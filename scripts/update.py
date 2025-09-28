@@ -9,48 +9,50 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 LEARN_URL = "https://blackhawk.church/learn/"
 TZ = ZoneInfo("America/Chicago")
 
-# scripts/update.py
+BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:99.0) "
+        "Gecko/20100101 Firefox/99.0"
+    )
+}
 
 def get_soup(url):
-    # add a realistic user agent header so the request isn't blocked
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:99.0) "
-            "Gecko/20100101 Firefox/99.0"
-        )
-    }
-    # pass the header into requests.get
-    r = requests.get(url, headers=headers, timeout=30)
+    r = requests.get(url, headers=BROWSER_HEADERS, timeout=30)
     r.raise_for_status()
     return BeautifulSoup(r.text, "lxml")
 
 def find_current_series_resources_url():
     """
-    Heuristic: on the Learn page, the current series block includes a lone link
-    titled exactly 'Resources'. We take the first such link above 'Past Series'.
+    On the Learn page, the current series block includes a link titled 'Resources'.
+    We take the first such link that appears before the 'Past Series' header (if present).
     """
     soup = get_soup(LEARN_URL)
 
-    # stop before 'Past Series' section if present
-    past_series_header = soup.find(lambda tag: tag.name in ("h4","h5","h2","h3") and "Past Series" in tag.get_text())
+    past_series_header = soup.find(
+        lambda tag: tag.name in ("h4", "h5", "h2", "h3")
+        and "Past Series" in tag.get_text()
+    )
+
     candidates = []
     for a in soup.find_all("a"):
         if a.get_text(strip=True) == "Resources":
-            # prefer it if it is before 'Past Series' in DOM order
             if past_series_header and hasattr(a, "sourceline") and hasattr(past_series_header, "sourceline"):
                 if (a.sourceline or 0) < (past_series_header.sourceline or 10**9):
                     candidates.append(a)
             else:
                 candidates.append(a)
+
     if not candidates:
         raise RuntimeError("Could not find current series 'Resources' link on Learn page.")
+
     return requests.compat.urljoin(LEARN_URL, candidates[0].get("href"))
 
 def find_today_discussion_pdf(series_url, today):
     """
-    On the series page, lines often look like:
-    'September 28 // Title | Speaker â Discussion Guide'
-    We parse the month/day near each 'Discussion Guide' link.
+    On the series page, entries look like:
+      'September 28 // Title | Speaker – Discussion Guide'
+    We parse the month/day near each 'Discussion Guide' link and select today's guide
+    (or the most recent past one if today's isn't posted yet).
     """
     soup = get_soup(series_url)
     series_title_tag = soup.find(lambda t: t.name in ("h1","h2") and t.get_text(strip=True))
@@ -88,34 +90,55 @@ def find_today_discussion_pdf(series_url, today):
     }
 
 def fetch_pdf_text(pdf_url):
-    r = requests.get(pdf_url, timeout=30)
+    r = requests.get(pdf_url, headers=BROWSER_HEADERS, timeout=30)
     r.raise_for_status()
     text = extract_text(io.BytesIO(r.content))
     return text
 
 def structure_text(raw):
+    """
+    Parse the PDF text into sections and bullets, merging wrapped bullet lines.
+
+    A bullet begins with '- '. Any subsequent lines that do not start with '- '
+    and are not recognised headings are treated as part of the same bullet.
+    """
     lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
     title = lines[0] if lines else "Discussion Guide"
     sections = []
     current = {"heading": None, "bullets": [], "paras": []}
+    bullet_active = False
 
     def commit():
-        nonlocal current
+        nonlocal current, bullet_active
         if current["heading"] or current["bullets"] or current["paras"]:
             sections.append(current)
         current = {"heading": None, "bullets": [], "paras": []}
+        bullet_active = False
+
+    KNOWN_HEADINGS = {"reflect + discuss", "pray", "next steps"}
 
     for ln in lines[1:]:
-        if re.match(r'^[A-Za-z].*$', ln) and not ln.startswith("- "):
-            if ln.lower() in {"reflect + discuss", "pray", "next steps"} or len(ln) <= 60:
+        # Start of a new bullet
+        if ln.startswith("- "):
+            bullet_active = True
+            current["bullets"].append(ln[2:].strip())
+            continue
+
+        # Continuation of the last bullet (PDF line wrap)
+        if bullet_active and not ln.startswith("- "):
+            current["bullets"][-1] += " " + ln.strip()
+            continue
+
+        # No longer in a bullet; check for headings
+        bullet_active = False
+        if re.match(r"^[A-Za-z].*$", ln):
+            if ln.lower() in KNOWN_HEADINGS or len(ln) <= 60:
                 commit()
                 current["heading"] = ln
-            else:
-                current["paras"].append(ln)
-        elif ln.startswith("- "):
-            current["bullets"].append(ln[2:].strip())
-        else:
-            current["paras"].append(ln)
+                continue
+
+        # Otherwise treat as a paragraph
+        current["paras"].append(ln)
 
     commit()
     return title, sections
@@ -149,7 +172,7 @@ def main():
         sections=sections,
         source_pdf=meta["pdf_url"]
     )
-    print(f"Built page for {meta['series_title']} â {meta['date']} from {meta['pdf_url']}")
+    print(f"Built page for {meta['series_title']} — {meta['date']} from {meta['pdf_url']}")
 
 if __name__ == "__main__":
     sys.exit(main())
