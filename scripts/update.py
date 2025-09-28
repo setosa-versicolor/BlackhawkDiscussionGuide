@@ -9,8 +9,18 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 LEARN_URL = "https://blackhawk.church/learn/"
 TZ = ZoneInfo("America/Chicago")
 
+# scripts/update.py
+
 def get_soup(url):
-    r = requests.get(url, timeout=30)
+    # add a realistic user agent header so the request isn't blocked
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:99.0) "
+            "Gecko/20100101 Firefox/99.0"
+        )
+    }
+    # pass the header into requests.get
+    r = requests.get(url, headers=headers, timeout=30)
     r.raise_for_status()
     return BeautifulSoup(r.text, "lxml")
 
