@@ -6,28 +6,43 @@
   <title>{{ series_title }} — Discussion Guide</title>
   <meta name="description" content="Mobile discussion guide for {{ series_title }} on {{ date_str }}." />
   <style>
-    :root { --max: 720px; --pad: 16px; --radius: 14px; }
+    :root { --max: 900px; --pad: 16px; --radius: 14px; }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; }
-    header { position: sticky; top: 0; backdrop-filter: blur(6px); background: rgba(255,255,255,.85); border-bottom: 1px solid #eee; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; background: #f6f7f9; color: #121316; }
+    header { position: sticky; top: 0; backdrop-filter: blur(6px); background: rgba(255,255,255,.9); border-bottom: 1px solid #e7eaf0; }
     header .wrap { max-width: var(--max); margin: 0 auto; padding: 12px var(--pad); display: flex; gap: 10px; align-items: center; justify-content: space-between; }
     h1 { font-size: 1.1rem; margin: 0; }
     main { max-width: var(--max); margin: 0 auto; padding: 12px var(--pad) 64px; }
-    .card { background: #fff; border: 1px solid #eee; border-radius: var(--radius); padding: 18px; margin: 12px 0; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
-    .meta { color: #666; font-size: .95rem; margin: 4px 0 12px; }
-    h2 { font-size: 1.1rem; margin: 6px 0 6px; }
-    ul { margin: 8px 0 0 20px; padding: 0; }
-    li { margin: 8px 0; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; }
-    .btn { appearance: none; border: 1px solid #ddd; padding: 10px 12px; border-radius: 10px; background: #fafafa; font: inherit; cursor: pointer; }
+    .metaCard { background: #fff; border: 1px solid #e7eaf0; border-radius: var(--radius); padding: 16px; margin: 12px 0; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
+    .meta { color: #586071; font-size: .95rem; margin: 4px 0 8px; }
+    .btn { appearance: none; border: 1px solid #d5dae3; padding: 10px 12px; border-radius: 10px; background: #fff; font: inherit; cursor: pointer; }
     .btn:active { transform: translateY(1px); }
-    footer { max-width: var(--max); margin: 28px auto; padding: 0 var(--pad) 28px; color: #666; font-size: .9rem; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    section.hdr { display: flex; align-items: center; justify-content: space-between; margin-top: 22px; }
+    section.hdr h2 { font-size: 1.05rem; margin: 0; color: #1e2633; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin: 12px 0 20px; }
+    .card { background: #fff; border: 1px solid #e7eaf0; border-radius: 14px; padding: 12px 12px 12px; box-shadow: 0 1px 2px rgba(0,0,0,.03); display: flex; gap: 10px; }
+    .card.dragging { opacity: .7; outline: 2px dashed #9ab0ff; }
+    .card .ck { margin-top: 3px; }
+    .card .content { flex: 1; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; color: #47566b; background: #f0f4ff; border: 1px solid #dbe5ff; padding: 4px 8px; border-radius: 999px; }
+    .empty { color: #6b7483; font-size: .95rem; border: 1px dashed #cfd6e3; border-radius: 12px; padding: 14px; background: #fafbff; }
+    .muted { color: #6b7483; font-size: .9rem; }
+    textarea.add { width: 100%; min-height: 70px; padding: 10px; border: 1px solid #d5dae3; border-radius: 12px; resize: vertical; font-family: inherit; }
+    dialog { border: 0; border-radius: 16px; padding: 0; }
+    dialog .dlg { padding: 18px; min-width: 280px; max-width: 560px; }
+    dialog form .row { justify-content: flex-end; }
+    footer { max-width: var(--max); margin: 28px auto; padding: 0 var(--pad) 28px; color: #6b7483; font-size: .9rem; }
+
     @media (prefers-color-scheme: dark) {
       body { background: #0e0f12; color: #eaeaea; }
-      header { background: rgba(14,15,18,.8); border-bottom-color: #272a30; }
-      .card { background: #13151a; border-color: #272a30; }
+      header { background: rgba(14,15,18,.85); border-bottom-color: #272a30; }
+      .metaCard, .card { background: #13151a; border-color: #272a30; }
       .btn { background: #1a1d23; border-color: #272a30; color: #eaeaea; }
-      .meta, footer { color: #acb2bd; }
+      .pill { color: #c7d3ff; background: #1a2140; border-color: #29356b; }
+      .empty { color: #a9b1c3; border-color: #2c3340; background: #151820; }
+      textarea.add { background: #0e0f12; color: #eaeaea; border-color: #2b3140; }
+      footer { color: #acb2bd; }
     }
   </style>
 </head>
@@ -43,37 +58,237 @@
   </header>
 
   <main>
-    <div class="card">
+    <div class="metaCard">
       <div class="meta">{{ date_str }}</div>
       <div class="meta"><strong>{{ title_line }}</strong></div>
+      <div class="muted">Tap the checkbox to prioritize a question. Drag cards in “Prioritized Questions” to reorder. Add your own items too.</div>
     </div>
 
-    {% for sec in sections %}
-      <section class="card">
-        {% if sec.heading %}<h2>{{ sec.heading }}</h2>{% endif %}
-        {% if sec.paras %}
-          {% for p in sec.paras %}<p>{{ p }}</p>{% endfor %}
-        {% endif %}
-        {% if sec.bullets %}
-          <ul>
-            {% for b in sec.bullets %}<li>{{ b }}</li>{% endfor %}
-          </ul>
-        {% endif %}
-      </section>
-    {% endfor %}
+    <!-- PRIORITIZED -->
+    <section class="hdr">
+      <h2>Prioritized Questions</h2>
+      <button class="btn" id="addBtn">Add a New Question</button>
+    </section>
+    <div id="prioritized" class="grid" aria-label="Prioritized Questions" data-sortable="true"></div>
+    <div id="priorEmpty" class="empty" style="display:none;">No prioritized questions yet. Check items below or add your own.</div>
+
+    <!-- ALL QUESTIONS -->
+    <section class="hdr">
+      <h2>All Questions</h2>
+      <span class="pill" title="From this week’s PDF">from PDF</span>
+    </section>
+    <div id="allQuestions" class="grid" aria-label="All Questions"></div>
   </main>
 
   <footer>
     <div>Auto-generated from the current series resources at Blackhawk Church. Original content © Blackhawk Church — <a href="{{ pdf_url }}" target="_blank" rel="noopener">source PDF</a>. Last updated {{ updated }}.</div>
   </footer>
 
+  <!-- Add Question dialog -->
+  <dialog id="dlg">
+    <div class="dlg">
+      <h3 style="margin:0 0 8px">Add a New Question</h3>
+      <form method="dialog">
+        <textarea class="add" id="newQuestion" placeholder="Type your question…"></textarea>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" value="cancel">Cancel</button>
+          <button class="btn" id="saveNew" value="ok">Add</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
   <script>
-    const shareBtn = document.getElementById('shareBtn');
-    shareBtn?.addEventListener('click', async () => {
+    // ===== UTILITIES & STATE =====
+    const $ = (s, p=document) => p.querySelector(s);
+    const $$ = (s, p=document) => [...p.querySelectorAll(s)];
+    const prioritizedEl = $("#prioritized");
+    const allEl = $("#allQuestions");
+    const priorEmpty = $("#priorEmpty");
+    const STORAGE_KEY = "bhq-v1";
+
+    // Build a flat list of bullets from Jinja sections.
+    // Give each bullet a stable id using a running counter.
+    const bullets = [];
+    (function buildBullets(){
+      // We embed the questions as a JSON array to avoid parsing DOM text back out.
+      const data = [];
+      {% set ns = namespace(i=0) %}
+      {% for sec in sections %}
+        {% for b in sec.bullets %}
+          {% set _ = ns.update({'i': ns.i + 1}) %}
+          data.push({ id: "q{{ns.i}}", text: {{ b | tojson }} });
+        {% endfor %}
+      {% endfor %}
+      window.__BH_BULLETS__ = data;
+    })();
+
+    // Load persisted state
+    function loadState() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+      catch { return {}; }
+    }
+    function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+
+    // State shape:
+    // { prioritized: ["q3","custom-..."], custom: { "custom-...": "text" } }
+    const state = Object.assign({ prioritized: [], custom: {} }, loadState());
+
+    // ===== CARD FACTORY =====
+    function makeCard(id, text, isPrioritized=false) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.draggable = isPrioritized;       // draggable only in prioritized
+      card.dataset.id = id;
+
+      const ck = document.createElement("input");
+      ck.type = "checkbox";
+      ck.className = "ck";
+      ck.checked = isPrioritized;
+
+      const content = document.createElement("div");
+      content.className = "content";
+      content.textContent = text;
+
+      card.appendChild(ck);
+      card.appendChild(content);
+
+      // checkbox moves between sections
+      ck.addEventListener("change", () => {
+        if (ck.checked) addToPrioritized(card);
+        else removeFromPrioritized(card);
+        persist();
+      });
+
+      // drag & drop (only inside prioritized)
+      card.addEventListener("dragstart", (e) => {
+        if (!ck.checked) { e.preventDefault(); return; }
+        card.classList.add("dragging");
+        e.dataTransfer.setData("text/plain", id);
+        e.dataTransfer.effectAllowed = "move";
+      });
+      card.addEventListener("dragend", () => {
+        card.classList.remove("dragging");
+        persist();
+      });
+
+      return card;
+    }
+
+    function addToPrioritized(card, atIndex = null) {
+      const id = card.dataset.id;
+      // Make draggable & checked
+      card.draggable = true;
+      card.querySelector(".ck").checked = true;
+      // Insert into prioritized container
+      if (atIndex === null || atIndex >= prioritizedEl.children.length) {
+        prioritizedEl.appendChild(card);
+      } else {
+        prioritizedEl.insertBefore(card, prioritizedEl.children[atIndex]);
+      }
+      // Remove from All if present
+      if (card.parentElement === allEl) allEl.removeChild(card);
+      showEmptyState();
+    }
+
+    function removeFromPrioritized(card) {
+      const id = card.dataset.id;
+      card.draggable = false;
+      card.querySelector(".ck").checked = false;
+      allEl.appendChild(card);
+      showEmptyState();
+    }
+
+    function showEmptyState() {
+      priorEmpty.style.display = prioritizedEl.children.length ? "none" : "block";
+    }
+
+    function persist() {
+      const ids = $$(".card", prioritizedEl).map(c => c.dataset.id);
+      state.prioritized = ids;
+      saveState(state);
+    }
+
+    // ===== RENDER INITIAL =====
+    (function render(){
+      const list = window.__BH_BULLETS__ || [];
+      const prioritizedSet = new Set(state.prioritized);
+
+      // create lookup for existing DOM cards (in case re-render)
+      const existing = new Map();
+
+      // Create cards for built-in bullets (PDF)
+      for (const item of list) {
+        const card = makeCard(item.id, item.text, prioritizedSet.has(item.id));
+        existing.set(item.id, card);
+      }
+
+      // Create cards for custom items
+      for (const [cid, text] of Object.entries(state.custom)) {
+        const card = makeCard(cid, text, prioritizedSet.has(cid));
+        existing.set(cid, card);
+      }
+
+      // Place prioritized in stored order, then any missing
+      const placed = new Set();
+      for (const id of state.prioritized) {
+        const c = existing.get(id);
+        if (c) { addToPrioritized(c); placed.add(id); }
+      }
+      // Remaining items go to All
+      for (const [id, card] of existing.entries()) {
+        if (!placed.has(id)) allEl.appendChild(card);
+      }
+      showEmptyState();
+    })();
+
+    // ===== SORTING (drag & drop) =====
+    prioritizedEl.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      const dragging = $(".card.dragging");
+      if (!dragging) return;
+      const after = getCardAfter(prioritizedEl, e.clientY);
+      if (!after) prioritizedEl.appendChild(dragging);
+      else prioritizedEl.insertBefore(dragging, after);
+    });
+    function getCardAfter(container, y) {
+      const els = [...container.querySelectorAll(".card:not(.dragging)")];
+      let closest = null;
+      let closestOffset = Number.NEGATIVE_INFINITY;
+      for (const el of els) {
+        const rect = el.getBoundingClientRect();
+        const offset = y - rect.top - rect.height / 2;
+        if (offset < 0 && offset > closestOffset) {
+          closestOffset = offset; closest = el;
+        }
+      }
+      return closest;
+    }
+
+    // ===== ADD NEW QUESTION =====
+    const dlg = $("#dlg");
+    $("#addBtn").addEventListener("click", () => {
+      $("#newQuestion").value = "";
+      dlg.showModal();
+    });
+    $("#saveNew").addEventListener("click", (e) => {
+      const txt = $("#newQuestion").value.trim();
+      if (!txt) { e.preventDefault(); return; }
+      const id = "custom-" + Date.now().toString(36);
+      state.custom[id] = txt;
+      // create & add
+      const card = makeCard(id, txt, true);
+      addToPrioritized(card);
+      persist();
+    });
+
+    // ===== SHARE =====
+    $("#shareBtn")?.addEventListener("click", async () => {
       try {
         await navigator.share({ title: document.title, url: location.href });
       } catch (_) { navigator.clipboard.writeText(location.href); }
     });
+
   </script>
 </body>
 </html>
