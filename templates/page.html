@@ -21,10 +21,10 @@
     section.hdr { display: flex; align-items: center; justify-content: space-between; margin-top: 22px; }
     section.hdr h2 { font-size: 1.05rem; margin: 0; color: #1e2633; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin: 12px 0 20px; }
-    .card { background: #fff; border: 1px solid #e7eaf0; border-radius: 14px; padding: 12px 12px 12px; box-shadow: 0 1px 2px rgba(0,0,0,.03); display: flex; gap: 10px; }
+    .card { background: #fff; border: 1px solid #e7eaf0; border-radius: 14px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.03); display: flex; gap: 10px; }
     .card.dragging { opacity: .7; outline: 2px dashed #9ab0ff; }
     .card .ck { margin-top: 3px; }
-    .card .content { flex: 1; }
+    .card .content { flex: 1; white-space: pre-wrap; }
     .pill { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; color: #47566b; background: #f0f4ff; border: 1px solid #dbe5ff; padding: 4px 8px; border-radius: 999px; }
     .empty { color: #6b7483; font-size: .95rem; border: 1px dashed #cfd6e3; border-radius: 12px; padding: 14px; background: #fafbff; }
     .muted { color: #6b7483; font-size: .9rem; }
@@ -98,6 +98,11 @@
     </div>
   </dialog>
 
+  <!-- Expose all bullets from Python to JS: flat array of strings -->
+  <script>
+    window.__BH_BULLETS__ = {{ sections | map(attribute='bullets') | sum(start=[]) | tojson }};
+  </script>
+
   <script>
     // ===== UTILITIES & STATE =====
     const $ = (s, p=document) => p.querySelector(s);
@@ -107,30 +112,13 @@
     const priorEmpty = $("#priorEmpty");
     const STORAGE_KEY = "bhq-v1";
 
-    // Build a flat list of bullets from Jinja sections.
-    // Give each bullet a stable id using a running counter.
-    const bullets = [];
-    (function buildBullets(){
-      // We embed the questions as a JSON array to avoid parsing DOM text back out.
-      const data = [];
-      {% set ns = namespace(i=0) %}
-      {% for sec in sections %}
-        {% for b in sec.bullets %}
-          {% set _ = ns.update({'i': ns.i + 1}) %}
-          data.push({ id: "q{{ns.i}}", text: {{ b | tojson }} });
-        {% endfor %}
-      {% endfor %}
-      window.__BH_BULLETS__ = data;
-    })();
-
-    // Load persisted state
     function loadState() {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
       catch { return {}; }
     }
     function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
 
-    // State shape:
+    // State:
     // { prioritized: ["q3","custom-..."], custom: { "custom-...": "text" } }
     const state = Object.assign({ prioritized: [], custom: {} }, loadState());
 
@@ -138,7 +126,7 @@
     function makeCard(id, text, isPrioritized=false) {
       const card = document.createElement("div");
       card.className = "card";
-      card.draggable = isPrioritized;       // draggable only in prioritized
+      card.draggable = isPrioritized;
       card.dataset.id = id;
 
       const ck = document.createElement("input");
@@ -153,14 +141,12 @@
       card.appendChild(ck);
       card.appendChild(content);
 
-      // checkbox moves between sections
       ck.addEventListener("change", () => {
         if (ck.checked) addToPrioritized(card);
         else removeFromPrioritized(card);
         persist();
       });
 
-      // drag & drop (only inside prioritized)
       card.addEventListener("dragstart", (e) => {
         if (!ck.checked) { e.preventDefault(); return; }
         card.classList.add("dragging");
@@ -176,23 +162,18 @@
     }
 
     function addToPrioritized(card, atIndex = null) {
-      const id = card.dataset.id;
-      // Make draggable & checked
       card.draggable = true;
       card.querySelector(".ck").checked = true;
-      // Insert into prioritized container
       if (atIndex === null || atIndex >= prioritizedEl.children.length) {
         prioritizedEl.appendChild(card);
       } else {
         prioritizedEl.insertBefore(card, prioritizedEl.children[atIndex]);
       }
-      // Remove from All if present
       if (card.parentElement === allEl) allEl.removeChild(card);
       showEmptyState();
     }
 
     function removeFromPrioritized(card) {
-      const id = card.dataset.id;
       card.draggable = false;
       card.querySelector(".ck").checked = false;
       allEl.appendChild(card);
@@ -213,23 +194,22 @@
     (function render(){
       const list = window.__BH_BULLETS__ || [];
       const prioritizedSet = new Set(state.prioritized);
-
-      // create lookup for existing DOM cards (in case re-render)
       const existing = new Map();
 
-      // Create cards for built-in bullets (PDF)
-      for (const item of list) {
-        const card = makeCard(item.id, item.text, prioritizedSet.has(item.id));
-        existing.set(item.id, card);
-      }
+      // Built-in bullets (PDF) -> deterministic IDs q1..qN
+      list.forEach((text, i) => {
+        const id = "q" + (i + 1);
+        const card = makeCard(id, text, prioritizedSet.has(id));
+        existing.set(id, card);
+      });
 
-      // Create cards for custom items
+      // Custom items (persisted)
       for (const [cid, text] of Object.entries(state.custom)) {
         const card = makeCard(cid, text, prioritizedSet.has(cid));
         existing.set(cid, card);
       }
 
-      // Place prioritized in stored order, then any missing
+      // Place prioritized in stored order
       const placed = new Set();
       for (const id of state.prioritized) {
         const c = existing.get(id);
@@ -276,7 +256,6 @@
       if (!txt) { e.preventDefault(); return; }
       const id = "custom-" + Date.now().toString(36);
       state.custom[id] = txt;
-      // create & add
       const card = makeCard(id, txt, true);
       addToPrioritized(card);
       persist();
@@ -284,11 +263,9 @@
 
     // ===== SHARE =====
     $("#shareBtn")?.addEventListener("click", async () => {
-      try {
-        await navigator.share({ title: document.title, url: location.href });
-      } catch (_) { navigator.clipboard.writeText(location.href); }
+      try { await navigator.share({ title: document.title, url: location.href }); }
+      catch { navigator.clipboard.writeText(location.href); }
     });
-
   </script>
 </body>
 </html>
