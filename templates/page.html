@@ -1,1 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{{ series_title }} — Discussion Guide</title>
+  <meta name="description" content="Mobile discussion guide for {{ series_title }} on {{ date_str }}." />
+  <style>
+    :root { --max: 720px; --pad: 16px; --radius: 14px; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; }
+    header { position: sticky; top: 0; backdrop-filter: blur(6px); background: rgba(255,255,255,.85); border-bottom: 1px solid #eee; }
+    header .wrap { max-width: var(--max); margin: 0 auto; padding: 12px var(--pad); display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+    h1 { font-size: 1.1rem; margin: 0; }
+    main { max-width: var(--max); margin: 0 auto; padding: 12px var(--pad) 64px; }
+    .card { background: #fff; border: 1px solid #eee; border-radius: var(--radius); padding: 18px; margin: 12px 0; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
+    .meta { color: #666; font-size: .95rem; margin: 4px 0 12px; }
+    h2 { font-size: 1.1rem; margin: 6px 0 6px; }
+    ul { margin: 8px 0 0 20px; padding: 0; }
+    li { margin: 8px 0; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { appearance: none; border: 1px solid #ddd; padding: 10px 12px; border-radius: 10px; background: #fafafa; font: inherit; cursor: pointer; }
+    .btn:active { transform: translateY(1px); }
+    footer { max-width: var(--max); margin: 28px auto; padding: 0 var(--pad) 28px; color: #666; font-size: .9rem; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #0e0f12; color: #eaeaea; }
+      header { background: rgba(14,15,18,.8); border-bottom-color: #272a30; }
+      .card { background: #13151a; border-color: #272a30; }
+      .btn { background: #1a1d23; border-color: #272a30; color: #eaeaea; }
+      .meta, footer { color: #acb2bd; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>{{ series_title }} — Discussion Guide</h1>
+      <div class="row">
+        <button class="btn" id="shareBtn" title="Share">Share</button>
+        <a class="btn" href="{{ pdf_url }}" target="_blank" rel="noopener">Open PDF</a>
+      </div>
+    </div>
+  </header>
 
+  <main>
+    <div class="card">
+      <div class="meta">{{ date_str }}</div>
+      <div class="meta"><strong>{{ title_line }}</strong></div>
+    </div>
+
+    {% for sec in sections %}
+      <section class="card">
+        {% if sec.heading %}<h2>{{ sec.heading }}</h2>{% endif %}
+        {% if sec.paras %}
+          {% for p in sec.paras %}<p>{{ p }}</p>{% endfor %}
+        {% endif %}
+        {% if sec.bullets %}
+          <ul>
+            {% for b in sec.bullets %}<li>{{ b }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+      </section>
+    {% endfor %}
+  </main>
+
+  <footer>
+    <div>Auto-generated from the current series resources at Blackhawk Church. Original content © Blackhawk Church — <a href="{{ pdf_url }}" target="_blank" rel="noopener">source PDF</a>. Last updated {{ updated }}.</div>
+  </footer>
+
+  <script>
+    const shareBtn = document.getElementById('shareBtn');
+    shareBtn?.addEventListener('click', async () => {
+      try {
+        await navigator.share({ title: document.title, url: location.href });
+      } catch (_) { navigator.clipboard.writeText(location.href); }
+    });
+  </script>
+</body>
+</html>
