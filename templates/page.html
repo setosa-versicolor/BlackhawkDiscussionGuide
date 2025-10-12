@@ -56,7 +56,7 @@
       <span class="muted">interactive cards + shared views</span>
     </header>
 
-    <!-- Source loader (static GitHub Pages) -->
+    <!-- Controls -->
     <div class="bar">
       <button id="loadLatestBtn" title="Load from data/guide.json">Load Latest</button>
       <button id="refreshBtn" class="secondary" title="Re-read data/guide.json with no cache">Refresh</button>
@@ -67,7 +67,7 @@
       <span class="muted" id="status"></span>
     </div>
 
-    <!-- Shared view controls (uses static/js/viewStore.js) -->
+    <!-- Shared views -->
     <div class="viewbar" style="margin-top:10px">
       <select id="viewSelect" title="Saved views dropdown"></select>
       <input id="viewName" type="text" placeholder="New view name…" />
@@ -77,7 +77,7 @@
       <button id="joinRoomBtn">Join</button>
     </div>
 
-    <!-- Add-your-own card -->
+    <!-- Add new card -->
     <div class="bar" style="margin-top:10px">
       <select id="newType">
         <option value="question">Question</option>
@@ -88,7 +88,7 @@
       <button id="addBtn">Add</button>
     </div>
 
-    <!-- Cards (one per row) -->
+    <!-- Cards -->
     <div id="board" class="board"></div>
 
     <div class="hint muted">
@@ -96,17 +96,16 @@
     </div>
 
     <div class="footer">
-      Loads from <code>data/guide.json</code> by default. You can import a different JSON if needed.
+      Loads from <code>data/guide.json</code> by default. You can import/export JSON too.
     </div>
   </div>
 
-  <!-- SortableJS CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" integrity="sha256-u3xk3r5U0s4dA7T9Q1rhWlVnA7e9c2b8GQj7iUbk0KU=" crossorigin="anonymous"></script>
+  <!-- SortableJS (remove integrity to avoid SRI mismatch) -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" crossorigin="anonymous"></script>
 
   <!-- App -->
   <script type="module">
-    // IMPORTANT: this path is relative to your repo structure on GitHub Pages.
-    // Keep your shared view store at /static/js/viewStore.js
+    /* Adjust this import to where your file actually lives relative to page.html. */
     import { listViews, loadView, saveView, joinRoom } from "./static/js/viewStore.js";
 
     // ---------- DOM ----------
@@ -135,7 +134,7 @@
     const genId = () => "c_" + Math.random().toString(36).slice(2, 9);
 
     // ---------- Render ----------
-    window.renderCards = function renderCards(next) {
+    function renderCards(next) {
       cards = next.map(c => ({ id: c.id || genId(), ...c }));
       $board.innerHTML = "";
       for (const c of cards) {
@@ -160,13 +159,13 @@
         el.appendChild(body);
         $board.appendChild(el);
       }
-    };
+    }
 
-    window.getCurrentCards = function getCurrentCards() {
+    function getCurrentCards() {
       const order = [...$board.querySelectorAll(".card")].map(node => node.dataset.id);
       const byId = Object.fromEntries(cards.map(c => [c.id, c]));
       return order.map(id => byId[id]).filter(Boolean);
-    };
+    }
 
     function persistOrderFromDOM() {
       cards = getCurrentCards();
@@ -205,7 +204,7 @@
     });
 
     $reset.addEventListener("click", () => {
-      localStorage.removeItem("bhq-views-v2"); // shared view storage
+      localStorage.removeItem("bhq-views-v2"); // shared-view storage
       localStorage.removeItem("bhq-v1");       // legacy key if you had it
       location.reload();
     });
@@ -213,7 +212,7 @@
     $exportBtn.addEventListener("click", () => {
       const payload = {
         questions: getCurrentCards().filter(c => c.type === "question").map(c => c.text),
-        sections: getCurrentCards().filter(c => c.type === "section").map(c => ({ title: c.title || "Section", body: c.text }))
+        sections:  getCurrentCards().filter(c => c.type === "section").map(c => ({ title: c.title || "Section", body: c.text }))
       };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -240,7 +239,7 @@
       }
     });
 
-    // Shared views
+    // ---------- Shared views ----------
     function refreshViewList() {
       const names = listViews($room.value.trim());
       $sel.innerHTML = "";
@@ -272,17 +271,19 @@
 
     refreshViewList();
 
-    // ---------- Data loading (GitHub Pages static) ----------
-    async function loadGuideJson(noCache = false) {
-        const u = new URL("data/guide.json", window.location.href);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        if (noCache) u.searchParams.set("ts", Date.now());
-        return u.toString();
+    // ---------- Data loading (single definition) ----------
+    function guideJsonUrl(noCache = false) {
+      // repo-relative; works under user.github.io/repo/
+      const u = new URL("data/guide.json", window.location.href);
+      if (noCache) u.searchParams.set("ts", Date.now());
+      return u.toString();
     }
+
     async function loadGuideJson(noCache = false) {
       $status.textContent = "Loading…";
       try {
         const res = await fetch(guideJsonUrl(noCache), { cache: noCache ? "no-store" : "default" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const next = [
           ...(data.questions || []).map(q => ({ type: "question", text: q })),
@@ -296,10 +297,11 @@
       }
     }
 
-    $loadLatest.addEventListener("click", () => loadGuideJson(false));
-    $refresh.addEventListener("click", () => loadGuideJson(true));
+    // Buttons
+    document.getElementById("loadLatestBtn").addEventListener("click", () => loadGuideJson(false));
+    document.getElementById("refreshBtn").addEventListener("click", () => loadGuideJson(true));
 
-    // Auto-load on first visit:
+    // Auto-load
     loadGuideJson(false);
 
     // ---------- Utils ----------
