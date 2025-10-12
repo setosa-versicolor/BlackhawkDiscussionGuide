@@ -1,25 +1,20 @@
-name: Fetch Guide (auto)
+# .github/workflows/fetch-guide.yml
+name: Fetch Guide (Blackhawk auto)
 
 on:
   schedule:
-    - cron: "0 12 * * 5"   # Fridays noon UTC (adjust)
-  workflow_dispatch:
-    inputs:
-      guide_url:
-        description: "Optional: override with a specific Guide URL"
-        required: false
-      roots:
-        description: "Optional: comma-separated start pages (overrides env)"
-        required: false
-      keywords:
-        description: "Optional: extra keywords (comma-separated)"
-        required: false
+    - cron: '0 12 * * 5'   # Fridays noon UTC; adjust if you want
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # allow pushing guide.json back to the repo
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -29,27 +24,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Fetch & write JSON (auto unless URL provided)
-        env:
-          ROOTS_DEFAULT: >-
-            https://YOUR-CHURCH-SITE/PAGE-WITH-DISCUSSION-GUIDES,
-            https://YOUR-CHURCH-SITE/series/  # add as many as you like
-          KEYWORDS_DEFAULT: >-
-            discussion guide, greater things, reflect + discuss, questions
+      - name: Generate data/guide.json
         run: |
-          ROOTS="${{ github.event.inputs.roots || env.ROOTS_DEFAULT }}"
-          KW="${{ github.event.inputs.keywords || env.KEYWORDS_DEFAULT }}"
-          URL_INPUT="${{ github.event.inputs.guide_url }}"
-          if [ -n "$URL_INPUT" ]; then
-            python scripts/update.py --fetch "$URL_INPUT"
-          else
-            python scripts/update.py --auto --roots "$ROOTS" --keywords "$KW"
-          fi
+          python scripts/update.py --out-json data/guide.json
 
       - name: Commit JSON
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
           git add data/guide.json
-          git commit -m "Update guide.json" || echo "No changes"
+          git commit -m "Auto-update guide.json" || echo "No changes"
           git push
