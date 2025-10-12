@@ -2,294 +2,213 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <title>Discussion Guide — Cards</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>{{ series_title }} — Discussion Guide</title>
-  <meta name="description" content="Mobile discussion guide for {{ series_title }} on {{ date_str }}." />
   <style>
-    :root { --max: 900px; --pad: 16px; --radius: 14px; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; background: #f6f7f9; color: #121316; }
-    header { position: sticky; top: 0; backdrop-filter: blur(6px); background: rgba(255,255,255,.9); border-bottom: 1px solid #e7eaf0; }
-    header .wrap { max-width: var(--max); margin: 0 auto; padding: 12px var(--pad); display: flex; gap: 10px; align-items: center; justify-content: space-between; }
-    h1 { font-size: 1.1rem; margin: 0; }
-    main { max-width: var(--max); margin: 0 auto; padding: 12px var(--pad) 64px; }
-    .metaCard { background: #fff; border: 1px solid #e7eaf0; border-radius: var(--radius); padding: 16px; margin: 12px 0; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
-    .meta { color: #586071; font-size: .95rem; margin: 4px 0 8px; }
-    .btn { appearance: none; border: 1px solid #d5dae3; padding: 10px 12px; border-radius: 10px; background: #fff; font: inherit; cursor: pointer; }
-    .btn:active { transform: translateY(1px); }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    section.hdr { display: flex; align-items: center; justify-content: space-between; margin-top: 22px; }
-    section.hdr h2 { font-size: 1.05rem; margin: 0; color: #1e2633; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin: 12px 0 20px; }
-    .card { background: #fff; border: 1px solid #e7eaf0; border-radius: 14px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.03); display: flex; gap: 10px; }
-    .card.dragging { opacity: .7; outline: 2px dashed #9ab0ff; }
-    .card .ck { margin-top: 3px; }
-    .card .content { flex: 1; white-space: pre-wrap; }
-    .pill { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; color: #47566b; background: #f0f4ff; border: 1px solid #dbe5ff; padding: 4px 8px; border-radius: 999px; }
-    .empty { color: #6b7483; font-size: .95rem; border: 1px dashed #cfd6e3; border-radius: 12px; padding: 14px; background: #fafbff; }
-    .muted { color: #6b7483; font-size: .9rem; }
-    textarea.add { width: 100%; min-height: 70px; padding: 10px; border: 1px solid #d5dae3; border-radius: 12px; resize: vertical; font-family: inherit; }
-    dialog { border: 0; border-radius: 16px; padding: 0; }
-    dialog .dlg { padding: 18px; min-width: 280px; max-width: 560px; }
-    dialog form .row { justify-content: flex-end; }
-    footer { max-width: var(--max); margin: 28px auto; padding: 0 var(--pad) 28px; color: #6b7483; font-size: .9rem; }
-
-    @media (prefers-color-scheme: dark) {
-      body { background: #0e0f12; color: #eaeaea; }
-      header { background: rgba(14,15,18,.85); border-bottom-color: #272a30; }
-      .metaCard, .card { background: #13151a; border-color: #272a30; }
-      .btn { background: #1a1d23; border-color: #272a30; color: #eaeaea; }
-      .pill { color: #c7d3ff; background: #1a2140; border-color: #29356b; }
-      .empty { color: #a9b1c3; border-color: #2c3340; background: #151820; }
-      textarea.add { background: #0e0f12; color: #eaeaea; border-color: #2b3140; }
-      footer { color: #acb2bd; }
-    }
+    :root { --bg:#0e0f12; --panel:#161820; --card:#1e2230; --text:#e8ecf3; --muted:#9aa3b2; --accent:#7aa2ff; --border:#2a2f3c; }
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    a{color:var(--accent);text-decoration:none}
+    .wrap{max-width:920px;margin:28px auto 80px;padding:0 16px}
+    header{display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+    header h1{font-size:20px;margin:0 12px 0 0;font-weight:700}
+    .bar,.viewbar{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    input[type="text"],select,textarea{background:#0f1117;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;outline:none;min-width:180px}
+    button{background:var(--accent);color:#0a0b0f;border:none;border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer}
+    button.secondary{background:#2b3040;color:var(--text)}
+    .muted{color:var(--muted)} .spacer{flex:1}
+    .board{display:block;margin-top:16px}
+    .card{width:100%;box-sizing:border-box;margin:12px 0;background:var(--card);border:1px solid var(--border);border-radius:16px}
+    .card-header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border)}
+    .drag-handle{cursor:grab;user-select:none;font-weight:900;letter-spacing:1px;opacity:.7}
+    .tag{font-size:12px;padding:2px 8px;border-radius:999px;background:#2b3142;color:#cfe}
+    .card-body{padding:12px;white-space:pre-wrap}
+    .ghost{opacity:.5}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .row>*{flex:0 0 auto} .row .grow{flex:1 1 240px;min-width:240px}
+    .hint{margin-top:8px}
   </style>
 </head>
 <body>
-  <header>
-    <div class="wrap">
-      <h1>{{ series_title }} — Discussion Guide</h1>
-      <div class="row">
-        <button class="btn" id="shareBtn" title="Share">Share</button>
-        <a class="btn" href="{{ pdf_url }}" target="_blank" rel="noopener">Open PDF</a>
-      </div>
-    </div>
-  </header>
+  <div class="wrap">
+    <header>
+      <h1>Discussion Guide</h1>
+      <span class="muted">interactive questions + shared views</span>
+    </header>
 
-  <main>
-    <div class="metaCard">
-      <div class="meta">{{ date_str }}</div>
-      <div class="meta"><strong>{{ title_line }}</strong></div>
-      <div class="muted">Tap the checkbox to prioritize a question. Drag cards in “Prioritized Questions” to reorder. Add your own items too.</div>
+    <div class="bar">
+      <input id="urlInput" class="grow" type="text" placeholder="Paste the guide URL…" />
+      <button id="loadBtn">Load</button>
+      <button id="resetBtn" class="secondary">Reset</button>
+      <div class="spacer"></div>
+      <span id="status" class="muted"></span>
     </div>
 
-    <!-- PRIORITIZED -->
-    <section class="hdr">
-      <h2>Prioritized Questions</h2>
-      <button class="btn" id="addBtn">Add a New Question</button>
-      <button class="btn" id="resetBtn" title="Reset">Reset</button>
-    </section>
-    <div id="prioritized" class="grid" aria-label="Prioritized Questions" data-sortable="true"></div>
-    <div id="priorEmpty" class="empty" style="display:none;">No prioritized questions yet. Check items below or add your own.</div>
-
-    <!-- ALL QUESTIONS -->
-    <section class="hdr">
-      <h2>All Questions</h2>
-      <span class="pill" title="From this week’s PDF">from PDF</span>
-    </section>
-    <div id="allQuestions" class="grid" aria-label="All Questions"></div>
-  </main>
-
-  <footer>
-    <div>Auto-generated from the current series resources at Blackhawk Church. Original content © Blackhawk Church — <a href="{{ pdf_url }}" target="_blank" rel="noopener">source PDF</a>. Last updated {{ updated }}.</div>
-  </footer>
-
-  <!-- Add Question dialog -->
-  <dialog id="dlg">
-    <div class="dlg">
-      <h3 style="margin:0 0 8px">Add a New Question</h3>
-      <form method="dialog">
-        <textarea class="add" id="newQuestion" placeholder="Type your question…"></textarea>
-        <div class="row" style="margin-top:12px">
-          <button class="btn" value="cancel">Cancel</button>
-          <button class="btn" id="saveNew" value="ok">Add</button>
-        </div>
-      </form>
+    <div class="viewbar" style="margin-top:10px">
+      <select id="viewSelect"></select>
+      <input id="viewName" type="text" placeholder="New view name…" />
+      <button id="saveViewBtn">Save / Update</button>
+      <div class="spacer"></div>
+      <input id="roomCode" type="text" placeholder="Room code (optional)" />
+      <button id="joinRoomBtn">Join</button>
     </div>
-  </dialog>
 
-  <!-- Expose all bullets from Python to JS: flat array of strings -->
-<script>
-  // All bullets as a flat array
-  window.__BH_BULLETS__ = {{ sections | map(attribute='bullets') | sum(start=[]) | tojson }};
+    <div class="bar" style="margin-top:10px">
+      <select id="newType">
+        <option value="question">Question</option>
+        <option value="section">Section</option>
+      </select>
+      <input id="newTitle" type="text" placeholder="(optional) Section title" />
+      <input id="newText" class="grow" type="text" placeholder="Type your question/section text…" />
+      <button id="addBtn">Add</button>
+    </div>
 
-  // Sections become single cards: "Heading: paragraph…"
-  window.__BH_SECTIONS__ = ({{ sections | tojson }} || [])
-    .filter(s => (s.heading || (s.paras && s.paras.length)))
-    .map(s => {
-      const head = (s.heading || "").trim();
-      const paras = (s.paras || []).join(" ").trim();
-      const h = head ? (head.endsWith(":") ? head : head + ":") : "";
-      return (h + (h && paras ? " " : "") + paras).trim();
-    })
-    .filter(Boolean);
-</script>
+    <div id="board" class="board"></div>
+    <div class="hint muted">Tip: drag with “⋮⋮”. Use the dropdown to switch/sync views.</div>
+  </div>
 
-  <script>
-    // ===== UTILITIES & STATE =====
-    const $ = (s, p=document) => p.querySelector(s);
-    const $$ = (s, p=document) => [...p.querySelectorAll(s)];
-    const prioritizedEl = $("#prioritized");
-    const allEl = $("#allQuestions");
-    const priorEmpty = $("#priorEmpty");
-    const STORAGE_KEY = "bhq-v1";
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" crossorigin="anonymous"></script>
+  <script type="module">
+    import { listViews, loadView, saveView, joinRoom } from "./static/js/viewStore.js";
 
-    function loadState() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
-      catch { return {}; }
+    const $board=document.getElementById("board");
+    const $url=document.getElementById("urlInput");
+    const $load=document.getElementById("loadBtn");
+    const $reset=document.getElementById("resetBtn");
+    const $status=document.getElementById("status");
+
+    const $sel=document.getElementById("viewSelect");
+    const $name=document.getElementById("viewName");
+    const $room=document.getElementById("roomCode");
+    const $save=document.getElementById("saveViewBtn");
+    const $join=document.getElementById("joinRoomBtn");
+
+    const $addBtn=document.getElementById("addBtn");
+    const $newType=document.getElementById("newType");
+    const $newTitle=document.getElementById("newTitle");
+    const $newText=document.getElementById("newText");
+
+    let cards=[]; const genId=()=> "c_"+Math.random().toString(36).slice(2,9);
+    const escapeHtml = s => s.replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m]));
+
+    function renderCards(next){
+      cards=next.map(c=>({id:c.id||genId(),...c}));
+      $board.innerHTML="";
+      for(const c of cards){
+        const el=document.createElement("div");
+        el.className="card"; el.dataset.id=c.id;
+        const header=document.createElement("div");
+        header.className="card-header";
+        header.innerHTML=`
+          <span class="drag-handle">⋮⋮</span>
+          <span class="tag">${c.type==="section"?"Section":"Question"}</span>
+          ${c.title?`<strong style="margin-left:6px">${escapeHtml(c.title)}</strong>`:""}
+          <div class="spacer"></div>
+          <button class="secondary" data-action="del">Delete</button>`;
+        const body=document.createElement("div");
+        body.className="card-body"; body.textContent=c.text;
+        el.append(header,body); $board.appendChild(el);
+      }
     }
-    function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
-
-    // State:
-    // { prioritized: ["q3","custom-..."], custom: { "custom-...": "text" } }
-    const state = Object.assign({ prioritized: [], custom: {} }, loadState());
-
-    // ===== CARD FACTORY =====
-    function makeCard(id, text, isPrioritized=false) {
-      const card = document.createElement("div");
-      card.className = "card";
-      card.draggable = isPrioritized;
-      card.dataset.id = id;
-
-      const ck = document.createElement("input");
-      ck.type = "checkbox";
-      ck.className = "ck";
-      ck.checked = isPrioritized;
-
-      const content = document.createElement("div");
-      content.className = "content";
-      content.textContent = text;
-
-      card.appendChild(ck);
-      card.appendChild(content);
-
-      ck.addEventListener("change", () => {
-        if (ck.checked) addToPrioritized(card);
-        else removeFromPrioritized(card);
-        persist();
-      });
-
-      card.addEventListener("dragstart", (e) => {
-        if (!ck.checked) { e.preventDefault(); return; }
-        card.classList.add("dragging");
-        e.dataTransfer.setData("text/plain", id);
-        e.dataTransfer.effectAllowed = "move";
-      });
-      card.addEventListener("dragend", () => {
-        card.classList.remove("dragging");
-        persist();
-      });
-
-      return card;
+    function getCurrentCards(){
+      const order=[...$board.querySelectorAll(".card")].map(n=>n.dataset.id);
+      const byId=Object.fromEntries(cards.map(c=>[c.id,c]));
+      return order.map(id=>byId[id]).filter(Boolean);
     }
 
-    function addToPrioritized(card, atIndex = null) {
-      card.draggable = true;
-      card.querySelector(".ck").checked = true;
-      if (atIndex === null || atIndex >= prioritizedEl.children.length) {
-        prioritizedEl.appendChild(card);
+    // parsing (client-side); uses a CORS-friendly reader proxy for HTML
+    const BULLET=/^\s*[–—-]\s+/;
+    const norm=s=>(s||"").replace(/\u00a0/g," ").replace(/[ \t]+/g," ").replace(/\s*\n\s*/g,"\n").trim();
+
+    function splitBullets(block){
+      const out=[]; let buf=null;
+      for(const raw of block.split(/\r?\n/)){
+        const line=raw.trim(); if(!line) continue;
+        if(BULLET.test(line)){ if(buf) out.push(buf.trim()); buf=line.replace(BULLET,""); }
+        else if(buf){ buf+=" "+line; }
+      }
+      if(buf) out.push(buf.trim());
+      return out;
+    }
+    function filterQuestions(arr){
+      return arr.filter(q => /\?\s*$/.test(q) || /(read\s+colossians|based on paul|what.*risk|what.*evidence|how.*change)/i.test(q));
+    }
+
+    async function fetchGuide(url){
+      // Use r.jina.ai to get readable HTML as plain text (works without CORS preflight)
+      // It mirrors the page server-side and returns article content.
+      const prox = url.startsWith("http") ? `https://r.jina.ai/${url}` : url;
+      const res = await fetch(prox, { mode:"cors" });
+      if(!res.ok) throw new Error(`Fetch ${res.status}`);
+      const txt = await res.text();
+
+      // Find "Reflect + Discuss" → block lines until next header-ish marker
+      const t = norm(txt);
+      const start = t.search(/reflect\s*\+\s*discuss/i);
+      let block="";
+      if(start>=0){
+        const rest = t.slice(start);
+        const m = rest.match(/reflect\s*\+\s*discuss[^\n]*\n([\s\S]*)/i);
+        block = m ? m[1] : rest;
+        // cut off at the next section header we know about
+        const cut = block.search(/\n\s*(memorization\s*challenge|pray|next\s*steps)\b/i);
+        if(cut>0) block = block.slice(0, cut);
       } else {
-        prioritizedEl.insertBefore(card, prioritizedEl.children[atIndex]);
-      }
-      if (card.parentElement === allEl) allEl.removeChild(card);
-      showEmptyState();
-    }
-
-    function removeFromPrioritized(card) {
-      card.draggable = false;
-      card.querySelector(".ck").checked = false;
-      allEl.appendChild(card);
-      showEmptyState();
-    }
-
-    function showEmptyState() {
-      priorEmpty.style.display = prioritizedEl.children.length ? "none" : "block";
-    }
-
-    function persist() {
-      const ids = $$(".card", prioritizedEl).map(c => c.dataset.id);
-      state.prioritized = ids;
-      saveState(state);
-    }
-
-    // ===== RENDER INITIAL =====
-    (function render(){
-      const bullets = window.__BH_BULLETS__ || [];
-      const sectionsAsCards = window.__BH_SECTIONS__ || [];
-      const combined = [...bullets, ...sectionsAsCards];   // bullets first, then section cards
-    
-      const prioritizedSet = new Set(state.prioritized);
-      const existing = new Map();
-    
-      combined.forEach((text, i) => {
-        const id = "q" + (i + 1); // stable across builds
-        const card = makeCard(id, text, prioritizedSet.has(id));
-        existing.set(id, card);
-      });
-
-  // Custom items...
-
-
-      // Custom items (persisted)
-      for (const [cid, text] of Object.entries(state.custom)) {
-        const card = makeCard(cid, text, prioritizedSet.has(cid));
-        existing.set(cid, card);
+        block = t;
       }
 
-      // Place prioritized in stored order
-      const placed = new Set();
-      for (const id of state.prioritized) {
-        const c = existing.get(id);
-        if (c) { addToPrioritized(c); placed.add(id); }
-      }
-      // Remaining items go to All
-      for (const [id, card] of existing.entries()) {
-        if (!placed.has(id)) allEl.appendChild(card);
-      }
-      showEmptyState();
-    })();
+      const candidates = splitBullets(block);
+      const questions = filterQuestions(candidates);
 
-    // ===== SORTING (drag & drop) =====
-    prioritizedEl.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      const dragging = $(".card.dragging");
-      if (!dragging) return;
-      const after = getCardAfter(prioritizedEl, e.clientY);
-      if (!after) prioritizedEl.appendChild(dragging);
-      else prioritizedEl.insertBefore(dragging, after);
-    });
-    function getCardAfter(container, y) {
-      const els = [...container.querySelectorAll(".card:not(.dragging)")];
-      let closest = null;
-      let closestOffset = Number.NEGATIVE_INFINITY;
-      for (const el of els) {
-        const rect = el.getBoundingClientRect();
-        const offset = y - rect.top - rect.height / 2;
-        if (offset < 0 && offset > closestOffset) {
-          closestOffset = offset; closest = el;
-        }
+      // Sections
+      function grab(title){
+        const re = new RegExp(`\\n\\s*${title}\\b[^\n]*\\n([\\s\\S]*?)\\n\\s*(?:memorization\\s*challenge|pray|next\\s*steps|$)`,"i");
+        const m = t.match(re);
+        if(!m) return null;
+        return { title: title.replace(/\\s\*/g," "), body: norm(m[1]) };
       }
-      return closest;
+      const sections = ["Memorization Challenge","Pray","Next Steps"].map(grab).filter(Boolean);
+
+      return { questions, sections };
     }
 
-    // ===== ADD NEW QUESTION =====
-    const dlg = $("#dlg");
-    $("#addBtn").addEventListener("click", () => {
-      $("#newQuestion").value = "";
-      dlg.showModal();
+    // events
+    $board.addEventListener("click",e=>{
+      const btn=e.target.closest("button[data-action='del']"); if(!btn) return;
+      const node=btn.closest(".card"); const id=node?.dataset.id; if(!id) return;
+      cards=cards.filter(c=>c.id!==id); node.remove();
     });
-    $("#saveNew").addEventListener("click", (e) => {
-      const txt = $("#newQuestion").value.trim();
-      if (!txt) { e.preventDefault(); return; }
-      const id = "custom-" + Date.now().toString(36);
-      state.custom[id] = txt;
-      const card = makeCard(id, txt, true);
-      addToPrioritized(card);
-      persist();
+    $addBtn.addEventListener("click",()=>{
+      const type=$newType.value, title=$newTitle.value.trim(), text=$newText.value.trim();
+      if(!text) return; const item={id:genId(),type,text}; if(type==="section"&&title) item.title=title;
+      cards.push(item); renderCards(cards); $newText.value=""; $newTitle.value="";
+    });
+    $reset.addEventListener("click",()=>{ localStorage.removeItem("bhq-views-v2"); location.reload(); });
+
+    $load.addEventListener("click", async ()=>{
+      const url=$url.value.trim(); if(!url) return;
+      $status.textContent="Loading…";
+      try{
+        const data=await fetchGuide(url);
+        renderCards([
+          ...data.questions.map(q=>({type:"question",text:q})),
+          ...data.sections.map(s=>({type:"section",title:s.title,text:s.body}))
+        ]);
+        $status.textContent=`Loaded: ${data.questions.length} questions, ${data.sections.length} sections.`;
+      }catch(err){ console.error(err); $status.textContent="Failed to load/parse."; }
     });
 
-    // ===== SHARE =====
-    $("#shareBtn")?.addEventListener("click", async () => {
-      try { await navigator.share({ title: document.title, url: location.href }); }
-      catch { navigator.clipboard.writeText(location.href); }
+    function refreshViewList(){
+      const names=listViews($room.value.trim());
+      $sel.innerHTML=""; for(const n of names){ const o=document.createElement("option"); o.value=n; o.textContent=n; $sel.appendChild(o); }
+    }
+    $join.addEventListener("click",async()=>{ await joinRoom($room.value.trim(),()=>refreshViewList()); });
+    $save.addEventListener("click",()=>{ const name=$name.value.trim()||"Untitled"; saveView({name, cards:getCurrentCards(), roomCode:$room.value.trim()||null}); refreshViewList(); });
+    $sel.addEventListener("change",()=>{
+      const name=$sel.value; const loaded=loadView({name, roomCode:$room.value.trim()||null}); if(loaded) renderCards(loaded);
     });
-    
-    // ===== RESET (clears saved order and checkboxes) =====
-    $("#resetBtn")?.addEventListener("click", () => {
-      localStorage.removeItem("bhq-v1");
-      location.reload();
-    });
+    refreshViewList();
+
+    Sortable.create($board,{ animation:150, handle:".drag-handle", ghostClass:"ghost", direction:"vertical", onEnd(){ cards=getCurrentCards(); }});
   </script>
 </body>
 </html>
