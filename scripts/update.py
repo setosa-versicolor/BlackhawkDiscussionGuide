@@ -1,293 +1,467 @@
 # scripts/update.py
-# Dual mode: (a) --auto crawl roots & pick the correct weekly guide
-#            (b) --fetch URL explicit
-# Also supports --serve for local dev with Flask API (unchanged UX).
+# Auto-discovers this week's discussion guide, parses HTML first (Reflect + Discuss),
+# falls back to PDF, and writes data/guide.json for a static (GitHub Pages) front-end.
+#
+# Reuses (and lightly extends) your original discovery flow:
+#   /messages -> "Discussion Guide" near today's date
+#   message page -> "Discussion Guide"
+#   /learn -> current series -> resources list (date-picked)
+#
+# Also writes a Jinja-built site/index.html if templates/page.html exists.
 
-import argparse, json, re, sys, datetime as dt
+import os, re, io, sys, datetime
+from zoneinfo import ZoneInfo
+import argparse
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
+from pdfminer.high_level import extract_text
 
-# ------------------------- Text helpers -------------------------
+# --------- Constants (from your script) ---------
+LEARN_URL     = "https://blackhawk.church/learn/"
+MESSAGES_URL  = "https://blackhawk.church/messages/"
+TZ            = ZoneInfo("America/Chicago")
+
+BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:124.0) "
+        "Gecko/20100101 Firefox/124.0"
+    )
+}
+
+# Month/Day patterns: "September 28", "Sept 28", "Sep. 28"
+MONTH_NAME_PAT = re.compile(
+    r"\b(?P<month>"
+    r"Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|"
+    r"Jul(?:y)?|Aug(?:ust)?|Sep(?:t|tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)"
+    r"\.?\s+(?P<day>\d{1,2})\b",
+    re.IGNORECASE
+)
+# Numeric patterns: "9/28", "09/28", "9-28"
+NUMERIC_DATE_PAT = re.compile(r"\b(?P<m>\d{1,2})[/-](?P<d>\d{1,2})\b")
+
+MONTHS = {
+    "jan": 1, "january": 1,
+    "feb": 2, "february": 2,
+    "mar": 3, "march": 3,
+    "apr": 4, "april": 4,
+    "may": 5,
+    "jun": 6, "june": 6,
+    "jul": 7, "july": 7,
+    "aug": 8, "august": 8,
+    "sep": 9, "sept": 9, "september": 9,
+    "oct": 10, "october": 10,
+    "nov": 11, "november": 11,
+    "dec": 12, "december": 12,
+}
+
+# --------- HTTP / Parsing helpers (from your script) ---------
+def get_soup(url: str) -> BeautifulSoup:
+    r = requests.get(url, headers=BROWSER_HEADERS, timeout=30)
+    r.raise_for_status()
+    return BeautifulSoup(r.text, "lxml")
+
+def _extract_dates_from_text(text: str, year_hint: int) -> list[datetime.date]:
+    dates = []
+    for m in MONTH_NAME_PAT.finditer(text):
+        mon_raw = m.group("month").lower().rstrip(".")
+        day = int(m.group("day"))
+        mon = MONTHS.get(mon_raw)
+        if mon and 1 <= day <= 31:
+            try:
+                dates.append(datetime.date(year_hint, mon, day))
+            except ValueError:
+                pass
+    for m in NUMERIC_DATE_PAT.finditer(text):
+        mon = int(m.group("m")); day = int(m.group("d"))
+        if 1 <= mon <= 12 and 1 <= day <= 31:
+            try:
+                dates.append(datetime.date(year_hint, mon, day))
+            except ValueError:
+                pass
+    return dates
+
+def _collect_nearby_text(a_tag, max_ancestors=3) -> str:
+    texts = []
+    texts.append(a_tag.get_text(" ", strip=True))
+    if a_tag.parent:
+        texts.append(a_tag.parent.get_text(" ", strip=True))
+
+    prev = a_tag.previous_sibling
+    steps = 0
+    while prev and steps < 3:
+        if hasattr(prev, "get_text"):
+            t = prev.get_text(" ", strip=True)
+            if t:
+                texts.append(t)
+        prev = prev.previous_sibling
+        steps += 1
+
+    anc = a_tag.parent
+    depth = 0
+    while anc and depth < max_ancestors:
+        texts.append(anc.get_text(" ", strip=True))
+        anc = anc.parent
+        depth += 1
+
+    uniq, seen = [], set()
+    for t in texts:
+        if t and t not in seen:
+            uniq.append(t); seen.add(t)
+    return "  •  ".join(uniq)
+
+# --------- Discovery flows (from your script) ---------
+def _first_discussion_link_on_messages_page(today: datetime.date) -> str | None:
+    soup = get_soup(MESSAGES_URL)
+    month_name = today.strftime("%B")
+    day = str(today.day)
+    year = str(today.year)
+
+    for a in soup.find_all("a"):
+        if "discussion guide" in a.get_text(strip=True).lower():
+            ctx = _collect_nearby_text(a)
+            has_full = (month_name in ctx and day in ctx and year in ctx)
+            has_md   = (month_name in ctx and day in ctx)
+            if has_full or has_md:
+                href = a.get("href")
+                if href:
+                    return requests.compat.urljoin(MESSAGES_URL, href)
+    return None
+
+def _discussion_link_from_message_page(url: str) -> str | None:
+    soup = get_soup(url)
+    for a in soup.find_all("a"):
+        if "discussion guide" in a.get_text(strip=True).lower():
+            href = a.get("href")
+            if href:
+                return requests.compat.urljoin(url, href)
+    return None
+
+def _find_message_page_for_today(today: datetime.date) -> str | None:
+    soup = get_soup(MESSAGES_URL)
+    month_name = today.strftime("%B")
+    day = str(today.day)
+    mmdd = f"{today.month}/{today.day}"
+
+    for a in soup.find_all("a", href=True):
+        href = a["href"]
+        if "/message/" in href:
+            ctx = a.parent.get_text(" ", strip=True) if a.parent else a.get_text(" ", strip=True)
+            if (month_name in ctx and day in ctx) or (mmdd in ctx):
+                return requests.compat.urljoin(MESSAGES_URL, href)
+    return None
+
+def find_current_series_resources_url() -> str:
+    soup = get_soup(LEARN_URL)
+    past_series_header = soup.find(
+        lambda tag: tag.name in ("h4","h5","h2","h3") and "Past Series" in tag.get_text()
+    )
+    candidates = []
+    for a in soup.find_all("a"):
+        if a.get_text(strip=True) == "Resources":
+            if past_series_header and hasattr(a, "sourceline") and hasattr(past_series_header, "sourceline"):
+                if (a.sourceline or 0) < (past_series_header.sourceline or 10**9):
+                    candidates.append(a)
+            else:
+                candidates.append(a)
+    if not candidates:
+        raise RuntimeError("Could not find current series 'Resources' link on Learn page.")
+    return requests.compat.urljoin(LEARN_URL, candidates[0].get("href"))
+
+def find_today_discussion_pdf_or_page(series_url: str, today: datetime.date) -> dict:
+    """
+    Returns: { series_title, date, url, context, all_guides }
+    'url' may be a PDF or HTML page. We'll parse accordingly.
+    """
+    # 1) Messages landing, direct Discussion Guide
+    direct = _first_discussion_link_on_messages_page(today)
+    if direct:
+        return {
+            "series_title": "Current Series",
+            "date": today,
+            "url": direct,
+            "context": "Messages landing (direct)",
+            "all_guides": []
+        }
+
+    # 2) message page -> discussion guide
+    msg_page = _find_message_page_for_today(today)
+    if msg_page:
+        dg = _discussion_link_from_message_page(msg_page)
+        if dg:
+            return {
+                "series_title": "Current Series",
+                "date": today,
+                "url": dg,
+                "context": msg_page,
+                "all_guides": []
+            }
+
+    # 3) Fallback: series resources list (date-scored, like your original)
+    soup_r = get_soup(series_url)
+    series_title_tag = soup_r.find(lambda t: t.name in ("h1","h2") and t.get_text(strip=True))
+    series_title = series_title_tag.get_text(strip=True) if series_title_tag else "Current Series"
+
+    guides = []
+    for a in soup_r.find_all("a"):
+        if "discussion guide" in a.get_text(strip=True).lower():
+            ctx = _collect_nearby_text(a)
+            ds = _extract_dates_from_text(ctx, year_hint=today.year)
+            if not ds:
+                continue
+            ds_unique = sorted(set(ds))
+            candidates = [d for d in ds_unique if d <= today]
+            dt_choice = candidates[-1] if candidates else ds_unique[-1]
+            href = a.get("href")
+            if href:
+                guides.append((dt_choice, requests.compat.urljoin(series_url, href), ctx))
+
+    if guides:
+        guides.sort(key=lambda x: x[0])
+        exact = [g for g in guides if g[0] == today]
+        chosen = exact[0] if exact else max([g for g in guides if g[0] <= today], key=lambda x: x[0], default=guides[-1])
+        return {
+            "series_title": series_title,
+            "date": chosen[0],
+            "url": chosen[1],
+            "context": chosen[2],
+            "all_guides": guides
+        }
+
+    raise RuntimeError("Could not locate a Discussion Guide link for today's message.")
+
+# --------- Content parsing (new HTML-first, then PDF fallback) ---------
 _WS = re.compile(r"\s+")
-_BULLET = re.compile(r"^\s*[–—-]\s+")
+_BULLET = re.compile(r"^\s*[–—-•]\s+")
+
 def _norm(s: str) -> str:
     if not s: return ""
     s = s.replace("\xa0", " ")
     s = _WS.sub(" ", s)
     return s.strip()
-def _node_text(n) -> str:
-    return _norm(n.get_text("\n", strip=True))
-def _heading_nodes(soup):
+
+def _headings(soup):
     return soup.select("h1,h2,h3,h4,h5,h6,strong,b")
+
+def _is_heading_tag(el) -> bool:
+    return bool(getattr(el, "name", "") and re.match(r"^h[1-6]$", el.name, re.I))
+
 def _next_el(el):
     n = el.next_sibling
     while n is not None and getattr(n, "name", None) is None:
         n = n.next_sibling
     return n
-def _collect_until_heading(start_el):
+
+def _collect_until_next_heading(start_el):
     parts = []
     n = _next_el(start_el)
-    while n is not None and not re.match(r"^H[1-6]$", getattr(n, "name", "X"), re.I):
-        parts.append(_node_text(n))
+    while n is not None and not _is_heading_tag(n):
+        parts.append(n.get_text("\n", strip=True))
         n = _next_el(n)
-    return "\n".join(p for p in parts if p).strip()
-def _split_bullets(block_text: str):
+    return "\n".join([_norm(p) for p in parts if _norm(p)]).strip()
+
+def parse_html_guide(html: str):
+    """
+    Extract questions from 'Reflect + Discuss' section (dash bullets),
+    and capture Memorization Challenge, Pray, Next Steps as sections.
+    """
+    soup = BeautifulSoup(html, "lxml")
+    heads = _headings(soup)
+
+    # Find Reflect + Discuss
+    reflect = None
+    for h in heads:
+        if re.search(r"reflect\s*\+\s*discuss", h.get_text(" ", strip=True), re.I):
+            reflect = h; break
+
+    block = _collect_until_next_heading(reflect) if reflect else soup.get_text("\n", strip=True)
+
+    # Split bullets (keep wrapped lines until next bullet)
     items, buf = [], None
-    for raw in block_text.splitlines():
+    for raw in block.splitlines():
         line = raw.strip()
-        if not line: continue
+        if not line:
+            continue
         if _BULLET.match(line):
             if buf: items.append(buf.strip())
             buf = _BULLET.sub("", line)
         else:
-            if buf: buf += " " + line
+            if buf:
+                buf += " " + line
     if buf: items.append(buf.strip())
-    return items
-def _filter_questions(cands):
-    keep = []
-    for q in cands:
-        if q.endswith("?") or re.search(r"(read\s+colossians|based on paul|what.*risk|what.*evidence|how.*change)", q, re.I):
-            keep.append(q)
-    return keep
 
-# ------------------------- Date scoring -------------------------
-# Parse dates from text/url (MM/DD/YY, Month D, YYYY, /YYYY/MM/DD/).
-_DATE_PATTERNS = [
-    re.compile(r"\b(\d{1,2})/(\d{1,2})/(\d{2,4})\b"),
-    re.compile(r"\b([A-Za-z]+)\s+(\d{1,2})(?:,?\s*(\d{4}))?\b"),
-    re.compile(r"/(\d{4})/(\d{1,2})/(\d{1,2})/"),  # in URL
-]
-_MONTHS = {m.lower(): i for i, m in enumerate(
-    ["January","February","March","April","May","June","July","August","September","October","November","December"], 1)}
+    # Filter to likely questions (end with ?, or clear prompt-y wording)
+    qs = [q for q in items if q.endswith("?") or re.search(r"(read\s+|what|how|why|where|when)", q, re.I)]
 
-def _try_parse_date(text: str):
-    text = text or ""
-    for pat in _DATE_PATTERNS:
-        m = pat.search(text)
-        if not m: continue
-        if pat.pattern.startswith(r"\b(\d{1,2})"):
-            mm, dd, yy = map(int, m.groups())
-            if yy < 100: yy += 2000
-            return dt.date(yy, mm, dd)
-        if pat.pattern.startswith(r"\b([A-Za-z]+)"):
-            mon, dd, yy = m.groups()
-            mm = _MONTHS.get(mon.lower())
-            if not mm: continue
-            dd = int(dd)
-            yy = int(yy) if yy else dt.date.today().year
-            return dt.date(yy, mm, dd)
-        if pat.pattern.startswith(r"/(\d{4})/"):
-            yy, mm, dd = map(int, m.groups())
-            return dt.date(yy, mm, dd)
-    return None
+    # Sections: Memorization Challenge, Pray, Next Steps
+    def grab(title_re):
+        h = next((x for x in heads if re.search(title_re, x.get_text(" ", strip=True), re.I)), None)
+        if not h: return None
+        title = _norm(h.get_text(" ", strip=True))
+        body = _collect_until_next_heading(h)
+        body = _norm(body)
+        if not body: return None
+        return {"title": title, "body": body}
 
-def _sunday_of_this_week(today=None):
-    today = today or dt.date.today()
-    # assuming Sunday-start week
-    return today - dt.timedelta(days=today.weekday()+1 if today.weekday()!=6 else 0)
+    sections = list(filter(None, [
+        grab(r"\bmemorization\s*challenge\b"),
+        grab(r"^\s*pray\s*$"),
+        grab(r"^\s*next\s*steps\s*$"),
+    ]))
 
-def _score_candidate(date_found: dt.date, target: dt.date):
-    if not date_found: return 9999
-    return abs((date_found - target).days)
+    return {"questions": qs, "sections": sections}
 
-# ------------------------- Parsing -------------------------
-def parse_sections(soup):
-    def grab(regex):
-        for h in _heading_nodes(soup):
-            if re.search(regex, h.get_text(" ", strip=True), re.I):
-                body = _collect_until_heading(h)
-                title = _norm(h.get_text(" ", strip=True))
-                if body.strip():
-                    return {"title": title, "body": _norm(body)}
-        return None
-    sections = [grab(r"\bmemorization\s*challenge\b"),
-                grab(r"^\s*pray\s*$"),
-                grab(r"^\s*next\s*steps\s*$")]
-    return [s for s in sections if s]
-
-def parse_guide_html(html: str):
-    soup = BeautifulSoup(html, "lxml")
-    # Reflect + Discuss
-    reflect = None
-    for h in _heading_nodes(soup):
-        if re.search(r"reflect\s*\+\s*discuss", h.get_text(" ", strip=True), re.I):
-            reflect = h; break
-    block = _collect_until_heading(reflect) if reflect else soup.get_text("\n", strip=True)
-    candidates = _split_bullets(block)
-    questions = _filter_questions(candidates)
-    sections = parse_sections(soup)
-    return {"questions": questions, "sections": sections}
-
-# Optional: if page has only a PDF
-def parse_guide_pdf(pdf_url: str):
-    try:
-        from pdfminer.high_level import extract_text
-        txt = extract_text(pdf_url)  # pdfminer can read from URL
-        # similar split: look for "Reflect + Discuss" line first
-        m = re.search(r"Reflect\s*\+\s*Discuss(.+)", txt, re.I | re.S)
-        block = m.group(1) if m else txt
-        # split on lines starting with dash-like bullets
-        lines = [ln.strip() for ln in block.splitlines()]
-        buf, items = None, []
-        for ln in lines:
-            if not ln: continue
-            if _BULLET.match(ln):
-                if buf: items.append(buf.strip())
-                buf = _BULLET.sub("", ln)
-            else:
-                if buf: buf += " " + ln
-        if buf: items.append(buf.strip())
-        questions = _filter_questions(items)
-        # naive sections
-        def grab(sec):
-            m = re.search(rf"{sec}\s*:?(.+?)(?=\n[A-Z][A-Za-z ]{2,}:\s*|$)", txt, re.I | re.S)
-            if not m: return None
-            return {"title": sec, "body": _norm(m.group(1))}
-        sections = list(filter(None, [grab("Memorization Challenge"), grab("Pray"), grab("Next Steps")]))
-        return {"questions": questions, "sections": sections}
-    except Exception:
-        return {"questions": [], "sections": []}
-
-# ------------------------- Discovery -------------------------
-def _same_host(root, href):
-    try:
-        return urlparse(root).netloc == urlparse(href).netloc
-    except Exception:
-        return False
-
-def discover_latest(roots, keywords):
-    """
-    Crawl the given root pages for links likely to be the current week's guide.
-    Strategy:
-      - collect all <a> links containing any keyword
-      - score each by date parsed from link text or URL vs this week's Sunday
-      - fetch the best-scoring page; if 0 questions found, follow its first PDF link
-    """
-    headers = {"User-Agent": "Mozilla/5.0 (DiscussionGuide/1.0)"}
-    target = _sunday_of_this_week()
-    best = None  # (score, url, html)
-
-    for root in roots:
-        try:
-            r = requests.get(root, headers=headers, timeout=20)
-            r.raise_for_status()
-        except Exception:
-            continue
-
-        soup = BeautifulSoup(r.text, "lxml")
-        anchors = soup.select("a[href]")
-        for a in anchors:
-            text = _norm(a.get_text(" ", strip=True))
-            href = a["href"]
-            abs_url = urljoin(root, href)
-            if not _same_host(root, abs_url):
-                continue
-            blob = (text + " " + abs_url).lower()
-            if not any(k in blob for k in keywords):
-                continue
-            date_found = _try_parse_date(text) or _try_parse_date(abs_url)
-            score = _score_candidate(date_found, target)
-            # keep a few good candidates
-            if best is None or score < best[0]:
-                best = (score, abs_url, None)
-
-    if not best:
-        raise RuntimeError("No candidate guide links found. Adjust ROOTS/KEYWORDS.")
-
-    # Fetch the best candidate page
-    score, url, _ = best
-    r = requests.get(url, headers=headers, timeout=20)
+def fetch_pdf_text(pdf_url: str) -> str:
+    r = requests.get(pdf_url, headers=BROWSER_HEADERS, timeout=30)
     r.raise_for_status()
-    html = r.text
-    data = parse_guide_html(html)
+    return extract_text(io.BytesIO(r.content))
 
-    # If HTML had no questions, try PDF on that page
-    if len(data["questions"]) == 0:
-        soup = BeautifulSoup(html, "lxml")
-        pdf_link = None
-        for a in soup.select("a[href]"):
-            h = a["href"]
-            if h.lower().endswith(".pdf"):
-                pdf_link = urljoin(url, h); break
-        if pdf_link:
-            data = parse_guide_pdf(pdf_link)
+def parse_pdf_guide(pdf_url: str):
+    raw = fetch_pdf_text(pdf_url)
+    BULLET_RE = re.compile(r'^[\-\u2013\u2014\u2022]\s+')
+    lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
+    title = lines[0] if lines else "Discussion Guide"
 
-    return url, data
+    # collect bullets after "Reflect + Discuss"
+    # find the block after reflect header
+    try:
+        start_idx = next(i for i, ln in enumerate(lines) if re.search(r"reflect\s*\+\s*discuss", ln, re.I))
+    except StopIteration:
+        start_idx = 0
 
-# ------------------------- IO -------------------------
-def write_json(url: str, data: dict, out_path: str = "data/guide.json"):
+    bullets = []
+    buf = None
+    for ln in lines[start_idx+1:]:
+        if BULLET_RE.match(ln):
+            if buf: bullets.append(buf.strip())
+            buf = BULLET_RE.sub("", ln)
+        else:
+            if buf:
+                buf += " " + ln
+            # stop if we hit a clear next heading
+            if re.match(r"^(memorization challenge|pray|next steps)\b", ln, re.I):
+                break
+    if buf: bullets.append(buf.strip())
+
+    questions = [q for q in bullets if q.endswith("?") or re.search(r"(read\s+|what|how|why|where|when)", q, re.I)]
+
+    # sections from pdf
+    def grab_sec(name):
+        m = re.search(rf"{name}\s*:?\s*(.+?)(?=\n[A-Z][A-Za-z ]{{2,}}:?\s*|\Z)", raw, re.I | re.S)
+        if not m: return None
+        return {"title": name.title(), "body": _norm(m.group(1))}
+    sections = list(filter(None, [grab_sec("Memorization Challenge"), grab_sec("Pray"), grab_sec("Next Steps")]))
+
+    return {"title": title, "questions": questions, "sections": sections}
+
+# --------- Outputs ---------
+def write_json(source_url: str, data: dict, out_path: str = "data/guide.json"):
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
-    Path(out_path).write_text(json.dumps({"url": url, **data}, indent=2), encoding="utf-8")
-    print(f"Wrote {out_path} ({len(data['questions'])} questions, {len(data['sections'])} sections)")
+    payload = {
+        "url": source_url,
+        "questions": data.get("questions", []),
+        "sections": data.get("sections", []),
+    }
+    Path(out_path).write_text(
+        __import__("json").dumps(payload, indent=2, ensure_ascii=False),
+        encoding="utf-8"
+    )
+    print(f"Wrote {out_path} ({len(payload['questions'])} questions, {len(payload['sections'])} sections)")
 
-# ------------------------- Flask (optional local) -------------------------
-def serve():
-    from flask import Flask, request, jsonify, render_template
-    from flask_cors import CORS
-    app = Flask(__name__, template_folder="../templates", static_folder="../static")
-    CORS(app)
+def maybe_write_site(series_title, date_obj, title_line, sections, source_pdf, out_dir="site"):
+    try:
+        from jinja2 import Environment, FileSystemLoader, select_autoescape
+    except Exception:
+        print("Jinja2 not installed; skipping static site rendering.")
+        return
+    os.makedirs(out_dir, exist_ok=True)
+    env = Environment(loader=FileSystemLoader("templates"), autoescape=select_autoescape())
+    try:
+        tpl = env.get_template("page.html")
+    except Exception:
+        print("templates/page.html not found; skipping static site rendering.")
+        return
 
-    @app.route("/")
-    def index():
-        return render_template("page.html")
+    day_fmt = "%-d" if os.name != "nt" else "%#d"
+    date_str = date_obj.strftime(f"%A, %B {day_fmt}, %Y") if hasattr(date_obj, "strftime") else str(date_obj)
 
-    @app.route("/api/guide")
-    def api_guide():
-        url = (request.args.get("url") or "").strip()
-        if not url:
-            return jsonify({"error": "Missing url"}), 400
-        headers = {"User-Agent": "Mozilla/5.0 (DiscussionGuide/1.0)"}
-        try:
-            resp = requests.get(url, headers=headers, timeout=20)
-            resp.raise_for_status()
-            return jsonify(parse_guide_html(resp.text))
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
+    html = tpl.render(
+        series_title=series_title or "Current Series",
+        title_line=title_line or "Discussion Guide",
+        date_str=date_str,
+        sections=sections or [],
+        pdf_url=source_pdf,
+        updated=datetime.datetime.now(tz=TZ).strftime("%Y-%m-%d %I:%M %p %Z")
+    )
+    with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f:
+        f.write(html)
+    print(f"Wrote {out_dir}/index.html")
 
-    app.run(host="0.0.0.0", port=5000, debug=True)
-
-# ------------------------- CLI -------------------------
-if __name__ == "__main__":
+# --------- Main ---------
+def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--fetch", metavar="URL", help="Fetch a specific guide URL and write data/guide.json")
-    ap.add_argument("--auto", action="store_true", help="Auto-discover latest guide from roots")
-    ap.add_argument("--roots", help="Comma-separated root pages to crawl")
-    ap.add_argument("--keywords", help="Comma-separated keywords used to filter links")
-    ap.add_argument("--serve", action="store_true", help="Run local Flask dev server")
+    ap.add_argument("--override", help="Optional: force a specific URL (HTML or PDF)")
+    ap.add_argument("--out-json", default="data/guide.json", help="Where to write the JSON")
     args = ap.parse_args()
 
-    if args.fetch:
-        headers = {"User-Agent": "Mozilla/5.0 (DiscussionGuide/1.0)"}
-        r = requests.get(args.fetch, headers=headers, timeout=20)
-        r.raise_for_status()
-        data = parse_guide_html(r.text)
-        if len(data["questions"]) == 0:
-            # optional: try PDF on that page
-            soup = BeautifulSoup(r.text, "lxml")
-            for a in soup.select("a[href]"):
-                if a["href"].lower().endswith(".pdf"):
-                    pdf_url = urljoin(args.fetch, a["href"])
-                    pdf_data = parse_guide_pdf(pdf_url)
-                    if pdf_data["questions"]:
-                        data = pdf_data
-                        break
-        write_json(args.fetch, data)
+    today = datetime.datetime.now(tz=TZ).date()
+    series_url = find_current_series_resources_url()
+    meta = {"series_title": "Current Series", "date": today, "url": None, "context": ""}
 
-    elif args.auto:
-        roots = [u.strip() for u in (args.roots or "").split(",") if u.strip()]
-        if not roots:
-            print("ERROR: --auto requires --roots with one or more start pages.", file=sys.stderr)
-            sys.exit(2)
-        keywords = [k.strip().lower() for k in (args.keywords or "discussion guide,greater things,reflect + discuss,questions").split(",") if k.strip()]
-        url, data = discover_latest(roots, keywords)
-        write_json(url, data)
-
-    elif args.serve:
-        serve()
-
+    if args.override:
+        source_url = args.override
     else:
-        ap.print_help()
-        sys.exit(1)
+        meta = find_today_discussion_pdf_or_page(series_url, today)
+        source_url = meta["url"]
+
+    # Fetch & parse (HTML first; if no questions found, fall back to PDF on that page)
+    r = requests.get(source_url, headers=BROWSER_HEADERS, timeout=30)
+    r.raise_for_status()
+    content_type = r.headers.get("content-type", "").lower()
+    data = {"questions": [], "sections": []}
+
+    if source_url.lower().endswith(".pdf") or "application/pdf" in content_type:
+        data = parse_pdf_guide(source_url)
+    else:
+        data = parse_html_guide(r.text)
+        # If HTML yielded nothing, try the first PDF linked on the page
+        if not data["questions"]:
+            soup = BeautifulSoup(r.text, "lxml")
+            pdf = None
+            for a in soup.select("a[href]"):
+                href = a.get("href", "")
+                if href.lower().endswith(".pdf"):
+                    pdf = urljoin(source_url, href)
+                    break
+            if pdf:
+                data = parse_pdf_guide(pdf)
+
+    # Write JSON for the interactive front-end
+    write_json(source_url, data, out_path=args.out_json)
+
+    # Optional: keep your original static site build (uses Jinja template if present)
+    # We’ll create a minimal structure from the parsed data:
+    # - Title line: first line or a fallback
+    title_line = "Discussion Guide"
+    if data.get("questions"):
+        title_line = "Reflect + Discuss"
+    maybe_write_site(
+        series_title=meta.get("series_title"),
+        date_obj=meta.get("date"),
+        title_line=title_line,
+        sections=[
+            {"heading": "Reflect + Discuss", "bullets": data.get("questions", []), "paras": []},
+            *[
+                {"heading": s["title"], "bullets": [], "paras": [s["body"]]}
+                for s in data.get("sections", [])
+            ],
+        ],
+        source_pdf=source_url,
+    )
+
+    print(f"Built JSON for {meta.get('series_title','Current Series')} — {meta.get('date')} from {source_url}")
+
+if __name__ == "__main__":
+    sys.exit(main())
