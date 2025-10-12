@@ -4,3 +4,5 @@ lxml
 pdfminer.six
 python-dateutil
 jinja2
+flask
+flask-cors
