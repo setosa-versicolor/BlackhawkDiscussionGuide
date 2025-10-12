@@ -1,159 +1,138 @@
-# update.py
-# Flask server that renders the page and exposes an API to fetch & parse a guide page.
-# Requires: pip install flask flask-cors beautifulsoup4 requests lxml (lxml optional but faster)
+# scripts/update.py
+# Dual-mode script:
+#  - --fetch <URL> : fetch, parse, and write data/guide.json (no Flask import)
+#  - --serve       : run local Flask app for dev (imports Flask lazily)
 
-from flask import Flask, request, jsonify, render_template, send_from_directory
-from flask_cors import CORS
+import argparse, json, os, re, sys
+from pathlib import Path
+
 import requests
 from bs4 import BeautifulSoup
-import re
 
-app = Flask(__name__, template_folder="templates", static_folder="static")
-CORS(app)
+# ---------- Parsing (no Flask dependencies) ----------
+_WS = re.compile(r"\s+")
+_BULLET = re.compile(r"^\s*[–—-]\s+")
 
-# ---- Helpers ----------------------------------------------------------------
-
-WS_RE = re.compile(r"\s+")
-BULLET_START_RE = re.compile(r"^\s*[–—-]\s+")  # en dash, em dash, hyphen
-
-def norm(s: str) -> str:
-    if not s:
-        return ""
+def _norm(s: str) -> str:
+    if not s: return ""
     s = s.replace("\xa0", " ")
-    s = WS_RE.sub(" ", s)
+    s = _WS.sub(" ", s)
     return s.strip()
 
-def node_text(n) -> str:
-    return norm(n.get_text("\n", strip=True))
+def _node_text(n) -> str:
+    return _norm(n.get_text("\n", strip=True))
 
-def find_heading_nodes(soup):
-    return soup.select("h1, h2, h3, h4, h5, h6, strong, b")
+def _heading_nodes(soup):
+    return soup.select("h1,h2,h3,h4,h5,h6,strong,b")
 
-def next_element(el):
-    # step to next element sibling (skip over text nodes)
+def _next_el(el):
     n = el.next_sibling
     while n is not None and getattr(n, "name", None) is None:
         n = n.next_sibling
     return n
 
-def collect_until_next_heading(start_el):
+def _collect_until_heading(start_el):
     parts = []
-    n = next_element(start_el)
+    n = _next_el(start_el)
     while n is not None and not re.match(r"^H[1-6]$", getattr(n, "name", "X"), re.I):
-        # capture visible text
-        parts.append(node_text(n))
-        n = next_element(n)
+        parts.append(_node_text(n))
+        n = _next_el(n)
     return "\n".join(p for p in parts if p).strip()
 
-def split_bullets(block_text: str):
-    """
-    Split a paragraph block that uses dash bullets into discrete items.
-    Keeps multiline bullets together until the next dash that begins a line.
-    """
-    items = []
-    buf = None
+def _split_bullets(block_text: str):
+    items, buf = [], None
     for raw in block_text.splitlines():
         line = raw.strip()
-        if not line:
-            continue
-        if BULLET_START_RE.match(line):
-            if buf:
-                items.append(buf.strip())
-            buf = BULLET_START_RE.sub("", line)
+        if not line: continue
+        if _BULLET.match(line):
+            if buf: items.append(buf.strip())
+            buf = _BULLET.sub("", line)
         else:
-            if buf:
-                buf += " " + line
-            else:
-                # sometimes first line isn't prefixed; ignore
-                pass
-    if buf:
-        items.append(buf.strip())
+            if buf: buf += " " + line
+    if buf: items.append(buf.strip())
     return items
 
-def filter_questions(candidates):
-    # keep those ending with ? or looking like prompts
+def _filter_questions(cands):
     keep = []
-    for q in candidates:
-        if q.endswith("?"):
-            keep.append(q)
-            continue
-        if re.search(r"(read\s+colossians|based on paul|what.*risk|what.*evidence|how.*change)", q, re.I):
+    for q in cands:
+        if q.endswith("?") or re.search(r"(read\s+colossians|based on paul|what.*risk|what.*evidence|how.*change)", q, re.I):
             keep.append(q)
     return keep
 
-def parse_sections(soup):
-    def grab(regex):
-        for h in find_heading_nodes(soup):
-            if re.search(regex, h.get_text(" ", strip=True), re.I):
-                body = collect_until_next_heading(h)
-                title = norm(h.get_text(" ", strip=True))
-                return {"title": title, "body": norm(body)}
-        return None
-
-    sections = []
-    m = grab(r"\bmemorization\s*challenge\b")
-    p = grab(r"^\s*pray\s*$")
-    n = grab(r"^\s*next\s*steps\s*$")
-
-    for s in (m, p, n):
-        if s and s["body"]:
-            sections.append(s)
-    return sections
-
 def parse_guide_html(html: str):
     soup = BeautifulSoup(html, "lxml")
-    # Locate "Reflect + Discuss"
-    reflect_el = None
-    for h in find_heading_nodes(soup):
+    # Reflect + Discuss
+    reflect = None
+    for h in _heading_nodes(soup):
         if re.search(r"reflect\s*\+\s*discuss", h.get_text(" ", strip=True), re.I):
-            reflect_el = h
-            break
+            reflect = h; break
+    block = _collect_until_heading(reflect) if reflect else soup.get_text("\n", strip=True)
+    candidates = _split_bullets(block)
+    questions = _filter_questions(candidates)
 
-    if reflect_el is None:
-        # fallback to body text
-        block = soup.get_text("\n", strip=True)
-    else:
-        block = collect_until_next_heading(reflect_el)
-
-    # Split bullets
-    candidates = split_bullets(block)
-    questions = filter_questions(candidates)
-
-    sections = parse_sections(soup)
-
+    # Sections
+    def grab(regex):
+        for h in _heading_nodes(soup):
+            if re.search(regex, h.get_text(" ", strip=True), re.I):
+                body = _collect_until_heading(h)
+                title = _norm(h.get_text(" ", strip=True))
+                if body.strip():
+                    return {"title": title, "body": _norm(body)}
+        return None
+    sections = [grab(r"\bmemorization\s*challenge\b"),
+                grab(r"^\s*pray\s*$"),
+                grab(r"^\s*next\s*steps\s*$")]
+    sections = [s for s in sections if s]
     return {"questions": questions, "sections": sections}
 
-# ---- Routes ------------------------------------------------------------------
+def fetch_and_write(url: str, out_path: str = "data/guide.json"):
+    headers = {"User-Agent": "Mozilla/5.0 (DiscussionGuide/1.0)"}
+    r = requests.get(url, headers=headers, timeout=20)
+    r.raise_for_status()
+    data = parse_guide_html(r.text)
+    Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(out_path).write_text(json.dumps({"url": url, **data}, indent=2), encoding="utf-8")
+    print(f"Wrote {out_path} ({len(data['questions'])} questions, {len(data['sections'])} sections)")
 
-@app.route("/")
-def index():
-    return render_template("page.html")
+# ---------- Optional local server (Flask import happens only here) ----------
+def serve():
+    from flask import Flask, request, jsonify, render_template
+    from flask_cors import CORS
 
-@app.route("/api/guide")
-def api_guide():
-    url = request.args.get("url", "").strip()
-    if not url:
-        return jsonify({"error": "Missing url"}), 400
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (compatible; DiscussionGuideBot/1.0)"
-        }
-        resp = requests.get(url, headers=headers, timeout=20)
-        resp.raise_for_status()
-        data = parse_guide_html(resp.text)
-        return jsonify(data)
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Failed to fetch: {e}"}), 502
-    except Exception as e:
-        return jsonify({"error": f"Parse error: {e}"}), 500
+    app = Flask(__name__, template_folder="../templates", static_folder="../static")
+    CORS(app)
 
-@app.route("/healthz")
-def health():
-    return "ok"
+    @app.route("/")
+    def index():
+        return render_template("page.html")
 
-# Optional: serve your static JS if needed (e.g., /static/js/viewStore.js)
-# Place your viewStore.js at ./static/js/viewStore.js
+    @app.route("/api/guide")
+    def api_guide():
+        url = (request.args.get("url") or "").strip()
+        if not url:
+            return jsonify({"error": "Missing url"}), 400
+        try:
+            headers = {"User-Agent": "Mozilla/5.0 (DiscussionGuide/1.0)"}
+            resp = requests.get(url, headers=headers, timeout=20)
+            resp.raise_for_status()
+            data = parse_guide_html(resp.text)
+            return jsonify(data)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
-if __name__ == "__main__":
-    # Run: python update.py
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+# ---------- CLI ----------
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--fetch", metavar="URL", help="Fetch guide and write data/guide.json")
+    ap.add_argument("--serve", action="store_true", help="Run local dev server with API")
+    args = ap.parse_args()
+
+    if args.fetch:
+        fetch_and_write(args.fetch)
+    elif args.serve:
+        serve()
+    else:
+        ap.print_help()
+        sys.exit(1)
