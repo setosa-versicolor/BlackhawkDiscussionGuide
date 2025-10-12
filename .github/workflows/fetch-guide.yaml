@@ -1,18 +1,25 @@
-name: Fetch Guide JSON
+name: Fetch Guide (auto)
 
 on:
+  schedule:
+    - cron: "0 12 * * 5"   # Fridays noon UTC (adjust)
   workflow_dispatch:
     inputs:
       guide_url:
-        description: "Guide URL to fetch"
-        required: true
+        description: "Optional: override with a specific Guide URL"
+        required: false
+      roots:
+        description: "Optional: comma-separated start pages (overrides env)"
+        required: false
+      keywords:
+        description: "Optional: extra keywords (comma-separated)"
+        required: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -22,9 +29,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Fetch & write JSON
+      - name: Fetch & write JSON (auto unless URL provided)
+        env:
+          ROOTS_DEFAULT: >-
+            https://YOUR-CHURCH-SITE/PAGE-WITH-DISCUSSION-GUIDES,
+            https://YOUR-CHURCH-SITE/series/  # add as many as you like
+          KEYWORDS_DEFAULT: >-
+            discussion guide, greater things, reflect + discuss, questions
         run: |
-          python scripts/update.py --fetch "${{ github.event.inputs.guide_url }}"
+          ROOTS="${{ github.event.inputs.roots || env.ROOTS_DEFAULT }}"
+          KW="${{ github.event.inputs.keywords || env.KEYWORDS_DEFAULT }}"
+          URL_INPUT="${{ github.event.inputs.guide_url }}"
+          if [ -n "$URL_INPUT" ]; then
+            python scripts/update.py --fetch "$URL_INPUT"
+          else
+            python scripts/update.py --auto --roots "$ROOTS" --keywords "$KW"
+          fi
 
       - name: Commit JSON
         run: |
