@@ -100,13 +100,11 @@
     </div>
   </div>
 
-  <!-- SortableJS (remove integrity to avoid SRI mismatch) -->
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" crossorigin="anonymous"></script>
 
   <!-- App -->
   <script type="module">
     /* Adjust this import to where your file actually lives relative to page.html. */
-    import { listViews, loadView, saveView, joinRoom } from "./static/js/viewStore.js";
+    import { listViews, loadView, saveView, joinRoom } from "./viewStore.js";
 
     // ---------- DOM ----------
     const $board   = document.getElementById("board");
@@ -272,30 +270,16 @@
     refreshViewList();
 
     // ---------- Data loading (single definition) ----------
-    function guideJsonUrl(noCache = false) {
-      // repo-relative; works under user.github.io/repo/
-      const u = new URL("data/guide.json", window.location.href);
-      if (noCache) u.searchParams.set("ts", Date.now());
-      return u.toString();
-    }
+function guideJsonUrl(noCache = false) {
+  const u = new URL("data/guide.json", window.location.href);
+  if (noCache) u.searchParams.set("ts", Date.now());
+  return u.toString();
+}
+async function loadGuideJson(noCache = false) {
+  const res = await fetch(guideJsonUrl(noCache), { cache: noCache ? "no-store" : "default" });
+  …
+}
 
-    async function loadGuideJson(noCache = false) {
-      $status.textContent = "Loading…";
-      try {
-        const res = await fetch(guideJsonUrl(noCache), { cache: noCache ? "no-store" : "default" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const next = [
-          ...(data.questions || []).map(q => ({ type: "question", text: q })),
-          ...(data.sections || []).map(s => ({ type: "section", title: s.title, text: s.body }))
-        ];
-        renderCards(next);
-        $status.textContent = `Loaded: ${next.length} cards (${(data.questions || []).length} questions, ${(data.sections || []).length} sections).`;
-      } catch (err) {
-        console.error(err);
-        $status.textContent = "Failed to load data/guide.json";
-      }
-    }
 
     // Buttons
     document.getElementById("loadLatestBtn").addEventListener("click", () => loadGuideJson(false));
