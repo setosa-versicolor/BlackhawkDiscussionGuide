@@ -68,6 +68,7 @@
     <section class="hdr">
       <h2>Prioritized Questions</h2>
       <button class="btn" id="addBtn">Add a New Question</button>
+      <button class="btn" id="resetBtn" title="Reset">Reset</button>
     </section>
     <div id="prioritized" class="grid" aria-label="Prioritized Questions" data-sortable="true"></div>
     <div id="priorEmpty" class="empty" style="display:none;">No prioritized questions yet. Check items below or add your own.</div>
@@ -99,9 +100,21 @@
   </dialog>
 
   <!-- Expose all bullets from Python to JS: flat array of strings -->
-  <script>
-    window.__BH_BULLETS__ = {{ sections | map(attribute='bullets') | sum(start=[]) | tojson }};
-  </script>
+<script>
+  // All bullets as a flat array
+  window.__BH_BULLETS__ = {{ sections | map(attribute='bullets') | sum(start=[]) | tojson }};
+
+  // Sections become single cards: "Heading: paragraph…"
+  window.__BH_SECTIONS__ = ({{ sections | tojson }} || [])
+    .filter(s => (s.heading || (s.paras && s.paras.length)))
+    .map(s => {
+      const head = (s.heading || "").trim();
+      const paras = (s.paras || []).join(" ").trim();
+      const h = head ? (head.endsWith(":") ? head : head + ":") : "";
+      return (h + (h && paras ? " " : "") + paras).trim();
+    })
+    .filter(Boolean);
+</script>
 
   <script>
     // ===== UTILITIES & STATE =====
@@ -192,16 +205,21 @@
 
     // ===== RENDER INITIAL =====
     (function render(){
-      const list = window.__BH_BULLETS__ || [];
+      const bullets = window.__BH_BULLETS__ || [];
+      const sectionsAsCards = window.__BH_SECTIONS__ || [];
+      const combined = [...bullets, ...sectionsAsCards];   // bullets first, then section cards
+    
       const prioritizedSet = new Set(state.prioritized);
       const existing = new Map();
-
-      // Built-in bullets (PDF) -> deterministic IDs q1..qN
-      list.forEach((text, i) => {
-        const id = "q" + (i + 1);
+    
+      combined.forEach((text, i) => {
+        const id = "q" + (i + 1); // stable across builds
         const card = makeCard(id, text, prioritizedSet.has(id));
         existing.set(id, card);
       });
+
+  // Custom items...
+
 
       // Custom items (persisted)
       for (const [cid, text] of Object.entries(state.custom)) {
@@ -265,6 +283,12 @@
     $("#shareBtn")?.addEventListener("click", async () => {
       try { await navigator.share({ title: document.title, url: location.href }); }
       catch { navigator.clipboard.writeText(location.href); }
+    });
+    
+    // ===== RESET (clears saved order and checkboxes) =====
+    $("#resetBtn")?.addEventListener("click", () => {
+      localStorage.removeItem("bhq-v1");
+      location.reload();
     });
   </script>
 </body>
