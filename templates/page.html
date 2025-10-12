@@ -107,7 +107,7 @@
   <script type="module">
     // IMPORTANT: this path is relative to your repo structure on GitHub Pages.
     // Keep your shared view store at /static/js/viewStore.js
-    import { listViews, loadView, saveView, joinRoom } from "../static/js/viewStore.js";
+    import { listViews, loadView, saveView, joinRoom } from "./static/js/viewStore.js";
 
     // ---------- DOM ----------
     const $board   = document.getElementById("board");
@@ -274,11 +274,15 @@
 
     // ---------- Data loading (GitHub Pages static) ----------
     async function loadGuideJson(noCache = false) {
+        const u = new URL("data/guide.json", window.location.href);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (noCache) u.searchParams.set("ts", Date.now());
+        return u.toString();
+    }
+    async function loadGuideJson(noCache = false) {
       $status.textContent = "Loading…";
       try {
-        const url = noCache ? `/data/guide.json?ts=${Date.now()}` : "/data/guide.json";
-        const res = await fetch(url, { cache: noCache ? "no-store" : "default" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const res = await fetch(guideJsonUrl(noCache), { cache: noCache ? "no-store" : "default" });
         const data = await res.json();
         const next = [
           ...(data.questions || []).map(q => ({ type: "question", text: q })),
