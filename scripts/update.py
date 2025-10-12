@@ -251,9 +251,12 @@ def fetch_pdf_text(pdf_url: str) -> str:
 def structure_text(raw: str):
     """
     Convert PDF text into sections with wrapped bullets handled.
-    A bullet starts with '- '. Lines that follow (and don't start with '- ')
-    are appended to the last bullet until the next bullet/heading.
+
+    A bullet begins with one of: '-', '–' (en dash), '—' (em dash), '•' followed by space.
+    Lines that follow (and don't start with a bullet) are appended to the last bullet
+    until the next bullet or a new heading.
     """
+    BULLET_RE = re.compile(r'^[\-\u2013\u2014\u2022]\s+')  # -, en dash, em dash, •
     lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
     title = lines[0] if lines else "Discussion Guide"
     sections = []
@@ -267,26 +270,46 @@ def structure_text(raw: str):
         current = {"heading": None, "bullets": [], "paras": []}
         bullet_active = False
 
-    KNOWN_HEADINGS = {"reflect + discuss", "pray", "next steps"}
+    KNOWN_HEADINGS = {
+        "reflect + discuss", "pray", "next steps", "memorization challenge",
+        "memorization challenge:", "memorization challenge :", "scripture", "apply"
+    }
+
+    # Helper: is this a short heading-like line (title case or ends with ':')
+    def looks_like_heading(s: str) -> bool:
+        s_clean = s.rstrip(":").strip()
+        return (s.lower() in KNOWN_HEADINGS) or s.endswith(":") or (len(s_clean) <= 60 and s_clean[:1].isalpha() and s_clean.istitle())
 
     for ln in lines[1:]:
-        if ln.startswith("- "):
+        # New bullet starts?
+        if BULLET_RE.match(ln):
             bullet_active = True
-            current["bullets"].append(ln[2:].strip())
+            txt = BULLET_RE.sub("", ln).strip()
+            if txt:
+                current["bullets"].append(txt)
             continue
-        if bullet_active and not ln.startswith("- "):
-            current["bullets"][-1] += " " + ln.strip()
+
+        # Continuation of previous bullet (PDF line wrap)
+        if bullet_active and not BULLET_RE.match(ln):
+            if current["bullets"]:
+                current["bullets"][-1] += " " + ln.strip()
+            else:
+                current["paras"].append(ln)  # safety
             continue
+
+        # Not in a bullet: maybe a new heading/section
         bullet_active = False
-        if re.match(r"^[A-Za-z].*$", ln):
-            if ln.lower() in KNOWN_HEADINGS or len(ln) <= 60:
-                commit()
-                current["heading"] = ln
-                continue
+        if looks_like_heading(ln):
+            commit()
+            current["heading"] = ln.rstrip()
+            continue
+
+        # Plain paragraph within current section
         current["paras"].append(ln)
 
     commit()
     return title, sections
+
 
 # --------- Site writer ---------
 def write_site(series_title, date_obj, title_line, sections, source_pdf, out_dir="site"):
