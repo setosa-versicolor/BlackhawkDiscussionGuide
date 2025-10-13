@@ -51,6 +51,16 @@
       <div class="spacer"></div>
       <button id="loadLatestBtn" class="secondary" title="Load from data/guide.json">Load Latest Sermon</button>
       <button id="refreshBtn" class="secondary" title="Re-read data/guide.json with no cache">Refresh</button>
+      <a id="pdfLink"
+         class="secondary"
+         href="#"
+         target="_blank"
+         rel="noopener"
+         style="display:none; text-decoration:none; padding:9px 12px; border-radius:10px; border:1px solid var(--border);">
+        Open PDF
+      </a>
+      
+      <div class="spacer"></div>
       <button id="resetBtn" class="danger" title="Clear saved app state">Reset</button>
       <span class="muted" id="status"></span>
     </div>
@@ -95,6 +105,7 @@
     const $createJoin = document.getElementById("createJoinBtn");
     const $share = document.getElementById("shareBtn");
     const $status = document.getElementById("status");
+    const $pdfLink = document.getElementById("pdfLink");
 
     const $board = document.getElementById("board");
     const $addBtn = document.getElementById("addBtn");
@@ -135,6 +146,16 @@
       const order = [...$board.querySelectorAll(".card")].map(n=>n.dataset.id);
       const byId = Object.fromEntries(cards.map(c=>[c.id,c]));
       return order.map(id=>byId[id]).filter(Boolean);
+    }
+    function updateGuideLink(meta) {
+      const u = (meta && meta.url) ? String(meta.url) : "";
+      if (!u) { $pdfLink.style.display = "none"; return; }
+    
+      // If it looks like a PDF, label it “Open PDF”; otherwise “Open Source Page”
+      const isPdf = u.toLowerCase().endsWith(".pdf");
+      $pdfLink.textContent = isPdf ? "Open PDF" : "Open Source Page";
+      $pdfLink.href = u;
+      $pdfLink.style.display = "inline-block";
     }
 
     // Drag & drop + autosave
@@ -235,6 +256,7 @@
           ...(data.questions||[]).map(q=>({type:"question",text:q})),
           ...(data.sections||[]).map(s=>({type:"section",title:s.title,text:s.body}))
         ];
+        updateGuideLink(data);
         renderCards(next);
         autoSave(); // seed the room with latest guide if desired
         $status.textContent=`Loaded: ${next.length} cards`;
