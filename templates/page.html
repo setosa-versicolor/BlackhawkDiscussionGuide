@@ -6,40 +6,34 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root {
-      --bg: #0e0f12; --panel: #161820; --card: #1e2230; --text: #e8ecf3;
-      --muted: #9aa3b2; --accent: #7aa2ff; --border: #2a2f3c; --danger: #ff6b6b;
+      --bg:#0e0f12; --panel:#161820; --card:#1e2230; --text:#e8ecf3;
+      --muted:#9aa3b2; --accent:#7aa2ff; --border:#2a2f3c; --danger:#ff6b6b;
     }
-    html, body { margin:0; padding:0; background:var(--bg); color:var(--text);
-      font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
-    a{ color:var(--accent); text-decoration:none; }
-    .wrap{ max-width:940px; margin:28px auto 80px; padding:0 16px; }
-    header{ display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
-    header h1{ font-size:20px; margin:0 12px 0 0; font-weight:700; }
-
-    .bar,.viewbar{ background:var(--panel); border:1px solid var(--border);
-      border-radius:12px; padding:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    input[type="text"],input[type="file"],select,textarea{ background:#0f1117; color:var(--text);
-      border:1px solid var(--border); border-radius:10px; padding:8px 10px; outline:none; min-width:180px; }
-    textarea{ width:100%; min-height:70px; resize:vertical; }
-    button{ background:var(--accent); color:#0a0b0f; border:none; border-radius:10px; padding:9px 12px; font-weight:700; cursor:pointer; }
-    button.secondary{ background:#2b3040; color:var(--text); }
-    button.danger{ background:var(--danger); color:#101114; }
-    .muted{ color:var(--muted); }
-    .spacer{ flex:1 }
-
-    .board{ display:block; margin-top:16px; }
-    .card{ width:100%; box-sizing:border-box; margin:12px 0; background:var(--card);
-      border:1px solid var(--border); border-radius:16px; }
-    .card-header{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--border); }
-    .drag-handle{ cursor:grab; user-select:none; font-weight:900; letter-spacing:1px; opacity:.7; }
-    .tag{ font-size:12px; padding:2px 8px; border-radius:999px; background:#2b3142; color:#cfe; }
-    .card-body{ padding:12px; white-space:pre-wrap; }
-    .ghost{ opacity:.5; }
-    .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    .row > *{ flex:0 0 auto; }
-    .row .grow{ flex:1 1 240px; min-width:240px; }
-    .hint{ margin-top:8px; }
-    .footer{ margin-top:18px; color:var(--muted); font-size:13px; }
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+      font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+    .wrap{max-width:940px;margin:28px auto 80px;padding:0 16px;}
+    header{display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+    header h1{font-size:20px;margin:0 12px 0 0;font-weight:700;}
+    .bar,.viewbar{background:var(--panel);border:1px solid var(--border);border-radius:12px;
+      padding:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+    input[type="text"],select{background:#0f1117;color:var(--text);border:1px solid var(--border);
+      border-radius:10px;padding:8px 10px;outline:none;min-width:180px;}
+    button{background:var(--accent);color:#0a0b0f;border:none;border-radius:10px;padding:9px 12px;
+      font-weight:700;cursor:pointer;}
+    button.secondary{background:#2b3040;color:var(--text);}
+    button.danger{background:var(--danger);color:#101114;}
+    .muted{color:var(--muted);} .spacer{flex:1}
+    .board{display:block;margin-top:16px;}
+    .card{width:100%;box-sizing:border-box;margin:12px 0;background:var(--card);
+      border:1px solid var(--border);border-radius:16px;}
+    .card-header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);}
+    .drag-handle{cursor:grab;user-select:none;font-weight:900;letter-spacing:1px;opacity:.7;}
+    .tag{font-size:12px;padding:2px 8px;border-radius:999px;background:#2b3142;color:#cfe;}
+    .card-body{padding:12px;white-space:pre-wrap;}
+    .ghost{opacity:.5;}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+    .row>*{flex:0 0 auto;} .row .grow{flex:1 1 240px;min-width:240px;}
+    .hint{margin-top:8px;} .footer{margin-top:18px;color:var(--muted);font-size:13px;}
   </style>
 </head>
 <body>
@@ -49,13 +43,11 @@
       <span class="muted">interactive cards + shared views</span>
     </header>
 
-    <!-- Controls -->
+    <!-- Top controls -->
     <div class="bar">
       <button id="loadLatestBtn" title="Load from data/guide.json">Load Latest</button>
       <button id="refreshBtn" class="secondary" title="Re-read data/guide.json with no cache">Refresh</button>
       <div class="spacer"></div>
-      <label class="muted">Import JSON: <input id="importFile" type="file" accept="application/json" /></label>
-      <button id="exportBtn" class="secondary">Export Current</button>
       <button id="resetBtn" class="danger" title="Clear saved app state">Reset</button>
       <span class="muted" id="status"></span>
     </div>
@@ -88,33 +80,31 @@
     <div id="board" class="board"></div>
 
     <div class="hint muted">Tip: drag cards with the “⋮⋮” handle. Use the dropdown to switch/sync views.</div>
-    <div class="footer">Loads from <code>data/guide.json</code> by default. You can import/export JSON too.</div>
+    <div class="footer">Loads from <code>data/guide.json</code> by default.</div>
   </div>
 
   <!-- SortableJS -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" crossorigin="anonymous"></script>
 
-  <!-- App (single module script – everything lives here) -->
+  <!-- App -->
   <script type="module">
     import { listViews, loadView, saveView, joinRoom, connectFirebase, currentRoomCode } from "./static/js/viewStore.js";
 
-    // ---- Firebase (paste your real config) ----
+    // ----- Firebase (paste your real config or set FIREBASE_ENABLED=false) -----
     const FIREBASE_ENABLED = true;
     const firebaseConfig = {
-      apiKey: "AIzaSyBMtVbKp6i5cnb_Zapc_sEW8rMebVjuIKs",
+      apiKey: "YOUR_API_KEY",
       authDomain: "blackhawk-discussion-guide.firebaseapp.com",
       projectId: "blackhawk-discussion-guide",
     };
     if (FIREBASE_ENABLED) { await connectFirebase(firebaseConfig); }
 
-    // ---- DOM ----
+    // ----- DOM -----
     const $board   = document.getElementById("board");
     const $status  = document.getElementById("status");
     const $loadLatest = document.getElementById("loadLatestBtn");
     const $refresh    = document.getElementById("refreshBtn");
     const $reset      = document.getElementById("resetBtn");
-    const $importFile = document.getElementById("importFile");
-    const $exportBtn  = document.getElementById("exportBtn");
     const $sel     = document.getElementById("viewSelect");
     const $name    = document.getElementById("viewName");
     const $save    = document.getElementById("saveViewBtn");
@@ -126,7 +116,7 @@
     const $newTitle= document.getElementById("newTitle");
     const $newText = document.getElementById("newText");
 
-    // ---- State / render ----
+    // ----- State & rendering -----
     let cards = [];
     const genId = () => "c_" + Math.random().toString(36).slice(2, 9);
 
@@ -162,40 +152,77 @@
       return order.map(id => byId[id]).filter(Boolean);
     }
 
-    // Drag & drop
-    Sortable.create($board, { animation:150, handle:".drag-handle", ghostClass:"ghost", direction:"vertical",
-      onEnd(){ cards = getCurrentCards(); } });
-
-    // ---- Import/Export/Reset ----
-    $reset.addEventListener("click", () => {
-      localStorage.removeItem("bhq-views-v2");
-      localStorage.removeItem("bhq-v1");
-      location.reload();
-    });
-    $exportBtn.addEventListener("click", () => {
-      const payload = {
-        questions: getCurrentCards().filter(c=>c.type==="question").map(c=>c.text),
-        sections:  getCurrentCards().filter(c=>c.type==="section").map(c=>({title:c.title||"Section", body:c.text}))
-      };
-      const blob = new Blob([JSON.stringify(payload,null,2)], { type:"application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = "guide-export.json"; a.click();
-      URL.revokeObjectURL(url);
-    });
-    $importFile.addEventListener("change", async (e) => {
-      const file = e.target.files?.[0]; if (!file) return;
-      try {
-        const data = JSON.parse(await file.text());
-        const next = [
-          ...(data.questions||[]).map(q=>({type:"question", text:q})),
-          ...(data.sections||[]).map(s=>({type:"section", title:s.title, text:s.body}))
-        ];
-        renderCards(next);
-        $status.textContent = `Imported: ${next.length} cards.`;
-      } catch { $status.textContent = "Import failed."; }
+    // Drag & drop keeps order in state
+    Sortable.create($board, {
+      animation: 150, handle: ".drag-handle", ghostClass: "ghost", direction: "vertical",
+      onEnd(){ cards = getCurrentCards(); }
     });
 
-    // ---- Guide JSON loader ----
+    // ----- Add / Delete -----
+    $addBtn.addEventListener("click", () => {
+      const type  = $newType.value;
+      const title = ($newTitle.value || "").trim();
+      const text  = ($newText.value  || "").trim();
+      if (!text) return;                               // prevent blank adds
+      const item = { id: genId(), type, text };
+      if (type === "section" && title) item.title = title;
+      renderCards([...cards, item]);                   // re-render with new item
+      $newText.value = ""; $newTitle.value = "";       // clear inputs
+    });
+
+    $board.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-action='del']");
+      if (!btn) return;
+      const id = btn.closest(".card")?.dataset.id;
+      if (!id) return;
+      renderCards(cards.filter(c => c.id !== id));
+    });
+
+    // ----- Shared views (rooms) -----
+    function refreshViewList() {
+      const names = listViews(currentRoomCode());
+      $sel.innerHTML = "";
+      for (const n of names) {
+        const opt = document.createElement("option");
+        opt.value = n; opt.textContent = n;
+        $sel.appendChild(opt);
+      }
+    }
+    async function joinFromUI(room) {
+      await joinRoom(room || null, () => {
+        refreshViewList();
+        $status.textContent = currentRoomCode()
+          ? `Connected to room ${currentRoomCode()}`
+          : `Local mode (not in a room)`;
+      });
+    }
+    // Auto-join via ?room=CODE
+    await joinFromUI(new URLSearchParams(location.search).get("room"));
+
+    $joinBtn.addEventListener("click", async () => {
+      await joinFromUI($roomInp.value.trim() || null);
+    });
+    $shareBtn.addEventListener("click", async () => {
+      const code = currentRoomCode(); if (!code) { alert("Join a room first."); return; }
+      const url = new URL(location.href); url.searchParams.set("room", code);
+      await navigator.clipboard.writeText(url.toString());
+      alert("Share link copied!");
+    });
+
+    $save.addEventListener("click", async () => {
+      const name = ($name.value || "Untitled").trim();
+      await saveView({ name, cards: getCurrentCards(), roomCode: currentRoomCode() });
+      refreshViewList();
+      $status.textContent = `Saved view: "${name}".`;
+    });
+
+    $sel.addEventListener("change", () => {
+      const name = $sel.value;
+      const loaded = loadView({ name, roomCode: currentRoomCode() });
+      if (loaded) renderCards(loaded);
+    });
+
+    // ----- Load guide.json -----
     const guideJsonUrl = (noCache=false) => {
       const u = new URL("data/guide.json", location.href);
       if (noCache) u.searchParams.set("ts", Date.now());
@@ -212,53 +239,16 @@
           ...(data.sections||[]).map(s=>({type:"section", title:s.title, text:s.body}))
         ];
         renderCards(next);
-        $status.textContent = `Loaded: ${next.length} cards (${(data.questions||[]).length} questions, ${(data.sections||[]).length} sections).`;
-      } catch { $status.textContent = "Failed to load data/guide.json"; }
+        $status.textContent = `Loaded: ${next.length} cards`;
+      } catch {
+        $status.textContent = "Failed to load data/guide.json";
+      }
     }
     document.getElementById("loadLatestBtn").addEventListener("click", ()=>loadGuideJson(false));
     document.getElementById("refreshBtn").addEventListener("click",   ()=>loadGuideJson(true));
     loadGuideJson(false);
 
-    // ---- Rooms (shared views) ----
-    function refreshViewList() {
-      const names = listViews(currentRoomCode());
-      $sel.innerHTML = "";
-      for (const n of names) {
-        const opt = document.createElement("option"); opt.value = n; opt.textContent = n;
-        $sel.appendChild(opt);
-      }
-    }
-    async function joinFromUI(room) {
-      await joinRoom(room || null, () => {
-        refreshViewList();
-        $status.textContent = currentRoomCode() ? `Connected to room ${currentRoomCode()}` : `Local mode (not in a room)`;
-      });
-    }
-    // URL ?room=CODE
-    const urlRoom = new URLSearchParams(location.search).get("room");
-    await joinFromUI(urlRoom);
-
-    $joinBtn.addEventListener("click", async () => {
-      await joinFromUI($roomInp.value.trim() || null);
-    });
-    $shareBtn.addEventListener("click", async () => {
-      const code = currentRoomCode(); if (!code) { alert("Join a room first."); return; }
-      const url = new URL(location.href); url.searchParams.set("room", code);
-      await navigator.clipboard.writeText(url.toString());
-      alert("Share link copied!");
-    });
-    $save.addEventListener("click", async () => {
-      const name = ($name.value || "Untitled").trim();
-      await saveView({ name, cards: getCurrentCards(), roomCode: currentRoomCode() });
-      refreshViewList(); $status.textContent = `Saved view: "${name}".`;
-    });
-    $sel.addEventListener("change", () => {
-      const name = $sel.value;
-      const loaded = loadView({ name, roomCode: currentRoomCode() });
-      if (loaded) renderCards(loaded);
-    });
-
-    // ---- Utils ----
+    // ----- Utils -----
     function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m])); }
   </script>
 </body>
