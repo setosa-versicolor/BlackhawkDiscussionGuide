@@ -14,7 +14,9 @@ from zoneinfo import ZoneInfo
 import argparse
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
-
+import shutil
+import os
+import datetime
 import requests
 from bs4 import BeautifulSoup
 from pdfminer.high_level import extract_text
@@ -395,9 +397,30 @@ def maybe_write_site(series_title, date_obj, title_line, sections, source_pdf, o
         pdf_url=source_pdf,
         updated=datetime.datetime.now(tz=TZ).strftime("%Y-%m-%d %I:%M %p %Z")
     )
+    # Write the main static page
     with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f:
         f.write(html)
     print(f"Wrote {out_dir}/index.html")
+
+    # -------------------------------------------------------------------------
+    # Copy supplemental assets into the output directory
+    # -------------------------------------------------------------------------
+
+    # 1. Copy viewStore.js if it exists (look in root and static/js)
+    for candidate in ["viewStore.js", os.path.join("static", "js", "viewStore.js")]:
+        if os.path.isfile(candidate):
+            shutil.copyfile(candidate, os.path.join(out_dir, "viewStore.js"))
+            break
+
+    # 2. Copy the interactive page (page.html) if it exists
+    if os.path.isfile("page.html"):
+        shutil.copyfile("page.html", os.path.join(out_dir, "page.html"))
+
+    # 3. Copy the JSON guide file if it exists
+    json_src = os.path.join("data", "guide.json")
+    if os.path.isfile(json_src):
+        os.makedirs(os.path.join(out_dir, "data"), exist_ok=True)
+        shutil.copyfile(json_src, os.path.join(out_dir, "data", "guide.json"))
 
 # --------- Main ---------
 def main():
