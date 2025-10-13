@@ -36,8 +36,12 @@
     .hint{margin-top:8px;} .footer{margin-top:18px;color:var(--muted);font-size:13px;}
 
     /* three lanes */
-    .boards { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 12px; }
-    @media (min-width: 1000px) { .boards { grid-template-columns: 1fr 1fr 1fr; } }
+    .boards {
+      display: grid;
+      grid-template-columns: 1fr;   /* always one column */
+      gap: 14px;
+      margin-top: 12px;
+    }
     .board-wrap { background: transparent; }
     .board-title { font-weight: 700; color: var(--muted); margin: 4px 0 2px; }
     .board-muted .card { opacity: .95; }
