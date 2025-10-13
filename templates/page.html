@@ -128,9 +128,9 @@
     // ---- Firebase (paste your config) ----
     const FIREBASE_ENABLED = true;
     const firebaseConfig = {
-      apiKey: "AIzaSyBMtVbKp6i5cnb_Zapc_sEW8rMebVjuIKs",
-      authDomain: "blackhawk-discussion-guide.firebaseapp.com",
-      projectId: "blackhawk-discussion-guide",
+      // apiKey: "...",
+      // authDomain: "blackhawk-discussion-guide.firebaseapp.com",
+      // projectId: "blackhawk-discussion-guide",
     };
     if (FIREBASE_ENABLED) { await connectFirebase(firebaseConfig); }
 
@@ -257,7 +257,7 @@
       saveLive(getCurrentCards());
     },400);
 
-    // Click actions in any board
+    // ✅ Click actions across all three boards
     document.querySelector(".boards").addEventListener("click", (e) => {
       const btn = e.target.closest("button[data-action]"); if (!btn) return;
       const id = btn.closest(".card")?.dataset.id; if (!id) return;
