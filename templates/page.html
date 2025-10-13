@@ -33,6 +33,19 @@
     .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
     .row>*{flex:0 0 auto;} .row .grow{flex:1 1 240px;min-width:240px;}
     .hint{margin-top:8px;} .footer{margin-top:18px;color:#9aa3b2;font-size:13px;}
+    /* Make the "Open PDF" anchor look like a secondary button (and not purple) */
+      #pdfLink,
+      #pdfLink:link,
+      #pdfLink:visited {
+        color: var(--text);
+        background: #2b3040;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 9px 12px;
+        display: inline-block;
+        text-decoration: none;
+      }
+      #pdfLink:hover { opacity: .9; }
   </style>
 </head>
 <body>
