@@ -21,8 +21,8 @@
     button{background:var(--accent);color:#0a0b0f;border:none;border-radius:10px;padding:9px 12px;
       font-weight:700;cursor:pointer;}
     button.secondary{background:#2b3040;color:var(--text);}
-    button.danger{background:var(--danger);color:#101114;}
-    .muted{color:var(--muted);} .spacer{flex:1}
+    button.danger{background:#ff6b6b;color:#101114;}
+    .muted{color:#9aa3b2;} .spacer{flex:1}
     .board{display:block;margin-top:16px;}
     .card{width:100%;box-sizing:border-box;margin:12px 0;background:var(--card);
       border:1px solid var(--border);border-radius:16px;}
@@ -33,7 +33,7 @@
     .ghost{opacity:.5;}
     .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
     .row>*{flex:0 0 auto;} .row .grow{flex:1 1 240px;min-width:240px;}
-    .hint{margin-top:8px;} .footer{margin-top:18px;color:var(--muted);font-size:13px;}
+    .hint{margin-top:8px;} .footer{margin-top:18px;color:#9aa3b2;font-size:13px;}
   </style>
 </head>
 <body>
@@ -93,9 +93,9 @@
     // ----- Firebase (paste your real config or set FIREBASE_ENABLED=false) -----
     const FIREBASE_ENABLED = true;
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "blackhawk-discussion-guide.firebaseapp.com",
-      projectId: "blackhawk-discussion-guide",
+      // apiKey: "...",
+      // authDomain: "blackhawk-discussion-guide.firebaseapp.com",
+      // projectId: "blackhawk-discussion-guide",
     };
     if (FIREBASE_ENABLED) { await connectFirebase(firebaseConfig); }
 
@@ -118,6 +118,7 @@
 
     // ----- State & rendering -----
     let cards = [];
+    let currentView = null;   // active view name
     const genId = () => "c_" + Math.random().toString(36).slice(2, 9);
 
     function renderCards(next) {
@@ -152,33 +153,41 @@
       return order.map(id => byId[id]).filter(Boolean);
     }
 
-    // Drag & drop keeps order in state
+    // Drag & drop + autosave
     Sortable.create($board, {
       animation: 150, handle: ".drag-handle", ghostClass: "ghost", direction: "vertical",
-      onEnd(){ cards = getCurrentCards(); }
+      onEnd(){ cards = getCurrentCards(); autoSave(); }
     });
 
-    // ----- Add / Delete -----
+    // Debounced autosave
+    const debounce = (fn, ms=400) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
+    const autoSave = debounce(() => {
+      if (!currentView) return;
+      saveView({ name: currentView, cards: getCurrentCards(), roomCode: currentRoomCode() });
+    }, 400);
+
+    // Add / Delete
     $addBtn.addEventListener("click", () => {
       const type  = $newType.value;
       const title = ($newTitle.value || "").trim();
       const text  = ($newText.value  || "").trim();
-      if (!text) return;                               // prevent blank adds
+      if (!text) return;
       const item = { id: genId(), type, text };
       if (type === "section" && title) item.title = title;
-      renderCards([...cards, item]);                   // re-render with new item
-      $newText.value = ""; $newTitle.value = "";       // clear inputs
+      renderCards([...cards, item]);
+      $newText.value = ""; $newTitle.value = "";
+      autoSave();
     });
-
     $board.addEventListener("click", (e) => {
       const btn = e.target.closest("button[data-action='del']");
       if (!btn) return;
       const id = btn.closest(".card")?.dataset.id;
       if (!id) return;
       renderCards(cards.filter(c => c.id !== id));
+      autoSave();
     });
 
-    // ----- Shared views (rooms) -----
+    // Shared views (rooms)
     function refreshViewList() {
       const names = listViews(currentRoomCode());
       $sel.innerHTML = "";
@@ -187,10 +196,16 @@
         opt.value = n; opt.textContent = n;
         $sel.appendChild(opt);
       }
+      if (currentView && names.includes(currentView)) $sel.value = currentView;
     }
+
     async function joinFromUI(room) {
       await joinRoom(room || null, () => {
         refreshViewList();
+        if (currentView) {
+          const updated = loadView({ name: currentView, roomCode: currentRoomCode() });
+          if (updated) renderCards(updated);
+        }
         $status.textContent = currentRoomCode()
           ? `Connected to room ${currentRoomCode()}`
           : `Local mode (not in a room)`;
@@ -211,18 +226,22 @@
 
     $save.addEventListener("click", async () => {
       const name = ($name.value || "Untitled").trim();
+      currentView = name;
       await saveView({ name, cards: getCurrentCards(), roomCode: currentRoomCode() });
       refreshViewList();
       $status.textContent = `Saved view: "${name}".`;
     });
-
+    $name.addEventListener("change", () => {
+      const n = $name.value.trim();
+      if (n) currentView = n;
+    });
     $sel.addEventListener("change", () => {
-      const name = $sel.value;
-      const loaded = loadView({ name, roomCode: currentRoomCode() });
+      currentView = $sel.value;
+      const loaded = loadView({ name: currentView, roomCode: currentRoomCode() });
       if (loaded) renderCards(loaded);
     });
 
-    // ----- Load guide.json -----
+    // Load guide.json
     const guideJsonUrl = (noCache=false) => {
       const u = new URL("data/guide.json", location.href);
       if (noCache) u.searchParams.set("ts", Date.now());
@@ -244,11 +263,18 @@
         $status.textContent = "Failed to load data/guide.json";
       }
     }
-    document.getElementById("loadLatestBtn").addEventListener("click", ()=>loadGuideJson(false));
-    document.getElementById("refreshBtn").addEventListener("click",   ()=>loadGuideJson(true));
+    $loadLatest.addEventListener("click", ()=>loadGuideJson(false));
+    $refresh.addEventListener("click",   ()=>loadGuideJson(true));
     loadGuideJson(false);
 
-    // ----- Utils -----
+    // Reset
+    $reset.addEventListener("click", () => {
+      localStorage.removeItem("bhq-views-v2");
+      localStorage.removeItem("bhq-v1");
+      location.reload();
+    });
+
+    // Utils
     function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m])); }
   </script>
 </body>
