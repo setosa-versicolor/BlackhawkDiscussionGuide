@@ -258,21 +258,27 @@
     },400);
 
     // ✅ Click actions across all three boards
-    document.querySelector(".boards").addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-action]"); if (!btn) return;
-      const id = btn.closest(".card")?.dataset.id; if (!id) return;
-      const action = btn.dataset.action;
-
-      const byId = Object.fromEntries(cards.map(c => [c.id, c]));
-      const c = byId[id]; if (!c) return;
-
-      if (action === "complete") c.status = "done";
-      else if (action === "trash") c.status = "deleted";
-      else if (action === "undo") c.status = "active";
-
-      renderCards(getCurrentCards());
-      autoSave();
-    });
+      document.querySelector(".boards").addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-action]");
+        if (!btn) return;
+      
+        const id = btn.closest(".card")?.dataset.id;
+        if (!id) return;
+      
+        const action = btn.dataset.action;
+        let newStatus;
+        if (action === "complete") newStatus = "done";
+        else if (action === "trash") newStatus = "deleted";
+        else if (action === "undo") newStatus = "active";
+        else return;
+      
+        // Preserve current order, change only the clicked card’s status
+        const current = getCurrentCards();
+        const next = current.map(c => (c.id === id ? { ...c, status: newStatus } : c));
+      
+        renderCards(next);
+        autoSave(); // will persist the new board state
+      });
 
     // Add new card -> Active
     document.getElementById("addBtn").addEventListener("click", ()=>{
