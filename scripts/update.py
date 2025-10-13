@@ -323,39 +323,116 @@ def fetch_pdf_text(pdf_url: str) -> str:
     r.raise_for_status()
     return extract_text(io.BytesIO(r.content))
 
+# --- add this helper near the other parsing helpers ---
+def _normalize_pdf_text(raw: str) -> str:
+    """
+    Make pdfminer text friendlier for list parsing:
+    - join hyphenated breaks like 'transfor-\nmation' -> 'transformation'
+    - collapse hard linebreaks inside sentences to spaces
+    - ensure bullets after '?' or ':' start on a new line
+    """
+    if not raw:
+        return ""
+
+    # 1) Fix hyphenation across line breaks: word-\nword  ->  wordword
+    raw = re.sub(r"(\w)-\s*\n\s*(\w)", r"\1\2", raw)
+
+    # 2) Replace Windows-style breaks just in case
+    raw = raw.replace("\r\n", "\n")
+
+    # 3) Collapse single newlines that are probably just wrapping
+    #    Keep blank lines (paragraphs) as is.
+    #    Heuristic: if a line ends with [a-z,0-9,)] and next line starts with lowercase,
+    #    join with a space.
+    lines = raw.split("\n")
+    joined = []
+    for i, ln in enumerate(lines):
+        if i > 0 and joined:
+            prev = joined[-1]
+            if re.search(r"[a-z0-9)\]]$", prev) and re.match(r"^[a-z]", ln):
+                joined[-1] = prev + " " + ln.strip()
+                continue
+        joined.append(ln)
+    raw = "\n".join(joined)
+
+    # 4) Force bullets that appear mid-line to start new lines.
+    #    Common patterns: "? –", "? -", ": –", ": -"
+    raw = re.sub(r"(\?|:)\s*[–\-•]\s+", r"\1\n– ", raw)
+
+    # 5) Normalize all bullet markers to an en-dash and make sure they’re at line starts
+    #    Turn lines like "  •  text" or " - text" into "– text"
+    raw = re.sub(r"^[\s]*[•\-]\s+", "– ", raw, flags=re.M)
+
+    return raw.strip()
+
+
+# --- replace your existing parse_pdf_guide with this version ---
 def parse_pdf_guide(pdf_url: str):
-    raw = fetch_pdf_text(pdf_url)
-    BULLET_RE = re.compile(r'^[\-\u2013\u2014\u2022]\s+')
-    lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
-    title = lines[0] if lines else "Discussion Guide"
+    raw0 = fetch_pdf_text(pdf_url)
+    raw = _normalize_pdf_text(raw0)
 
-    try:
-        start_idx = next(i for i, ln in enumerate(lines) if re.search(r"reflect\s*\+\s*discuss", ln, re.I))
-    except StopIteration:
-        start_idx = 0
+    # Extract the main R+D block (stop at next section header or EOF)
+    m = re.search(
+        r"reflect\s*\+\s*discuss\s*(.+?)(?=\n\s*(memorization\s*challenge|pray|next\s*steps)\b|\Z)",
+        raw, re.I | re.S
+    )
+    block = m.group(1) if m else raw
 
-    bullets = []
-    buf = None
-    for ln in lines[start_idx+1:]:
-        if BULLET_RE.match(ln):
-            if buf: bullets.append(buf.strip())
-            buf = BULLET_RE.sub("", ln)
-        else:
+    # Split into bullets; also handle wrapped paragraphs under each bullet.
+    BULLET_RE = re.compile(r"^\s*[–\u2013\u2022\-]\s+", re.U)
+    items, buf = [], None
+    for ln in block.splitlines():
+        t = ln.strip()
+        if not t:
+            continue
+        if BULLET_RE.match(t):
+            # new bullet
             if buf:
-                buf += " " + ln
-            if re.match(r"^(memorization challenge|pray|next steps)\b", ln, re.I):
-                break
-    if buf: bullets.append(buf.strip())
+                items.append(buf.strip())
+            buf = BULLET_RE.sub("", t)
+        else:
+            # continuation of prior bullet
+            if buf:
+                # join with a space (not a newline) to avoid mid-sentence breaks
+                buf = (buf + " " + t).strip()
+            else:
+                # stray line before first bullet — ignore
+                pass
+    if buf:
+        items.append(buf.strip())
 
-    questions = [q for q in bullets if q.endswith("?") or re.search(r"(read\s+|what|how|why|where|when)", q, re.I)]
+    # Only keep likely questions/prompts
+    questions = [
+        q.strip()
+        for q in items
+        if q.endswith("?") or re.search(r"\b(read|what|how|why|where|when|discuss|based on)\b", q, re.I)
+    ]
 
+    # Sections: grab bodies robustly from normalized text
     def grab_sec(name):
-        m = re.search(rf"{name}\s*:?\s*(.+?)(?=\n[A-Z][A-Za-z ]{{2,}}:?\s*|\Z)", raw, re.I | re.S)
-        if not m: return None
-        return {"title": name.title(), "body": _norm(m.group(1))}
-    sections = list(filter(None, [grab_sec("Memorization Challenge"), grab_sec("Pray"), grab_sec("Next Steps")]))
+        m = re.search(
+            rf"\n\s*{name}\s*:?\s*(.+?)(?=\n\s*(memorization\s*challenge|pray|next\s*steps)\b|\Z)",
+            raw, re.I | re.S
+        )
+        if not m:
+            return None
+        body = _norm(m.group(1))
+        # Trim accidental leading bullets that slipped through
+        body = re.sub(r"^\s*[–\u2013\u2022\-]\s+", "", body)
+        title = " ".join(w.capitalize() for w in name.split())
+        return {"title": title, "body": body}
 
-    return {"title": title, "questions": questions, "sections": sections}
+    sections = list(filter(None, [
+        grab_sec("memorization challenge"),
+        grab_sec("pray"),
+        grab_sec("next steps"),
+    ]))
+
+    # Title (first line with date|series if present; keep simple)
+    first_line = raw.splitlines()[0] if raw.splitlines() else "Discussion Guide"
+
+    return {"title": first_line, "questions": questions, "sections": sections}
+
 
 # --------- Outputs ---------
 def write_json(source_url: str, data: dict, out_path: str = "site/data/guide.json"):
