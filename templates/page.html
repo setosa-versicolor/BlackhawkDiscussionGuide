@@ -6,47 +6,40 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root {
-      --bg: #0e0f12;
-      --panel: #161820;
-      --card: #1e2230;
-      --text: #e8ecf3;
-      --muted: #9aa3b2;
-      --accent: #7aa2ff;
-      --border: #2a2f3c;
-      --danger: #ff6b6b;
+      --bg: #0e0f12; --panel: #161820; --card: #1e2230; --text: #e8ecf3;
+      --muted: #9aa3b2; --accent: #7aa2ff; --border: #2a2f3c; --danger: #ff6b6b;
     }
     html, body { margin:0; padding:0; background:var(--bg); color:var(--text);
-      font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
-    a { color: var(--accent); text-decoration: none; }
-    .wrap { max-width: 940px; margin: 28px auto 80px; padding: 0 16px; }
-    header { display:flex; gap:12px; align-items:center; margin-bottom: 12px; flex-wrap: wrap; }
-    header h1 { font-size: 20px; margin:0 12px 0 0; font-weight: 700;}
+      font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+    a{ color:var(--accent); text-decoration:none; }
+    .wrap{ max-width:940px; margin:28px auto 80px; padding:0 16px; }
+    header{ display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+    header h1{ font-size:20px; margin:0 12px 0 0; font-weight:700; }
 
-    .bar, .viewbar { background: var(--panel); border:1px solid var(--border);
-      border-radius: 12px; padding: 10px; display:flex; gap:8px; align-items: center; flex-wrap: wrap; }
-    input[type="text"], input[type="file"], select, textarea { background:#0f1117; color:var(--text);
-      border:1px solid var(--border); border-radius:10px; padding:8px 10px; outline:none; min-width: 180px; }
-    textarea { width:100%; min-height: 70px; resize: vertical; }
-    button { background: var(--accent); color:#0a0b0f; border: none; border-radius: 10px;
-      padding: 9px 12px; font-weight: 700; cursor: pointer; }
-    button.secondary { background: #2b3040; color: var(--text); }
-    button.danger { background: var(--danger); color: #101114; }
-    .muted { color: var(--muted); }
-    .spacer { flex:1 }
+    .bar,.viewbar{ background:var(--panel); border:1px solid var(--border);
+      border-radius:12px; padding:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    input[type="text"],input[type="file"],select,textarea{ background:#0f1117; color:var(--text);
+      border:1px solid var(--border); border-radius:10px; padding:8px 10px; outline:none; min-width:180px; }
+    textarea{ width:100%; min-height:70px; resize:vertical; }
+    button{ background:var(--accent); color:#0a0b0f; border:none; border-radius:10px; padding:9px 12px; font-weight:700; cursor:pointer; }
+    button.secondary{ background:#2b3040; color:var(--text); }
+    button.danger{ background:var(--danger); color:#101114; }
+    .muted{ color:var(--muted); }
+    .spacer{ flex:1 }
 
-    .board { display: block; margin-top: 16px; }
-    .card { width: 100%; box-sizing: border-box; margin: 12px 0; background: var(--card);
-      border:1px solid var(--border); border-radius: 16px; }
-    .card-header { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom: 1px solid var(--border); }
-    .drag-handle { cursor: grab; user-select:none; font-weight: 900; letter-spacing: 1px; opacity: .7; }
-    .tag { font-size: 12px; padding:2px 8px; border-radius: 999px; background:#2b3142; color: #cfe; }
-    .card-body { padding:12px; white-space: pre-wrap; }
-    .ghost { opacity: .5; }
-    .row { display:flex; gap:8px; align-items:center; flex-wrap: wrap; }
-    .row > * { flex: 0 0 auto; }
-    .row .grow { flex: 1 1 240px; min-width: 240px; }
-    .hint { margin-top: 8px; }
-    .footer { margin-top: 18px; color: var(--muted); font-size: 13px; }
+    .board{ display:block; margin-top:16px; }
+    .card{ width:100%; box-sizing:border-box; margin:12px 0; background:var(--card);
+      border:1px solid var(--border); border-radius:16px; }
+    .card-header{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--border); }
+    .drag-handle{ cursor:grab; user-select:none; font-weight:900; letter-spacing:1px; opacity:.7; }
+    .tag{ font-size:12px; padding:2px 8px; border-radius:999px; background:#2b3142; color:#cfe; }
+    .card-body{ padding:12px; white-space:pre-wrap; }
+    .ghost{ opacity:.5; }
+    .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .row > *{ flex:0 0 auto; }
+    .row .grow{ flex:1 1 240px; min-width:240px; }
+    .hint{ margin-top:8px; }
+    .footer{ margin-top:18px; color:var(--muted); font-size:13px; }
   </style>
 </head>
 <body>
@@ -78,24 +71,6 @@
         <button id="joinBtn">Join Room</button>
         <button id="shareBtn" class="secondary">Copy Share Link</button>
       </div>
-      
-      <script type="module">
-        // inside the same module script as above
-        const $room = document.getElementById("roomInput");
-        document.getElementById("joinBtn").addEventListener("click", async () => {
-          const code = $room.value.trim();
-          await joinFromUI(code || null);
-        });
-      
-        document.getElementById("shareBtn").addEventListener("click", async () => {
-          const code = currentRoomCode();
-          if (!code) { alert("Join a room first."); return; }
-          const url = new URL(location.href);
-          url.searchParams.set("room", code);
-          await navigator.clipboard.writeText(url.toString());
-          alert("Share link copied!");
-        });
-      </script>
     </div>
 
     <!-- Add new card -->
@@ -112,96 +87,49 @@
     <!-- Cards -->
     <div id="board" class="board"></div>
 
-    <div class="hint muted">
-      Tip: drag cards with the “⋮⋮” handle. Use the dropdown to switch/sync views.
-    </div>
-
-    <div class="footer">
-      Loads from <code>data/guide.json</code> by default. You can import/export JSON too.
-    </div>
+    <div class="hint muted">Tip: drag cards with the “⋮⋮” handle. Use the dropdown to switch/sync views.</div>
+    <div class="footer">Loads from <code>data/guide.json</code> by default. You can import/export JSON too.</div>
   </div>
 
-  <!-- SortableJS: loaded without integrity attribute so it isn’t blocked -->
+  <!-- SortableJS -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" crossorigin="anonymous"></script>
 
-  <!-- App -->
-<script type="module">
-  import { listViews, loadView, saveView, joinRoom, connectFirebase, currentRoomCode } from "./static/js/viewStore.js";
+  <!-- App (single module script – everything lives here) -->
+  <script type="module">
+    import { listViews, loadView, saveView, joinRoom, connectFirebase, currentRoomCode } from "./static/js/viewStore.js";
 
-  // 1) OPTIONAL: enable realtime sync by adding your Firebase config
-  //    (Create a Firebase project → Web App → copy the config below)
-  const FIREBASE_ENABLED = true; // set to false if you want local-only
-  const firebaseConfig = {
-    apiKey: "AIzaSyBMtVbKp6i5cnb_Zapc_sEW8rMebVjuIKs",
-    authDomain: "blackhawk-discussion-guide.firebaseapp.com",
-    projectId: "blackhawk-discussion-guide",
-    // Firestore only needs projectId; including the rest is fine.
-  };
+    // ---- Firebase (paste your real config) ----
+    const FIREBASE_ENABLED = true;
+    const firebaseConfig = {
+      apiKey: "AIzaSyBMtVbKp6i5cnb_Zapc_sEW8rMebVjuIKs",
+      authDomain: "blackhawk-discussion-guide.firebaseapp.com",
+      projectId: "blackhawk-discussion-guide",
+    };
+    if (FIREBASE_ENABLED) { await connectFirebase(firebaseConfig); }
 
-  if (FIREBASE_ENABLED) {
-    await connectFirebase(firebaseConfig);
-  }
-
-  // 2) Join a room if provided via ?room=CODE or from an input
-  const params = new URLSearchParams(location.search);
-  const urlRoom = params.get("room");
-  const $status = document.getElementById("status"); // you already have this in your template
-
-  async function joinFromUI(room) {
-    await joinRoom(room || null, () => {
-      // refresh view list whenever remote changes land
-      refreshViewList();
-      $status.textContent = currentRoomCode()
-        ? `Connected to room ${currentRoomCode()}`
-        : `Local mode (not in a room)`;
-    });
-  }
-
-  // If room in URL, auto-join; otherwise stay local
-  await joinFromUI(urlRoom);
-
-  // Hook up your existing save/load buttons to pass roomCode (or omit for local)
-  function refreshViewList() {
-    const names = listViews(currentRoomCode());
-    // ...your existing code to populate a <select> or menu...
-  }
-
-  // Example: when saving current cards
-  async function saveCurrent(name, cards) {
-    await saveView({ name, cards, roomCode: currentRoomCode() });
-    refreshViewList();
-  }
-
-  // the rest of your existing code...
-</script>
-
-
-    // ---------- DOM ----------
+    // ---- DOM ----
     const $board   = document.getElementById("board");
     const $status  = document.getElementById("status");
-
     const $loadLatest = document.getElementById("loadLatestBtn");
     const $refresh    = document.getElementById("refreshBtn");
     const $reset      = document.getElementById("resetBtn");
     const $importFile = document.getElementById("importFile");
     const $exportBtn  = document.getElementById("exportBtn");
-
     const $sel     = document.getElementById("viewSelect");
     const $name    = document.getElementById("viewName");
-    const $room    = document.getElementById("roomCode");
     const $save    = document.getElementById("saveViewBtn");
-    const $join    = document.getElementById("joinRoomBtn");
-
+    const $joinBtn = document.getElementById("joinBtn");
+    const $shareBtn= document.getElementById("shareBtn");
+    const $roomInp = document.getElementById("roomInput");
     const $addBtn  = document.getElementById("addBtn");
     const $newType = document.getElementById("newType");
     const $newTitle= document.getElementById("newTitle");
     const $newText = document.getElementById("newText");
 
-    // ---------- State ----------
-    let cards = []; // [{id,type, text, title?}]
+    // ---- State / render ----
+    let cards = [];
     const genId = () => "c_" + Math.random().toString(36).slice(2, 9);
 
-    // ---------- Render ----------
     function renderCards(next) {
       cards = next.map(c => ({ id: c.id || genId(), ...c }));
       $board.innerHTML = "";
@@ -228,155 +156,110 @@
         $board.appendChild(el);
       }
     }
-
     function getCurrentCards() {
-      const order = [...$board.querySelectorAll(".card")].map(node => node.dataset.id);
+      const order = [...$board.querySelectorAll(".card")].map(n => n.dataset.id);
       const byId = Object.fromEntries(cards.map(c => [c.id, c]));
       return order.map(id => byId[id]).filter(Boolean);
     }
 
-    function persistOrderFromDOM() {
-      cards = getCurrentCards();
-    }
+    // Drag & drop
+    Sortable.create($board, { animation:150, handle:".drag-handle", ghostClass:"ghost", direction:"vertical",
+      onEnd(){ cards = getCurrentCards(); } });
 
-    // ---------- Drag & drop ----------
-    Sortable.create($board, {
-      animation: 150,
-      handle: ".drag-handle",
-      ghostClass: "ghost",
-      direction: "vertical",
-      onEnd: persistOrderFromDOM
-    });
-
-    // ---------- Events ----------
-    $board.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-action='del']");
-      if (!btn) return;
-      const node = btn.closest(".card");
-      const id = node?.dataset.id;
-      if (!id) return;
-      cards = cards.filter(c => c.id !== id);
-      node.remove();
-    });
-
-    $addBtn.addEventListener("click", () => {
-      const type = $newType.value;
-      const title = ($newTitle.value || "").trim();
-      const text = ($newText.value || "").trim();
-      if (!text) return;
-      const item = { id: genId(), type, text };
-      if (type === "section" && title) item.title = title;
-      cards.push(item);
-      renderCards(cards);
-      $newText.value = "";
-      $newTitle.value = "";
-    });
-
+    // ---- Import/Export/Reset ----
     $reset.addEventListener("click", () => {
-      localStorage.removeItem("bhq-views-v2"); // shared-view storage
-      localStorage.removeItem("bhq-v1");       // legacy key if you had it
+      localStorage.removeItem("bhq-views-v2");
+      localStorage.removeItem("bhq-v1");
       location.reload();
     });
-
     $exportBtn.addEventListener("click", () => {
       const payload = {
-        questions: getCurrentCards().filter(c => c.type === "question").map(c => c.text),
-        sections:  getCurrentCards().filter(c => c.type === "section").map(c => ({ title: c.title || "Section", body: c.text }))
+        questions: getCurrentCards().filter(c=>c.type==="question").map(c=>c.text),
+        sections:  getCurrentCards().filter(c=>c.type==="section").map(c=>({title:c.title||"Section", body:c.text}))
       };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(payload,null,2)], { type:"application/json" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = "guide-export.json"; a.click();
+      const a = document.createElement("a"); a.href = url; a.download = "guide-export.json"; a.click();
       URL.revokeObjectURL(url);
     });
-
     $importFile.addEventListener("change", async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+      const file = e.target.files?.[0]; if (!file) return;
       try {
-        const text = await file.text();
-        const data = JSON.parse(text);
+        const data = JSON.parse(await file.text());
         const next = [
-          ...(data.questions || []).map(q => ({ type: "question", text: q })),
-          ...(data.sections || []).map(s => ({ type: "section", title: s.title, text: s.body }))
+          ...(data.questions||[]).map(q=>({type:"question", text:q})),
+          ...(data.sections||[]).map(s=>({type:"section", title:s.title, text:s.body}))
         ];
         renderCards(next);
         $status.textContent = `Imported: ${next.length} cards.`;
-      } catch (err) {
-        console.error(err);
-        $status.textContent = "Import failed.";
-      }
+      } catch { $status.textContent = "Import failed."; }
     });
 
-    // ---------- Shared views ----------
+    // ---- Guide JSON loader ----
+    const guideJsonUrl = (noCache=false) => {
+      const u = new URL("data/guide.json", location.href);
+      if (noCache) u.searchParams.set("ts", Date.now());
+      return u.toString();
+    };
+    async function loadGuideJson(noCache=false){
+      $status.textContent = "Loading…";
+      try{
+        const res = await fetch(guideJsonUrl(noCache), { cache: noCache ? "no-store" : "default" });
+        if(!res.ok) throw new Error("HTTP "+res.status);
+        const data = await res.json();
+        const next = [
+          ...(data.questions||[]).map(q=>({type:"question", text:q})),
+          ...(data.sections||[]).map(s=>({type:"section", title:s.title, text:s.body}))
+        ];
+        renderCards(next);
+        $status.textContent = `Loaded: ${next.length} cards (${(data.questions||[]).length} questions, ${(data.sections||[]).length} sections).`;
+      } catch { $status.textContent = "Failed to load data/guide.json"; }
+    }
+    document.getElementById("loadLatestBtn").addEventListener("click", ()=>loadGuideJson(false));
+    document.getElementById("refreshBtn").addEventListener("click",   ()=>loadGuideJson(true));
+    loadGuideJson(false);
+
+    // ---- Rooms (shared views) ----
     function refreshViewList() {
-      const names = listViews($room.value.trim());
+      const names = listViews(currentRoomCode());
       $sel.innerHTML = "";
       for (const n of names) {
-      const opt = document.createElement("option");
-      opt.value = n; opt.textContent = n;
-      $sel.appendChild(opt);
+        const opt = document.createElement("option"); opt.value = n; opt.textContent = n;
+        $sel.appendChild(opt);
       }
     }
-
-    $join.addEventListener("click", async () => {
-      await joinRoom($room.value.trim(), () => {
+    async function joinFromUI(room) {
+      await joinRoom(room || null, () => {
         refreshViewList();
+        $status.textContent = currentRoomCode() ? `Connected to room ${currentRoomCode()}` : `Local mode (not in a room)`;
       });
-    });
+    }
+    // URL ?room=CODE
+    const urlRoom = new URLSearchParams(location.search).get("room");
+    await joinFromUI(urlRoom);
 
-    $save.addEventListener("click", () => {
-      const name = $name.value.trim() || "Untitled";
-      saveView({ name, cards: getCurrentCards(), roomCode: $room.value.trim() || null });
-      refreshViewList();
-      $status.textContent = `Saved view: "${name}".`;
+    $joinBtn.addEventListener("click", async () => {
+      await joinFromUI($roomInp.value.trim() || null);
     });
-
+    $shareBtn.addEventListener("click", async () => {
+      const code = currentRoomCode(); if (!code) { alert("Join a room first."); return; }
+      const url = new URL(location.href); url.searchParams.set("room", code);
+      await navigator.clipboard.writeText(url.toString());
+      alert("Share link copied!");
+    });
+    $save.addEventListener("click", async () => {
+      const name = ($name.value || "Untitled").trim();
+      await saveView({ name, cards: getCurrentCards(), roomCode: currentRoomCode() });
+      refreshViewList(); $status.textContent = `Saved view: "${name}".`;
+    });
     $sel.addEventListener("change", () => {
       const name = $sel.value;
-      const loaded = loadView({ name, roomCode: $room.value.trim() || null });
+      const loaded = loadView({ name, roomCode: currentRoomCode() });
       if (loaded) renderCards(loaded);
     });
 
-    refreshViewList();
-
-    // ---------- Data loading ----------
-    function guideJsonUrl(noCache = false) {
-      // Build URL relative to the current page (avoids root /)
-      const u = new URL("data/guide.json", window.location.href);
-      if (noCache) u.searchParams.set("ts", Date.now());
-      return u.toString();
-    }
-
-    async function loadGuideJson(noCache = false) {
-      $status.textContent = "Loading…";
-      try {
-        const res = await fetch(guideJsonUrl(noCache), { cache: noCache ? "no-store" : "default" });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const data = await res.json();
-        const next = [
-          ...(data.questions || []).map(q => ({ type: "question", text: q })),
-          ...(data.sections || []).map(s => ({ type: "section", title: s.title, text: s.body }))
-        ];
-        renderCards(next);
-        $status.textContent = `Loaded: ${next.length} cards (${(data.questions || []).length} questions, ${(data.sections || []).length} sections).`;
-      } catch (err) {
-        console.error(err);
-        $status.textContent = "Failed to load data/guide.json";
-      }
-    }
-
-    // Hook up buttons
-    document.getElementById("loadLatestBtn").addEventListener("click", () => loadGuideJson(false));
-    document.getElementById("refreshBtn").addEventListener("click", () => loadGuideJson(true));
-
-    // Auto-load the guide on page load
-    loadGuideJson(false);
-
-    // ---------- Utility ----------
-    function escapeHtml(s) {
-      return s.replace(/[&<>"']/g, (m)=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m]));
-    }
+    // ---- Utils ----
+    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m])); }
   </script>
 </body>
 </html>
