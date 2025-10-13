@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Blackhawk Discussion Guide — Rooms</title>
+  <title>Discussion Guide — Rooms</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root {
@@ -11,7 +11,7 @@
     }
     html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
       font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
-    .wrap{max-width:940px;margin:28px auto 80px;padding:0 16px;}
+    .wrap{max-width:1100px;margin:28px auto 80px;padding:0 16px;}
     header{display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
     header h1{font-size:20px;margin:0 12px 0 0;font-weight:700;}
     .bar{background:var(--panel);border:1px solid var(--border);border-radius:12px;
@@ -20,9 +20,10 @@
       border-radius:10px;padding:8px 10px;outline:none;min-width:180px;}
     button{background:var(--accent);color:#0a0b0f;border:none;border-radius:10px;padding:9px 12px;
       font-weight:700;cursor:pointer;}
-    button.secondary{background:#2b3040;color:var(--text);} button.danger{background:#ff6b6b;color:#101114;}
-    .muted{color:#9aa3b2;} .spacer{flex:1}
-    .board{display:block;margin-top:16px;}
+    button.secondary{background:#2b3040;color:var(--text);}
+    button.danger{background:var(--danger);color:#101114;}
+    .muted{color:var(--muted);} .spacer{flex:1}
+    .board{display:block;margin-top:8px;}
     .card{width:100%;box-sizing:border-box;margin:12px 0;background:var(--card);
       border:1px solid var(--border);border-radius:16px;}
     .card-header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);}
@@ -32,48 +33,58 @@
     .ghost{opacity:.5;}
     .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
     .row>*{flex:0 0 auto;} .row .grow{flex:1 1 240px;min-width:240px;}
-    .hint{margin-top:8px;} .footer{margin-top:18px;color:#9aa3b2;font-size:13px;}
-    /* Make the "Open PDF" anchor look like a secondary button (and not purple) */
-      #pdfLink,
-      #pdfLink:link,
-      #pdfLink:visited {
-        color: var(--text);
-        background: #2b3040;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 9px 12px;
-        display: inline-block;
-        text-decoration: none;
-      }
-      #pdfLink:hover { opacity: .9; }
+    .hint{margin-top:8px;} .footer{margin-top:18px;color:var(--muted);font-size:13px;}
+
+    /* three lanes */
+    .boards { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 12px; }
+    @media (min-width: 1000px) { .boards { grid-template-columns: 1fr 1fr 1fr; } }
+    .board-wrap { background: transparent; }
+    .board-title { font-weight: 700; color: var(--muted); margin: 4px 0 2px; }
+    .board-muted .card { opacity: .95; }
+    .board-muted .drag-handle { opacity: .35; cursor: default; }
+
+    /* compact icon buttons */
+    .icon-btn {
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 4px 8px; line-height: 1; display: inline-flex; align-items: center;
+    }
+    .icon-btn:hover { opacity: .9; }
+    .icon-btn.danger { border-color: #4d2630; }
+    .icon-btn svg { width: 16px; height: 16px; display: block; }
+
+    /* "Open PDF" anchor should look like button and not purple when visited */
+    #pdfLink, #pdfLink:link, #pdfLink:visited {
+      color: var(--text);
+      background: #2b3040;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 12px;
+      display: inline-block;
+      text-decoration: none;
+    }
+    #pdfLink:hover { opacity: .9; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <h1>Discussion Guide</h1>
-      <span class="muted">Blackhawk Church</span>
+      <span class="muted">live shared rooms</span>
     </header>
 
-    <!-- Room controls -->
+    <!-- Room + actions bar -->
     <div class="bar">
       <select id="roomSelect" title="Rooms"></select>
       <input id="roomInput" type="text" placeholder="New room name…" />
       <button id="createJoinBtn">Create / Join</button>
-      <button id="shareBtn" class="secondary">Copy Link</button>
+      <button id="shareBtn" class="secondary">Copy Share Link</button>
+
+      <a id="pdfLink" href="#" target="_blank" rel="noopener" style="display:none">Open PDF</a>
+
       <div class="spacer"></div>
       <button id="loadLatestBtn" class="secondary" title="Load from data/guide.json">Load Latest Sermon</button>
       <button id="refreshBtn" class="secondary" title="Re-read data/guide.json with no cache">Refresh</button>
-      <a id="pdfLink"
-         class="secondary"
-         href="#"
-         target="_blank"
-         rel="noopener"
-         style="display:none; text-decoration:none; padding:9px 12px; border-radius:10px; border:1px solid var(--border);">
-        Open PDF
-      </a>
-      
-      <div class="spacer"></div>
       <button id="deleteRoomBtn" class="danger" title="Delete this room for everyone">Delete Room</button>
       <span class="muted" id="status"></span>
     </div>
@@ -89,14 +100,24 @@
       <button id="addBtn">Add</button>
     </div>
 
-    <!-- Cards -->
-    <div id="board" class="board"></div>
+    <!-- Boards -->
+    <div class="boards">
+      <div class="board-wrap">
+        <div class="board-title">Active</div>
+        <div id="boardActive" class="board"></div>
+      </div>
+      <div class="board-wrap">
+        <div class="board-title">Completed</div>
+        <div id="boardDone" class="board board-muted"></div>
+      </div>
+      <div class="board-wrap">
+        <div class="board-title">Deleted</div>
+        <div id="boardDeleted" class="board board-muted"></div>
+      </div>
+    </div>
 
-    <div class="hint muted">If the page is blank, click "Load Latest Sermon" to get started.</div>
-    <div class="hint muted">Rooms are live, and allow you to collaborate with others. Please note that anyone can see your room content.</div>
-    <div class="hint muted">Drag and drop by clicking the dots in the upper left corner to put things in the order you want. </div>
-    <div class="hint muted">If you ever make a mistake, or delete a question you didn't intend to. Just use the Refresh button. This will undo any previous customizations and default in the questions from the Discussion Guide.</div>
-    <div class="footer">blackhawk.church/learn.</div>
+    <div class="hint muted">Rooms are live: edits autosave & sync to others in the same room.</div>
+    <div class="footer">Loads from <code>data/guide.json</code> by default.</div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" crossorigin="anonymous"></script>
@@ -107,9 +128,9 @@
     // ---- Firebase (paste your config) ----
     const FIREBASE_ENABLED = true;
     const firebaseConfig = {
-      apiKey: "AIzaSyBMtVbKp6i5cnb_Zapc_sEW8rMebVjuIKs",
-      authDomain: "blackhawk-discussion-guide.firebaseapp.com",
-      projectId: "blackhawk-discussion-guide",
+      // apiKey: "...",
+      // authDomain: "blackhawk-discussion-guide.firebaseapp.com",
+      // projectId: "blackhawk-discussion-guide",
     };
     if (FIREBASE_ENABLED) { await connectFirebase(firebaseConfig); }
 
@@ -121,7 +142,11 @@
     const $status = document.getElementById("status");
     const $pdfLink = document.getElementById("pdfLink");
 
-    const $board = document.getElementById("board");
+    const $boardActive  = document.getElementById("boardActive");
+    const $boardDone    = document.getElementById("boardDone");
+    const $boardDeleted = document.getElementById("boardDeleted");
+    const $boards       = document.querySelector(".boards");
+
     const $addBtn = document.getElementById("addBtn");
     const $newType = document.getElementById("newType");
     const $newTitle= document.getElementById("newTitle");
@@ -131,52 +156,99 @@
     const $loadLatest = document.getElementById("loadLatestBtn");
     const $refresh = document.getElementById("refreshBtn");
 
+    // ---- Icons (flat SVG) ----
+    const ICONS = {
+      check: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>`,
+      trash: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18" />
+          <path d="M8 6V4h8v2" />
+          <path d="M19 6l-1 14H6L5 6" />
+          <path d="M10 11v6M14 11v6" />
+        </svg>`,
+      undo: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 9l-4 4 4 4" />
+          <path d="M3 13h9a6 6 0 016 6" />
+        </svg>`
+    };
+
     // ---- State / render ----
+    // cards: [{ id, type, text, title?, status: 'active'|'done'|'deleted' }]
     let cards = [];
     const genId = () => "c_" + Math.random().toString(36).slice(2,9);
 
     function renderCards(next) {
-      cards = next.map(c => ({ id: c.id || genId(), ...c }));
-      $board.innerHTML = "";
+      // default to active status for any card missing it
+      cards = next.map(c => ({ status: 'active', ...c, id: c.id || genId() }));
+
+      $boardActive.innerHTML  = "";
+      $boardDone.innerHTML    = "";
+      $boardDeleted.innerHTML = "";
+
       for (const c of cards) {
         const el = document.createElement("div");
-        el.className = "card";
-        el.dataset.id = c.id;
-        el.innerHTML = `
-          <div class="card-header">
-            <span class="drag-handle">⋮⋮</span>
-            <span class="tag">${c.type === "section" ? "Section" : "Question"}</span>
-            ${c.title ? `<strong style="margin-left:6px">${escapeHtml(c.title)}</strong>` : ""}
-            <div class="spacer"></div>
-            <button class="secondary" data-action="del">Delete</button>
-          </div>
-          <div class="card-body"></div>
+        el.className = "card"; el.dataset.id = c.id;
+
+        const header = document.createElement("div");
+        header.className = "card-header";
+        header.innerHTML = `
+          <span class="drag-handle">⋮⋮</span>
+          <span class="tag">${c.type === "section" ? "Section" : "Question"}</span>
+          ${c.title ? `<strong style="margin-left:6px">${escapeHtml(c.title)}</strong>` : ""}
+          <div class="spacer"></div>
+          ${c.status === 'active' ? `
+            <button class="icon-btn" data-action="complete" title="Mark complete" aria-label="Mark complete">
+              ${ICONS.check}
+            </button>
+            <button class="icon-btn danger" data-action="trash" title="Move to deleted" aria-label="Move to deleted">
+              ${ICONS.trash}
+            </button>
+          ` : `
+            <button class="icon-btn" data-action="undo" title="Move back to active" aria-label="Undo">
+              ${ICONS.undo}
+            </button>
+          `}
         `;
-        el.querySelector(".card-body").textContent = c.text;
-        $board.appendChild(el);
+        const body = document.createElement("div");
+        body.className = "card-body";
+        body.textContent = c.text;
+
+        el.appendChild(header);
+        el.appendChild(body);
+
+        if (c.status === "done") $boardDone.appendChild(el);
+        else if (c.status === "deleted") $boardDeleted.appendChild(el);
+        else $boardActive.appendChild(el);
       }
     }
-    function getCurrentCards(){
-      const order = [...$board.querySelectorAll(".card")].map(n=>n.dataset.id);
-      const byId = Object.fromEntries(cards.map(c=>[c.id,c]));
-      return order.map(id=>byId[id]).filter(Boolean);
-    }
-    function updateGuideLink(meta) {
-      const u = (meta && meta.url) ? String(meta.url) : "";
-      if (!u) { $pdfLink.style.display = "none"; return; }
-    
-      // If it looks like a PDF, label it “Open PDF”; otherwise “Open Source Page”
-      const isPdf = u.toLowerCase().endsWith(".pdf");
-      $pdfLink.textContent = isPdf ? "Open PDF" : "Open Source Page";
-      $pdfLink.href = u;
-      $pdfLink.style.display = "inline-block";
+
+    function getCurrentCards() {
+      const byId = Object.fromEntries(cards.map(c => [c.id, c]));
+      const read = (container, status) =>
+        [...container.querySelectorAll(".card")].map(n => {
+          const id = n.dataset.id;
+          return { ...byId[id], status };
+        });
+      return [
+        ...read($boardActive,  'active'),
+        ...read($boardDone,    'done'),
+        ...read($boardDeleted, 'deleted'),
+      ];
     }
 
-    // Drag & drop + autosave
-    Sortable.create($board, {
+    // Sortable only on Active column
+    Sortable.create($boardActive, {
       animation:150, handle:".drag-handle", ghostClass:"ghost", direction:"vertical",
       onEnd(){ cards=getCurrentCards(); autoSave(); }
     });
+    // Done/Deleted columns are read-only
 
     // Debounced autosave
     const debounce=(fn,ms=400)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
@@ -185,61 +257,37 @@
       saveLive(getCurrentCards());
     },400);
 
-    // Add/Delete
-    $addBtn.addEventListener("click", ()=>{
+    // Click actions in any board
+    document.querySelector(".boards").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-action]"); if (!btn) return;
+      const id = btn.closest(".card")?.dataset.id; if (!id) return;
+      const action = btn.dataset.action;
+
+      const byId = Object.fromEntries(cards.map(c => [c.id, c]));
+      const c = byId[id]; if (!c) return;
+
+      if (action === "complete") c.status = "done";
+      else if (action === "trash") c.status = "deleted";
+      else if (action === "undo") c.status = "active";
+
+      renderCards(getCurrentCards());
+      autoSave();
+    });
+
+    // Add new card -> Active
+    document.getElementById("addBtn").addEventListener("click", ()=>{
       const type=$newType.value;
       const title=($newTitle.value||"").trim();
       const text=($newText.value||"").trim();
       if(!text) return;
-      const item={ id: genId(), type, text };
+      const item={ id: genId(), type, text, status:"active" };
       if(type==="section" && title) item.title=title;
       renderCards([...cards, item]);
       $newText.value=""; $newTitle.value="";
       autoSave();
     });
-    $board.addEventListener("click",(e)=>{
-      const btn=e.target.closest("button[data-action='del']"); if(!btn) return;
-      const id=btn.closest(".card")?.dataset.id; if(!id) return;
-      renderCards(cards.filter(c=>c.id!==id));
-      autoSave();
-    });
 
-    $deleteRoom.addEventListener("click", async () => {
-      const code = currentRoomCode();
-    
-      if (!code) {
-        // No room joined: offer to clear all local cached rooms instead
-        const ok = confirm(
-          "You are not in a room. This will clear ALL local cached rooms on this device. Continue?"
-        );
-        if (!ok) return;
-        localStorage.removeItem("bhq-rooms-v1");
-        location.reload();
-        return;
-      }
-    
-      const ok = confirm(
-        `Delete room “${code}” for everyone?\n\n` +
-        "This will remove the room for everyone and cannot be undone."
-      );
-      if (!ok) return;
-    
-      try {
-        await deleteRoom(code);     // removes remote doc(s) if Firebase is enabled + local cache
-        alert(`Room “${code}” deleted.`);
-      } catch (e) {
-        console.error(e);
-        alert("Failed to delete room (see console).");
-      }
-    
-      // Reset UI back to no room
-      const url = new URL(location.href);
-      url.searchParams.delete("room");
-      location.href = url.toString();
-    });
-
-    
-    // Rooms
+    // Rooms: list, join, share
     async function refreshRoomsList(selected){
       const rooms = await listRooms();
       $roomSel.innerHTML="";
@@ -252,7 +300,6 @@
 
     async function joinAndLoad(room){
       await joinRoom(room, ()=>{
-        // Snapshot callback – reload live view
         const state = loadLive();
         renderCards(state);
         $status.textContent = currentRoomCode()
@@ -260,7 +307,6 @@
           : `Local mode (not in a room)`;
       });
       await refreshRoomsList(currentRoomCode());
-      // Initial load
       const state = loadLive();
       renderCards(state);
     }
@@ -274,7 +320,6 @@
       const name = ($roomInp.value || "").trim();
       if(!name) return;
       await joinAndLoad(name);
-      // add to URL
       const url = new URL(location.href); url.searchParams.set("room", name);
       history.replaceState(null, "", url.toString());
     });
@@ -293,49 +338,85 @@
       alert("Share link copied!");
     });
 
-    // Guide.json loader
+    // Delete Room (with confirm)
+    $deleteRoom.addEventListener("click", async () => {
+      const code = currentRoomCode();
+
+      if (!code) {
+        const ok = confirm(
+          "You are not in a room. This will clear ALL local cached rooms on this device. Continue?"
+        );
+        if (!ok) return;
+        localStorage.removeItem("bhq-rooms-v1");
+        location.reload();
+        return;
+      }
+
+      const ok = confirm(
+        `Delete room “${code}” for everyone?\n\nThis will remove the live board in Firestore and cannot be undone.`
+      );
+      if (!ok) return;
+
+      try {
+        await deleteRoom(code);
+        alert(`Room “${code}” deleted.`);
+      } catch (e) {
+        console.error(e);
+        alert("Failed to delete room (see console).");
+      }
+
+      const url = new URL(location.href);
+      url.searchParams.delete("room");
+      location.href = url.toString();
+    });
+
+    // Guide.json loader + PDF link
     const guideJsonUrl=(noCache=false)=>{ const u=new URL("data/guide.json",location.href); if(noCache) u.searchParams.set("ts",Date.now()); return u.toString(); };
+    function updateGuideLink(meta){
+      const u = (meta && meta.url) ? String(meta.url) : "";
+      if (!u) { $pdfLink.style.display = "none"; return; }
+      const isPdf = u.toLowerCase().endsWith(".pdf");
+      $pdfLink.textContent = isPdf ? "Open PDF" : "Open Source Page";
+      $pdfLink.href = u;
+      $pdfLink.style.display = "inline-block";
+    }
     async function loadGuideJson(noCache=false){
       $status.textContent="Loading…";
       try{
         const res=await fetch(guideJsonUrl(noCache),{cache:noCache?"no-store":"default"});
         if(!res.ok) throw new Error("HTTP "+res.status);
         const data=await res.json();
-        const next=[
-          ...(data.questions||[]).map(q=>({type:"question",text:q})),
-          ...(data.sections||[]).map(s=>({type:"section",title:s.title,text:s.body}))
-        ];
         updateGuideLink(data);
+        const next=[
+          ...(data.questions||[]).map(q=>({type:"question",text:q,status:"active"})),
+          ...(data.sections||[]).map(s=>({type:"section",title:s.title,text:s.body,status:"active"}))
+        ];
         renderCards(next);
-        autoSave(); // seed the room with latest guide if desired
+        autoSave(); // persist to room
         $status.textContent=`Loaded: ${next.length} cards`;
-      } catch { $status.textContent="Failed to load data/guide.json"; }
+      } catch (e) {
+        console.error(e);
+        $status.textContent="Failed to load data/guide.json";
+      }
     }
-    document.getElementById("loadLatestBtn").addEventListener("click", () => {
+
+    // Confirmations for overwriting actions
+    $loadLatest.addEventListener("click", () => {
       const ok = confirm(
-        "Load Latest Sermon will replace the current board with the latest guide.\n\n" +
-        "Any unsaved changes in this room will be overwritten. Continue?"
+        "Load Latest Sermon will replace the current board with the latest guide.\n\nAny unsaved changes in this room will be overwritten. Continue?"
       );
       if (!ok) return;
-      loadGuideJson(false);   // your autoSave() call inside load path will persist to the room
+      loadGuideJson(false);
     });
-    
-    document.getElementById("refreshBtn").addEventListener("click", () => {
+    $refresh.addEventListener("click", () => {
       const ok = confirm(
-        "Refresh will re-read the latest guide and overwrite the current board.\n\n" +
-        "Any unsaved changes in this room will be overwritten. Continue?"
+        "Refresh will re-read the latest guide and overwrite the current board.\n\nAny unsaved changes in this room will be overwritten. Continue?"
       );
       if (!ok) return;
       loadGuideJson(true);
     });
 
-    // Reset
-    document.getElementById("resetBtn").addEventListener("click", ()=>{
-      localStorage.removeItem("bhq-rooms-v1");
-      location.reload();
-    });
-
-    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;"," >":"&gt;","\"":"&quot;","'":"&#039;" }[m])); }
+    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m])); }
   </script>
 </body>
 </html>
