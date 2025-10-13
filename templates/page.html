@@ -74,7 +74,7 @@
   <div class="wrap">
     <header>
       <h1>Discussion Guide</h1>
-      <span class="muted">live shared rooms</span>
+      <span class="muted">Blackhawk Church</span>
     </header>
 
     <!-- Room + actions bar -->
@@ -120,8 +120,9 @@
       </div>
     </div>
 
-    <div class="hint muted">Rooms are live: edits autosave & sync to others in the same room.</div>
-    <div class="footer">Loads from <code>data/guide.json</code> by default.</div>
+    <div class="hint muted">If you don't see anything on the page, start by clicking "Load Latest Sermon"</div>
+    <div class="hint muted">Rooms allow you to share your view with others and collaborate in real time.</div>
+    <div class="footer">blackhawk.church/learn</div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" crossorigin="anonymous"></script>
@@ -363,7 +364,7 @@
       }
 
       const ok = confirm(
-        `Delete room “${code}” for everyone?\n\nThis will remove the live board in Firestore and cannot be undone.`
+        `Delete room “${code}” for everyone?\n\nThis will remove the room for everyone, not just you. Continue?`
       );
       if (!ok) return;
 
@@ -413,14 +414,14 @@
     // Confirmations for overwriting actions
     $loadLatest.addEventListener("click", () => {
       const ok = confirm(
-        "Load Latest Sermon will replace the current board with the latest guide.\n\nAny unsaved changes in this room will be overwritten. Continue?"
+        "Load Latest Sermon will replace the current board with the latest Discussion Guide.\n\nAny changes in this room will be overwritten. Continue?"
       );
       if (!ok) return;
       loadGuideJson(false);
     });
     $refresh.addEventListener("click", () => {
       const ok = confirm(
-        "Refresh will re-read the latest guide and overwrite the current board.\n\nAny unsaved changes in this room will be overwritten. Continue?"
+        "Refresh will re-read the latest guide and overwrite the current Discussion Guide questions.\n\nAny changes will be overwritten. Continue?"
       );
       if (!ok) return;
       loadGuideJson(true);
