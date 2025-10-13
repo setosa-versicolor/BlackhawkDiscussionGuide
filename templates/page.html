@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Discussion Guide — Cards</title>
+  <title>Discussion Guide — Rooms</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root {
@@ -14,14 +14,13 @@
     .wrap{max-width:940px;margin:28px auto 80px;padding:0 16px;}
     header{display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
     header h1{font-size:20px;margin:0 12px 0 0;font-weight:700;}
-    .bar,.viewbar{background:var(--panel);border:1px solid var(--border);border-radius:12px;
+    .bar{background:var(--panel);border:1px solid var(--border);border-radius:12px;
       padding:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
     input[type="text"],select{background:#0f1117;color:var(--text);border:1px solid var(--border);
       border-radius:10px;padding:8px 10px;outline:none;min-width:180px;}
     button{background:var(--accent);color:#0a0b0f;border:none;border-radius:10px;padding:9px 12px;
       font-weight:700;cursor:pointer;}
-    button.secondary{background:#2b3040;color:var(--text);}
-    button.danger{background:#ff6b6b;color:#101114;}
+    button.secondary{background:#2b3040;color:var(--text);} button.danger{background:#ff6b6b;color:#101114;}
     .muted{color:#9aa3b2;} .spacer{flex:1}
     .board{display:block;margin-top:16px;}
     .card{width:100%;box-sizing:border-box;margin:12px 0;background:var(--card);
@@ -40,29 +39,20 @@
   <div class="wrap">
     <header>
       <h1>Discussion Guide</h1>
-      <span class="muted">interactive cards + shared views</span>
+      <span class="muted">live shared rooms</span>
     </header>
 
-    <!-- Top controls -->
+    <!-- Room controls -->
     <div class="bar">
-      <button id="loadLatestBtn" title="Load from data/guide.json">Load Latest</button>
-      <button id="refreshBtn" class="secondary" title="Re-read data/guide.json with no cache">Refresh</button>
+      <select id="roomSelect" title="Rooms"></select>
+      <input id="roomInput" type="text" placeholder="New room name…" />
+      <button id="createJoinBtn">Create / Join</button>
+      <button id="shareBtn" class="secondary">Copy Share Link</button>
       <div class="spacer"></div>
+      <button id="loadLatestBtn" class="secondary" title="Load from data/guide.json">Load Latest</button>
+      <button id="refreshBtn" class="secondary" title="Re-read data/guide.json with no cache">Refresh</button>
       <button id="resetBtn" class="danger" title="Clear saved app state">Reset</button>
       <span class="muted" id="status"></span>
-    </div>
-
-    <!-- Shared views -->
-    <div class="viewbar" style="margin-top:10px">
-      <select id="viewSelect" title="Saved views dropdown"></select>
-      <input id="viewName" type="text" placeholder="New view name…" />
-      <button id="saveViewBtn">Save / Update</button>
-      <div class="spacer"></div>
-      <div class="row">
-        <input id="roomInput" placeholder="Room code (e.g., ABCD123)" />
-        <button id="joinBtn">Join Room</button>
-        <button id="shareBtn" class="secondary">Copy Share Link</button>
-      </div>
     </div>
 
     <!-- Add new card -->
@@ -79,18 +69,16 @@
     <!-- Cards -->
     <div id="board" class="board"></div>
 
-    <div class="hint muted">Tip: drag cards with the “⋮⋮” handle. Use the dropdown to switch/sync views.</div>
+    <div class="hint muted">Rooms are live: edits autosave & sync to others in the same room.</div>
     <div class="footer">Loads from <code>data/guide.json</code> by default.</div>
   </div>
 
-  <!-- SortableJS -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" crossorigin="anonymous"></script>
 
-  <!-- App -->
   <script type="module">
-    import { listViews, loadView, saveView, joinRoom, connectFirebase, currentRoomCode } from "./static/js/viewStore.js";
+    import { connectFirebase, joinRoom, saveLive, loadLive, listRooms, currentRoomCode } from "./static/js/viewStore.js";
 
-    // ----- Firebase (paste your real config or set FIREBASE_ENABLED=false) -----
+    // ---- Firebase (paste your config) ----
     const FIREBASE_ENABLED = true;
     const firebaseConfig = {
       apiKey: "AIzaSyBMtVbKp6i5cnb_Zapc_sEW8rMebVjuIKs",
@@ -99,27 +87,26 @@
     };
     if (FIREBASE_ENABLED) { await connectFirebase(firebaseConfig); }
 
-    // ----- DOM -----
-    const $board   = document.getElementById("board");
-    const $status  = document.getElementById("status");
-    const $loadLatest = document.getElementById("loadLatestBtn");
-    const $refresh    = document.getElementById("refreshBtn");
-    const $reset      = document.getElementById("resetBtn");
-    const $sel     = document.getElementById("viewSelect");
-    const $name    = document.getElementById("viewName");
-    const $save    = document.getElementById("saveViewBtn");
-    const $joinBtn = document.getElementById("joinBtn");
-    const $shareBtn= document.getElementById("shareBtn");
+    // ---- DOM ----
+    const $roomSel = document.getElementById("roomSelect");
     const $roomInp = document.getElementById("roomInput");
-    const $addBtn  = document.getElementById("addBtn");
+    const $createJoin = document.getElementById("createJoinBtn");
+    const $share = document.getElementById("shareBtn");
+    const $status = document.getElementById("status");
+
+    const $board = document.getElementById("board");
+    const $addBtn = document.getElementById("addBtn");
     const $newType = document.getElementById("newType");
     const $newTitle= document.getElementById("newTitle");
     const $newText = document.getElementById("newText");
 
-    // ----- State & rendering -----
+    const $reset = document.getElementById("resetBtn");
+    const $loadLatest = document.getElementById("loadLatestBtn");
+    const $refresh = document.getElementById("refreshBtn");
+
+    // ---- State / render ----
     let cards = [];
-    let currentView = null;   // active view name
-    const genId = () => "c_" + Math.random().toString(36).slice(2, 9);
+    const genId = () => "c_" + Math.random().toString(36).slice(2,9);
 
     function renderCards(next) {
       cards = next.map(c => ({ id: c.id || genId(), ...c }));
@@ -128,154 +115,139 @@
         const el = document.createElement("div");
         el.className = "card";
         el.dataset.id = c.id;
-
-        const header = document.createElement("div");
-        header.className = "card-header";
-        header.innerHTML = `
-          <span class="drag-handle">⋮⋮</span>
-          <span class="tag">${c.type === "section" ? "Section" : "Question"}</span>
-          ${c.title ? `<strong style="margin-left:6px">${escapeHtml(c.title)}</strong>` : ""}
-          <div class="spacer"></div>
-          <button class="secondary" data-action="del">Delete</button>
+        el.innerHTML = `
+          <div class="card-header">
+            <span class="drag-handle">⋮⋮</span>
+            <span class="tag">${c.type === "section" ? "Section" : "Question"}</span>
+            ${c.title ? `<strong style="margin-left:6px">${escapeHtml(c.title)}</strong>` : ""}
+            <div class="spacer"></div>
+            <button class="secondary" data-action="del">Delete</button>
+          </div>
+          <div class="card-body"></div>
         `;
-        const body = document.createElement("div");
-        body.className = "card-body";
-        body.textContent = c.text;
-
-        el.appendChild(header);
-        el.appendChild(body);
+        el.querySelector(".card-body").textContent = c.text;
         $board.appendChild(el);
       }
     }
-    function getCurrentCards() {
-      const order = [...$board.querySelectorAll(".card")].map(n => n.dataset.id);
-      const byId = Object.fromEntries(cards.map(c => [c.id, c]));
-      return order.map(id => byId[id]).filter(Boolean);
+    function getCurrentCards(){
+      const order = [...$board.querySelectorAll(".card")].map(n=>n.dataset.id);
+      const byId = Object.fromEntries(cards.map(c=>[c.id,c]));
+      return order.map(id=>byId[id]).filter(Boolean);
     }
 
     // Drag & drop + autosave
     Sortable.create($board, {
-      animation: 150, handle: ".drag-handle", ghostClass: "ghost", direction: "vertical",
-      onEnd(){ cards = getCurrentCards(); autoSave(); }
+      animation:150, handle:".drag-handle", ghostClass:"ghost", direction:"vertical",
+      onEnd(){ cards=getCurrentCards(); autoSave(); }
     });
 
     // Debounced autosave
-    const debounce = (fn, ms=400) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
-    const autoSave = debounce(() => {
-      if (!currentView) return;
-      saveView({ name: currentView, cards: getCurrentCards(), roomCode: currentRoomCode() });
-    }, 400);
+    const debounce=(fn,ms=400)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
+    const autoSave = debounce(()=>{
+      if (!currentRoomCode()) return;
+      saveLive(getCurrentCards());
+    },400);
 
-    // Add / Delete
-    $addBtn.addEventListener("click", () => {
-      const type  = $newType.value;
-      const title = ($newTitle.value || "").trim();
-      const text  = ($newText.value  || "").trim();
-      if (!text) return;
-      const item = { id: genId(), type, text };
-      if (type === "section" && title) item.title = title;
+    // Add/Delete
+    $addBtn.addEventListener("click", ()=>{
+      const type=$newType.value;
+      const title=($newTitle.value||"").trim();
+      const text=($newText.value||"").trim();
+      if(!text) return;
+      const item={ id: genId(), type, text };
+      if(type==="section" && title) item.title=title;
       renderCards([...cards, item]);
-      $newText.value = ""; $newTitle.value = "";
+      $newText.value=""; $newTitle.value="";
       autoSave();
     });
-    $board.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-action='del']");
-      if (!btn) return;
-      const id = btn.closest(".card")?.dataset.id;
-      if (!id) return;
-      renderCards(cards.filter(c => c.id !== id));
+    $board.addEventListener("click",(e)=>{
+      const btn=e.target.closest("button[data-action='del']"); if(!btn) return;
+      const id=btn.closest(".card")?.dataset.id; if(!id) return;
+      renderCards(cards.filter(c=>c.id!==id));
       autoSave();
     });
 
-    // Shared views (rooms)
-    function refreshViewList() {
-      const names = listViews(currentRoomCode());
-      $sel.innerHTML = "";
-      for (const n of names) {
-        const opt = document.createElement("option");
-        opt.value = n; opt.textContent = n;
-        $sel.appendChild(opt);
+    // Rooms
+    async function refreshRoomsList(selected){
+      const rooms = await listRooms();
+      $roomSel.innerHTML="";
+      for(const r of rooms){
+        const opt=document.createElement("option"); opt.value=r; opt.textContent=r;
+        $roomSel.appendChild(opt);
       }
-      if (currentView && names.includes(currentView)) $sel.value = currentView;
+      if(selected && rooms.includes(selected)) $roomSel.value=selected;
     }
 
-    async function joinFromUI(room) {
-      await joinRoom(room || null, () => {
-        refreshViewList();
-        if (currentView) {
-          const updated = loadView({ name: currentView, roomCode: currentRoomCode() });
-          if (updated) renderCards(updated);
-        }
+    async function joinAndLoad(room){
+      await joinRoom(room, ()=>{
+        // Snapshot callback – reload live view
+        const state = loadLive();
+        renderCards(state);
         $status.textContent = currentRoomCode()
           ? `Connected to room ${currentRoomCode()}`
           : `Local mode (not in a room)`;
       });
+      await refreshRoomsList(currentRoomCode());
+      // Initial load
+      const state = loadLive();
+      renderCards(state);
     }
-    // Auto-join via ?room=CODE
-    await joinFromUI(new URLSearchParams(location.search).get("room"));
 
-    $joinBtn.addEventListener("click", async () => {
-      await joinFromUI($roomInp.value.trim() || null);
+    // ?room=CODE
+    const urlRoom = new URLSearchParams(location.search).get("room");
+    await joinAndLoad(urlRoom || null);
+    await refreshRoomsList(currentRoomCode());
+
+    $createJoin.addEventListener("click", async ()=>{
+      const name = ($roomInp.value || "").trim();
+      if(!name) return;
+      await joinAndLoad(name);
+      // add to URL
+      const url = new URL(location.href); url.searchParams.set("room", name);
+      history.replaceState(null, "", url.toString());
     });
-    $shareBtn.addEventListener("click", async () => {
-      const code = currentRoomCode(); if (!code) { alert("Join a room first."); return; }
-      const url = new URL(location.href); url.searchParams.set("room", code);
+
+    $roomSel.addEventListener("change", async ()=>{
+      const name=$roomSel.value;
+      await joinAndLoad(name);
+      const url=new URL(location.href); url.searchParams.set("room", name);
+      history.replaceState(null, "", url.toString());
+    });
+
+    $share.addEventListener("click", async ()=>{
+      const code=currentRoomCode(); if(!code){ alert("Join a room first."); return; }
+      const url=new URL(location.href); url.searchParams.set("room", code);
       await navigator.clipboard.writeText(url.toString());
       alert("Share link copied!");
     });
 
-    $save.addEventListener("click", async () => {
-      const name = ($name.value || "Untitled").trim();
-      currentView = name;
-      await saveView({ name, cards: getCurrentCards(), roomCode: currentRoomCode() });
-      refreshViewList();
-      $status.textContent = `Saved view: "${name}".`;
-    });
-    $name.addEventListener("change", () => {
-      const n = $name.value.trim();
-      if (n) currentView = n;
-    });
-    $sel.addEventListener("change", () => {
-      currentView = $sel.value;
-      const loaded = loadView({ name: currentView, roomCode: currentRoomCode() });
-      if (loaded) renderCards(loaded);
-    });
-
-    // Load guide.json
-    const guideJsonUrl = (noCache=false) => {
-      const u = new URL("data/guide.json", location.href);
-      if (noCache) u.searchParams.set("ts", Date.now());
-      return u.toString();
-    };
+    // Guide.json loader
+    const guideJsonUrl=(noCache=false)=>{ const u=new URL("data/guide.json",location.href); if(noCache) u.searchParams.set("ts",Date.now()); return u.toString(); };
     async function loadGuideJson(noCache=false){
-      $status.textContent = "Loading…";
+      $status.textContent="Loading…";
       try{
-        const res = await fetch(guideJsonUrl(noCache), { cache: noCache ? "no-store" : "default" });
+        const res=await fetch(guideJsonUrl(noCache),{cache:noCache?"no-store":"default"});
         if(!res.ok) throw new Error("HTTP "+res.status);
-        const data = await res.json();
-        const next = [
-          ...(data.questions||[]).map(q=>({type:"question", text:q})),
-          ...(data.sections||[]).map(s=>({type:"section", title:s.title, text:s.body}))
+        const data=await res.json();
+        const next=[
+          ...(data.questions||[]).map(q=>({type:"question",text:q})),
+          ...(data.sections||[]).map(s=>({type:"section",title:s.title,text:s.body}))
         ];
         renderCards(next);
-        $status.textContent = `Loaded: ${next.length} cards`;
-      } catch {
-        $status.textContent = "Failed to load data/guide.json";
-      }
+        autoSave(); // seed the room with latest guide if desired
+        $status.textContent=`Loaded: ${next.length} cards`;
+      } catch { $status.textContent="Failed to load data/guide.json"; }
     }
-    $loadLatest.addEventListener("click", ()=>loadGuideJson(false));
-    $refresh.addEventListener("click",   ()=>loadGuideJson(true));
-    loadGuideJson(false);
+    document.getElementById("loadLatestBtn").addEventListener("click",()=>loadGuideJson(false));
+    document.getElementById("refreshBtn").addEventListener("click",()=>loadGuideJson(true));
 
     // Reset
-    $reset.addEventListener("click", () => {
-      localStorage.removeItem("bhq-views-v2");
-      localStorage.removeItem("bhq-v1");
+    document.getElementById("resetBtn").addEventListener("click", ()=>{
+      localStorage.removeItem("bhq-rooms-v1");
       location.reload();
     });
 
-    // Utils
-    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m])); }
+    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;"," >":"&gt;","\"":"&quot;","'":"&#039;" }[m])); }
   </script>
 </body>
 </html>
