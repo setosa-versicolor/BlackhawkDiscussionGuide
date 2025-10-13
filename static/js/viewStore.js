@@ -1,3 +1,4 @@
+
 // static/js/viewStore.js
 // Single-live-view-per-room store with optional Firestore sync.
 // If Firebase isn't connected, everything stays local (per-room in localStorage).
@@ -20,14 +21,29 @@ function saveLS() {
 
 export async function connectFirebase(config) {
   if (fb) return fb;
-  const [{ initializeApp }, { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, serverTimestamp, deleteDoc }] =
-    await Promise.all([
-      import("https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"),
-      import("https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js")
-    ]);
+
+  // Add Auth + App Check imports
+  const [
+    { initializeApp },
+    { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, serverTimestamp },
+    { getAuth, signInAnonymously },
+    { initializeAppCheck, ReCaptchaEnterpriseProvider } // or ReCaptchaV3Provider
+  ] = await Promise.all([
+    import("https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"),
+    import("https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"),
+    import("https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"),
+    import("https://www.gstatic.com/firebasejs/10.12.4/firebase-app-check.js"),
+  ]);
+
   const app = initializeApp(config);
   const db = getFirestore(app);
-  fb = { app, db, firestore: { doc, setDoc, getDoc, onSnapshot, collection, getDocs, serverTimestamp, deleteDoc } };
+  
+  // silent login — no UI
+  const auth = getAuth(app);
+  await signInAnonymously(auth).catch(console.error);
+  
+  fb = { app, db, auth, firestore: { doc, setDoc, getDoc, onSnapshot, collection, getDocs, serverTimestamp } };
+
   return fb;
 }
 
