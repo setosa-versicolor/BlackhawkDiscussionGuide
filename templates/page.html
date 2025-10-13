@@ -74,7 +74,7 @@
       </a>
       
       <div class="spacer"></div>
-      <button id="resetBtn" class="danger" title="Clear saved app state">Reset</button>
+      <button id="deleteRoomBtn" class="danger" title="Delete this room for everyone">Delete Room</button>
       <span class="muted" id="status"></span>
     </div>
 
@@ -101,7 +101,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" crossorigin="anonymous"></script>
 
   <script type="module">
-    import { connectFirebase, joinRoom, saveLive, loadLive, listRooms, currentRoomCode } from "./static/js/viewStore.js";
+    import { connectFirebase, joinRoom, saveLive, loadLive, listRooms, currentRoomCode, deleteRoom } from "./static/js/viewStore.js";
 
     // ---- Firebase (paste your config) ----
     const FIREBASE_ENABLED = true;
@@ -126,7 +126,7 @@
     const $newTitle= document.getElementById("newTitle");
     const $newText = document.getElementById("newText");
 
-    const $reset = document.getElementById("resetBtn");
+    const $deleteRoom = document.getElementById("deleteRoomBtn");
     const $loadLatest = document.getElementById("loadLatestBtn");
     const $refresh = document.getElementById("refreshBtn");
 
@@ -203,6 +203,41 @@
       autoSave();
     });
 
+    $deleteRoom.addEventListener("click", async () => {
+      const code = currentRoomCode();
+    
+      if (!code) {
+        // No room joined: offer to clear all local cached rooms instead
+        const ok = confirm(
+          "You are not in a room. This will clear ALL local cached rooms on this device. Continue?"
+        );
+        if (!ok) return;
+        localStorage.removeItem("bhq-rooms-v1");
+        location.reload();
+        return;
+      }
+    
+      const ok = confirm(
+        `Delete room “${code}” for everyone?\n\n` +
+        "This will remove the live board in Firestore and cannot be undone."
+      );
+      if (!ok) return;
+    
+      try {
+        await deleteRoom(code);     // removes remote doc(s) if Firebase is enabled + local cache
+        alert(`Room “${code}” deleted.`);
+      } catch (e) {
+        console.error(e);
+        alert("Failed to delete room (see console).");
+      }
+    
+      // Reset UI back to no room
+      const url = new URL(location.href);
+      url.searchParams.delete("room");
+      location.href = url.toString();
+    });
+
+    
     // Rooms
     async function refreshRoomsList(selected){
       const rooms = await listRooms();
@@ -275,8 +310,23 @@
         $status.textContent=`Loaded: ${next.length} cards`;
       } catch { $status.textContent="Failed to load data/guide.json"; }
     }
-    document.getElementById("loadLatestBtn").addEventListener("click",()=>loadGuideJson(false));
-    document.getElementById("refreshBtn").addEventListener("click",()=>loadGuideJson(true));
+    document.getElementById("loadLatestBtn").addEventListener("click", () => {
+      const ok = confirm(
+        "Load Latest Sermon will replace the current board with the latest guide.\n\n" +
+        "Any unsaved changes in this room will be overwritten. Continue?"
+      );
+      if (!ok) return;
+      loadGuideJson(false);   // your autoSave() call inside load path will persist to the room
+    });
+    
+    document.getElementById("refreshBtn").addEventListener("click", () => {
+      const ok = confirm(
+        "Refresh will re-read the latest guide and overwrite the current board.\n\n" +
+        "Any unsaved changes in this room will be overwritten. Continue?"
+      );
+      if (!ok) return;
+      loadGuideJson(true);
+    });
 
     // Reset
     document.getElementById("resetBtn").addEventListener("click", ()=>{
