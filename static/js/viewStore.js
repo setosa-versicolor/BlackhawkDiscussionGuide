@@ -20,14 +20,14 @@ function saveLS() {
 
 export async function connectFirebase(config) {
   if (fb) return fb;
-  const [{ initializeApp }, { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, serverTimestamp }] =
+  const [{ initializeApp }, { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, serverTimestamp, deleteDoc }] =
     await Promise.all([
       import("https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"),
       import("https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js")
     ]);
   const app = initializeApp(config);
   const db = getFirestore(app);
-  fb = { app, db, firestore: { doc, setDoc, getDoc, onSnapshot, collection, getDocs, serverTimestamp } };
+  fb = { app, db, firestore: { doc, setDoc, getDoc, onSnapshot, collection, getDocs, serverTimestamp, deleteDoc } };
   return fb;
 }
 
@@ -110,6 +110,34 @@ export async function saveLive(cards) {
     }
   }
 }
+
+export async function deleteRoom(code) {
+  loadLS();
+  const name = (code || currentRoom || "").trim();
+  if (!name) return;
+
+  // Remove local cache
+  if (memory.rooms[name]) {
+    delete memory.rooms[name];
+    saveLS();
+  }
+  if (currentRoom === name) currentRoom = null;
+
+  // Remove remote docs if connected
+  if (fb) {
+    const { db, firestore } = fb;
+    const liveDoc = firestore.doc(db, "rooms", name, "views", "__live");
+    const roomDoc = firestore.doc(db, "rooms", name);
+    try {
+      await firestore.deleteDoc(liveDoc).catch(()=>{});
+      await firestore.deleteDoc(roomDoc).catch(()=>{});
+    } catch (e) {
+      console.error("deleteRoom Firestore error:", e);
+      throw e;
+    }
+  }
+}
+
 
 export function loadLive() {
   loadLS();
