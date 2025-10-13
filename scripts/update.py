@@ -1,27 +1,33 @@
 # scripts/update.py
 # Auto-discovers this week's discussion guide, parses HTML first (Reflect + Discuss),
-# falls back to PDF, and writes data/guide.json for a static (GitHub Pages) front-end.
+# falls back to PDF, and writes a complete deployable site/ for GitHub Pages.
 #
-# Reuses (and lightly extends) your original discovery flow:
+# Discovery flow:
 #   /messages -> "Discussion Guide" near today's date
 #   message page -> "Discussion Guide"
 #   /learn -> current series -> resources list (date-picked)
 #
-# Also writes a Jinja-built site/index.html if templates/page.html exists.
+# Outputs:
+#   - site/index.html (from templates/page.html if present)
+#   - site/data/guide.json (parsed content)
+#   - site/static/* (mirrored from ./static if present)
 
-import os, re, io, sys, datetime
-from zoneinfo import ZoneInfo
-import argparse
-from pathlib import Path
-from urllib.parse import urljoin, urlparse
-import shutil
 import os
+import re
+import io
+import sys
+import shutil
 import datetime
+from pathlib import Path
+from urllib.parse import urljoin
+from zoneinfo import ZoneInfo
+
+import argparse
 import requests
 from bs4 import BeautifulSoup
 from pdfminer.high_level import extract_text
 
-# --------- Constants (from your script) ---------
+# --------- Constants ---------
 LEARN_URL     = "https://blackhawk.church/learn/"
 MESSAGES_URL  = "https://blackhawk.church/messages/"
 TZ            = ZoneInfo("America/Chicago")
@@ -59,7 +65,7 @@ MONTHS = {
     "dec": 12, "december": 12,
 }
 
-# --------- HTTP / Parsing helpers (from your script) ---------
+# --------- HTTP / Parsing helpers ---------
 def get_soup(url: str) -> BeautifulSoup:
     r = requests.get(url, headers=BROWSER_HEADERS, timeout=30)
     r.raise_for_status()
@@ -114,7 +120,7 @@ def _collect_nearby_text(a_tag, max_ancestors=3) -> str:
             uniq.append(t); seen.add(t)
     return "  •  ".join(uniq)
 
-# --------- Discovery flows (from your script) ---------
+# --------- Discovery flows ---------
 def _first_discussion_link_on_messages_page(today: datetime.date) -> str | None:
     soup = get_soup(MESSAGES_URL)
     month_name = today.strftime("%B")
@@ -201,7 +207,7 @@ def find_today_discussion_pdf_or_page(series_url: str, today: datetime.date) -> 
                 "all_guides": []
             }
 
-    # 3) Fallback: series resources list (date-scored, like your original)
+    # 3) Fallback: series resources list (date-scored)
     soup_r = get_soup(series_url)
     series_title_tag = soup_r.find(lambda t: t.name in ("h1","h2") and t.get_text(strip=True))
     series_title = series_title_tag.get_text(strip=True) if series_title_tag else "Current Series"
@@ -234,7 +240,7 @@ def find_today_discussion_pdf_or_page(series_url: str, today: datetime.date) -> 
 
     raise RuntimeError("Could not locate a Discussion Guide link for today's message.")
 
-# --------- Content parsing (new HTML-first, then PDF fallback) ---------
+# --------- Content parsing (HTML first, then PDF fallback) ---------
 _WS = re.compile(r"\s+")
 _BULLET = re.compile(r"^\s*[–—-•]\s+")
 
@@ -272,7 +278,6 @@ def parse_html_guide(html: str):
     soup = BeautifulSoup(html, "lxml")
     heads = _headings(soup)
 
-    # Find Reflect + Discuss
     reflect = None
     for h in heads:
         if re.search(r"reflect\s*\+\s*discuss", h.get_text(" ", strip=True), re.I):
@@ -294,10 +299,8 @@ def parse_html_guide(html: str):
                 buf += " " + line
     if buf: items.append(buf.strip())
 
-    # Filter to likely questions (end with ?, or clear prompt-y wording)
     qs = [q for q in items if q.endswith("?") or re.search(r"(read\s+|what|how|why|where|when)", q, re.I)]
 
-    # Sections: Memorization Challenge, Pray, Next Steps
     def grab(title_re):
         h = next((x for x in heads if re.search(title_re, x.get_text(" ", strip=True), re.I)), None)
         if not h: return None
@@ -326,8 +329,6 @@ def parse_pdf_guide(pdf_url: str):
     lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
     title = lines[0] if lines else "Discussion Guide"
 
-    # collect bullets after "Reflect + Discuss"
-    # find the block after reflect header
     try:
         start_idx = next(i for i, ln in enumerate(lines) if re.search(r"reflect\s*\+\s*discuss", ln, re.I))
     except StopIteration:
@@ -342,14 +343,12 @@ def parse_pdf_guide(pdf_url: str):
         else:
             if buf:
                 buf += " " + ln
-            # stop if we hit a clear next heading
             if re.match(r"^(memorization challenge|pray|next steps)\b", ln, re.I):
                 break
     if buf: bullets.append(buf.strip())
 
     questions = [q for q in bullets if q.endswith("?") or re.search(r"(read\s+|what|how|why|where|when)", q, re.I)]
 
-    # sections from pdf
     def grab_sec(name):
         m = re.search(rf"{name}\s*:?\s*(.+?)(?=\n[A-Z][A-Za-z ]{{2,}}:?\s*|\Z)", raw, re.I | re.S)
         if not m: return None
@@ -359,7 +358,7 @@ def parse_pdf_guide(pdf_url: str):
     return {"title": title, "questions": questions, "sections": sections}
 
 # --------- Outputs ---------
-def write_json(source_url: str, data: dict, out_path: str = "data/guide.json"):
+def write_json(source_url: str, data: dict, out_path: str = "site/data/guide.json"):
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "url": source_url,
@@ -373,11 +372,13 @@ def write_json(source_url: str, data: dict, out_path: str = "data/guide.json"):
     print(f"Wrote {out_path} ({len(payload['questions'])} questions, {len(payload['sections'])} sections)")
 
 def maybe_write_site(series_title, date_obj, title_line, sections, source_pdf, out_dir="site"):
+    # Render index.html via Jinja (if template exists)
     try:
         from jinja2 import Environment, FileSystemLoader, select_autoescape
     except Exception:
         print("Jinja2 not installed; skipping static site rendering.")
         return
+
     os.makedirs(out_dir, exist_ok=True)
     env = Environment(loader=FileSystemLoader("templates"), autoescape=select_autoescape())
     try:
@@ -395,38 +396,33 @@ def maybe_write_site(series_title, date_obj, title_line, sections, source_pdf, o
         date_str=date_str,
         sections=sections or [],
         pdf_url=source_pdf,
-        updated=datetime.datetime.now(tz=TZ).strftime("%Y-%m-%d %I:%M %p %Z")
+        updated=datetime.datetime.now(tz=TZ).strftime("%Y-%m-%d %I:%M %p %Z"),
     )
-    # Write the main static page
-    with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f:
-        f.write(html)
+    (Path(out_dir) / "index.html").write_text(html, encoding="utf-8")
     print(f"Wrote {out_dir}/index.html")
 
-    # -------------------------------------------------------------------------
-    # Copy supplemental assets into the output directory
-    # -------------------------------------------------------------------------
+    # Mirror ./static → site/static (so ./static/js/viewStore.js resolves)
+    src_static = Path("static")
+    dst_static = Path(out_dir) / "static"
+    if src_static.exists():
+        # Python 3.8+: dirs_exist_ok available
+        shutil.copytree(src_static, dst_static, dirs_exist_ok=True)
 
-    # 1. Copy viewStore.js if it exists (look in root and static/js)
-    for candidate in ["viewStore.js", os.path.join("static", "js", "viewStore.js")]:
-        if os.path.isfile(candidate):
-            shutil.copyfile(candidate, os.path.join(out_dir, "viewStore.js"))
-            break
-
-    # 2. Copy the interactive page (page.html) if it exists
-    if os.path.isfile("page.html"):
-        shutil.copyfile("page.html", os.path.join(out_dir, "page.html"))
-
-    # 3. Copy the JSON guide file if it exists
-    json_src = os.path.join("data", "guide.json")
-    if os.path.isfile(json_src):
-        os.makedirs(os.path.join(out_dir, "data"), exist_ok=True)
-        shutil.copyfile(json_src, os.path.join(out_dir, "data", "guide.json"))
+    # Ensure site/data/guide.json exists even if user customized --out-json
+    site_data_dir = Path(out_dir) / "data"
+    site_data_dir.mkdir(parents=True, exist_ok=True)
+    # If there's a non-site JSON, copy it in; otherwise leave the one we wrote
+    default_src = Path("data/guide.json")
+    default_dst = site_data_dir / "guide.json"
+    if default_src.exists() and not default_dst.exists():
+        shutil.copyfile(default_src, default_dst)
 
 # --------- Main ---------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--override", help="Optional: force a specific URL (HTML or PDF)")
-    ap.add_argument("--out-json", default="data/guide.json", help="Where to write the JSON")
+    # Default to writing inside site/, so Pages artifact is self-contained
+    ap.add_argument("--out-json", default="site/data/guide.json", help="Where to write the JSON")
     args = ap.parse_args()
 
     today = datetime.datetime.now(tz=TZ).date()
@@ -443,13 +439,11 @@ def main():
     r = requests.get(source_url, headers=BROWSER_HEADERS, timeout=30)
     r.raise_for_status()
     content_type = r.headers.get("content-type", "").lower()
-    data = {"questions": [], "sections": []}
 
     if source_url.lower().endswith(".pdf") or "application/pdf" in content_type:
         data = parse_pdf_guide(source_url)
     else:
         data = parse_html_guide(r.text)
-        # If HTML yielded nothing, try the first PDF linked on the page
         if not data["questions"]:
             soup = BeautifulSoup(r.text, "lxml")
             pdf = None
@@ -461,30 +455,27 @@ def main():
             if pdf:
                 data = parse_pdf_guide(pdf)
 
-    # Write JSON for the interactive front-end
+    # Write JSON for the interactive front-end (into site/)
     write_json(source_url, data, out_path=args.out_json)
 
-    # Optional: keep your original static site build (uses Jinja template if present)
-    # We’ll create a minimal structure from the parsed data:
-    # - Title line: first line or a fallback
-    title_line = "Discussion Guide"
-    if data.get("questions"):
-        title_line = "Reflect + Discuss"
+    # Build the Jinja static page and stage assets
+    title_line = "Reflect + Discuss" if data.get("questions") else "Discussion Guide"
+    sections = [
+        {"heading": "Reflect + Discuss", "bullets": data.get("questions", []), "paras": []},
+        *[
+            {"heading": s["title"], "bullets": [], "paras": [s["body"]]}
+            for s in data.get("sections", [])
+        ],
+    ]
     maybe_write_site(
         series_title=meta.get("series_title"),
         date_obj=meta.get("date"),
         title_line=title_line,
-        sections=[
-            {"heading": "Reflect + Discuss", "bullets": data.get("questions", []), "paras": []},
-            *[
-                {"heading": s["title"], "bullets": [], "paras": [s["body"]]}
-                for s in data.get("sections", [])
-            ],
-        ],
+        sections=sections,
         source_pdf=source_url,
     )
 
-    print(f"Built JSON for {meta.get('series_title','Current Series')} — {meta.get('date')} from {source_url}")
+    print(f"Built site for {meta.get('series_title','Current Series')} — {meta.get('date')} from {source_url}")
 
 if __name__ == "__main__":
     sys.exit(main())
