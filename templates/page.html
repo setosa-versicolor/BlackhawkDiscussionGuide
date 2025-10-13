@@ -73,8 +73,29 @@
       <input id="viewName" type="text" placeholder="New view name…" />
       <button id="saveViewBtn">Save / Update</button>
       <div class="spacer"></div>
-      <input id="roomCode" type="text" placeholder="Room code (optional for sharing)" />
-      <button id="joinRoomBtn">Join</button>
+      <div class="row">
+        <input id="roomInput" placeholder="Room code (e.g., ABCD123)" />
+        <button id="joinBtn">Join Room</button>
+        <button id="shareBtn" class="secondary">Copy Share Link</button>
+      </div>
+      
+      <script type="module">
+        // inside the same module script as above
+        const $room = document.getElementById("roomInput");
+        document.getElementById("joinBtn").addEventListener("click", async () => {
+          const code = $room.value.trim();
+          await joinFromUI(code || null);
+        });
+      
+        document.getElementById("shareBtn").addEventListener("click", async () => {
+          const code = currentRoomCode();
+          if (!code) { alert("Join a room first."); return; }
+          const url = new URL(location.href);
+          url.searchParams.set("room", code);
+          await navigator.clipboard.writeText(url.toString());
+          alert("Share link copied!");
+        });
+      </script>
     </div>
 
     <!-- Add new card -->
@@ -104,8 +125,56 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" crossorigin="anonymous"></script>
 
   <!-- App -->
-  <script type="module">
-    import { listViews, loadView, saveView, joinRoom } from "./static/js/viewStore.js";
+<script type="module">
+  import { listViews, loadView, saveView, joinRoom, connectFirebase, currentRoomCode } from "./static/js/viewStore.js";
+
+  // 1) OPTIONAL: enable realtime sync by adding your Firebase config
+  //    (Create a Firebase project → Web App → copy the config below)
+  const FIREBASE_ENABLED = true; // set to false if you want local-only
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    // Firestore only needs projectId; including the rest is fine.
+  };
+
+  if (FIREBASE_ENABLED) {
+    await connectFirebase(firebaseConfig);
+  }
+
+  // 2) Join a room if provided via ?room=CODE or from an input
+  const params = new URLSearchParams(location.search);
+  const urlRoom = params.get("room");
+  const $status = document.getElementById("status"); // you already have this in your template
+
+  async function joinFromUI(room) {
+    await joinRoom(room || null, () => {
+      // refresh view list whenever remote changes land
+      refreshViewList();
+      $status.textContent = currentRoomCode()
+        ? `Connected to room ${currentRoomCode()}`
+        : `Local mode (not in a room)`;
+    });
+  }
+
+  // If room in URL, auto-join; otherwise stay local
+  await joinFromUI(urlRoom);
+
+  // Hook up your existing save/load buttons to pass roomCode (or omit for local)
+  function refreshViewList() {
+    const names = listViews(currentRoomCode());
+    // ...your existing code to populate a <select> or menu...
+  }
+
+  // Example: when saving current cards
+  async function saveCurrent(name, cards) {
+    await saveView({ name, cards, roomCode: currentRoomCode() });
+    refreshViewList();
+  }
+
+  // the rest of your existing code...
+</script>
+
 
     // ---------- DOM ----------
     const $board   = document.getElementById("board");
