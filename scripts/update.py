@@ -48,7 +48,8 @@ MONTH_NAME_PAT = re.compile(
     re.IGNORECASE
 )
 # Numeric patterns: "9/28", "09/28", "9-28"
-NUMERIC_DATE_PAT = re.compile(r"\b(?P<m>\d{1,2})[/-](?P<d>\d{1,2})\b")
+# Recognize numeric dates separated by slash, hyphen or period (e.g. 9/28, 9-28, 9.28)
+NUMERIC_DATE_PAT = re.compile(r"\b(?P<m>\d{1,2})[\/\.\-](?P<d>\d{1,2})\b")
 
 MONTHS = {
     "jan": 1, "january": 1,
@@ -122,21 +123,43 @@ def _collect_nearby_text(a_tag, max_ancestors=3) -> str:
 
 # --------- Discovery flows ---------
 def _first_discussion_link_on_messages_page(today: datetime.date) -> str | None:
-    soup = get_soup(MESSAGES_URL)
-    month_name = today.strftime("%B")
-    day = str(today.day)
-    year = str(today.year)
+    """
+    Scan the messages landing page for all discussion guide links and return
+    the one that most closely matches today's date.
 
+    The original implementation returned the first matching link in the DOM,
+    which inadvertently selected an older guide when the page lists messages
+    chronologically (oldest first). To robustly choose the current week's
+    guide, we collect every link labeled "Discussion Guide", extract dates from
+    the surrounding context, and pick the newest date not after today. If no
+    dates are found, fall back to the last occurrence in the list.
+    """
+    soup = get_soup(MESSAGES_URL)
+    guides: list[tuple[datetime.date, str]] = []
     for a in soup.find_all("a"):
         if "discussion guide" in a.get_text(strip=True).lower():
             ctx = _collect_nearby_text(a)
-            has_full = (month_name in ctx and day in ctx and year in ctx)
-            has_md   = (month_name in ctx and day in ctx)
-            if has_full or has_md:
-                href = a.get("href")
-                if href:
-                    return requests.compat.urljoin(MESSAGES_URL, href)
-    return None
+            # Extract all dates from context, assuming the current year as a hint
+            ds = _extract_dates_from_text(ctx, year_hint=today.year)
+            if not ds:
+                # Skip entries without recognizable dates to avoid mis-selection
+                continue
+            ds_unique = sorted(set(ds))
+            # Prefer dates on or before today
+            candidates = [d for d in ds_unique if d <= today]
+            dt_choice = candidates[-1] if candidates else ds_unique[-1]
+            href = a.get("href")
+            if href:
+                guides.append((dt_choice, requests.compat.urljoin(MESSAGES_URL, href)))
+    if not guides:
+        # No dated guides found
+        return None
+    # Sort by date so the last element is the latest
+    guides.sort(key=lambda x: x[0])
+    # Choose the guide whose date is closest to (but not after) today
+    filtered = [g for g in guides if g[0] <= today]
+    chosen = filtered[-1] if filtered else guides[-1]
+    return chosen[1]
 
 def _discussion_link_from_message_page(url: str) -> str | None:
     soup = get_soup(url)
@@ -148,18 +171,37 @@ def _discussion_link_from_message_page(url: str) -> str | None:
     return None
 
 def _find_message_page_for_today(today: datetime.date) -> str | None:
-    soup = get_soup(MESSAGES_URL)
-    month_name = today.strftime("%B")
-    day = str(today.day)
-    mmdd = f"{today.month}/{today.day}"
+    """
+    Return the message detail page that corresponds to today's date.
 
+    Similar to `_first_discussion_link_on_messages_page`, the original implementation
+    stopped at the first `/message/` link whose context contained the month/day.
+    Because the messages index may list older messages before newer ones, this
+    could incorrectly choose a past message. We now collect all candidate message
+    links with recognizable dates and choose the most recent date not after today.
+    """
+    soup = get_soup(MESSAGES_URL)
+    candidates: list[tuple[datetime.date, str]] = []
     for a in soup.find_all("a", href=True):
         href = a["href"]
-        if "/message/" in href:
-            ctx = a.parent.get_text(" ", strip=True) if a.parent else a.get_text(" ", strip=True)
-            if (month_name in ctx and day in ctx) or (mmdd in ctx):
-                return requests.compat.urljoin(MESSAGES_URL, href)
-    return None
+        if "/message/" not in href:
+            continue
+        # Extract context text around the link and look for a date
+        ctx = a.parent.get_text(" ", strip=True) if a.parent else a.get_text(" ", strip=True)
+        ds = _extract_dates_from_text(ctx, year_hint=today.year)
+        if not ds:
+            # Skip message links without an explicit date
+            continue
+        ds_unique = sorted(set(ds))
+        valid = [d for d in ds_unique if d <= today]
+        dt_choice = valid[-1] if valid else ds_unique[-1]
+        candidates.append((dt_choice, requests.compat.urljoin(MESSAGES_URL, href)))
+    if not candidates:
+        return None
+    candidates.sort(key=lambda x: x[0])
+    filtered = [c for c in candidates if c[0] <= today]
+    chosen = filtered[-1] if filtered else candidates[-1]
+    return chosen[1]
 
 def find_current_series_resources_url() -> str:
     soup = get_soup(LEARN_URL)
