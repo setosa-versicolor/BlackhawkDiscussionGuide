@@ -5,6 +5,7 @@
   <title>Discussion Guide — Rooms</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
   <style>
+    /* [Previous CSS remains exactly the same - copying from page_with_verses.html] */
     :root {
       --bg:#0e0f12; --panel:#161820; --card:#1e2230; --text:#e8ecf3;
       --muted:#9aa3b2; --accent:#7aa2ff; --border:#2a2f3c; --danger:#ff6b6b;
@@ -40,7 +41,6 @@
     .row>*{flex:0 0 auto;} .row .grow{flex:1 1 240px;min-width:240px;}
     .hint{margin-top:8px;} .footer{margin-top:18px;color:var(--muted);font-size:13px;}
 
-    /* three lanes */
     .boards {
       display: grid;
       grid-template-columns: 1fr;
@@ -64,7 +64,6 @@
     .board-muted .card { opacity: .95; }
     .board-muted .drag-handle { opacity: .35; cursor: default; }
 
-    /* compact icon buttons */
     .icon-btn {
       background: transparent; color: var(--text);
       border: 1px solid var(--border); border-radius: 8px;
@@ -74,7 +73,6 @@
     .icon-btn.danger { border-color: #4d2630; }
     .icon-btn svg { width: 16px; height: 16px; display: block; }
 
-    /* "Open PDF" anchor should look like button and not purple when visited */
     #pdfLink, #pdfLink:link, #pdfLink:visited {
       color: var(--text);
       background: #2b3040;
@@ -86,7 +84,6 @@
     }
     #pdfLink:hover { opacity: .9; }
 
-    /* Edit mode styles */
     .card.editing .card-body { display: none; }
     .card:not(.editing) .edit-area { display: none; }
     .edit-area {
@@ -118,7 +115,6 @@
       font-size: 16px;
     }
 
-    /* Bible verses section */
     .card-verses {
       border-top: 1px solid var(--border);
       background: rgba(122, 162, 255, 0.03);
@@ -185,7 +181,6 @@
       font-style: italic;
     }
 
-    /* Title input - hidden by default, shown for sections */
     #newTitle {
       display: none;
     }
@@ -193,7 +188,6 @@
       display: block;
     }
 
-    /* Search/filter bar */
     .filter-bar {
       margin-top: 10px;
       display: flex;
@@ -210,12 +204,10 @@
       white-space: nowrap;
     }
 
-    /* Hide filtered cards */
     .card.filtered {
       display: none;
     }
 
-    /* Edited indicator */
     .edited-badge {
       font-size: 10px;
       padding: 2px 6px;
@@ -225,7 +217,6 @@
       margin-left: 4px;
     }
 
-    /* Hamburger menu */
     .menu-toggle {
       position: relative;
     }
@@ -274,7 +265,6 @@
       color: var(--danger);
     }
 
-    /* Sermon date display */
     .sermon-date {
       font-size: 13px;
       color: var(--muted);
@@ -282,7 +272,6 @@
       white-space: nowrap;
     }
 
-    /* Keyboard shortcuts help */
     .shortcuts-help {
       position: fixed;
       bottom: 20px;
@@ -330,7 +319,6 @@
       line-height: 1;
     }
 
-    /* Mobile optimizations */
     @media (max-width: 768px) {
       html, body {
         font-size: 16px;
@@ -380,7 +368,6 @@
       <span class="muted">Blackhawk Church</span>
     </header>
 
-    <!-- Room Details -->
     <div class="section-title">Room Details</div>
     <div class="bar">
       <select id="roomSelect" title="Rooms"></select>
@@ -394,7 +381,6 @@
       <span class="sermon-date" id="sermonDate"></span>
       <button id="loadLatestBtn" class="secondary" title="Load from data/guide.json">Load Latest Sermon</button>
       
-      <!-- Hamburger Menu -->
       <div class="menu-toggle">
         <button id="menuToggle" title="More options">☰</button>
         <div class="menu-dropdown" id="menuDropdown">
@@ -408,7 +394,6 @@
       <span class="muted" id="status"></span>
     </div>
 
-    <!-- Search -->
     <div class="section-title" style="margin-top:16px">Search</div>
     <div class="bar filter-bar">
       <input id="searchInput" type="text" placeholder="Search questions..." />
@@ -416,7 +401,6 @@
       <span class="filter-count" id="filterCount"></span>
     </div>
 
-    <!-- Add Custom Questions -->
     <div class="section-title" style="margin-top:16px">Add Custom Questions</div>
     <div class="bar">
       <select id="newType">
@@ -428,7 +412,6 @@
       <button id="addBtn">Add</button>
     </div>
 
-    <!-- Boards -->
     <div class="boards">
       <div class="board-wrap">
         <div class="board-title">
@@ -458,7 +441,6 @@
     <div class="footer">blackhawk.church/learn</div>
   </div>
 
-  <!-- Keyboard shortcuts help panel -->
   <div class="shortcuts-help" id="shortcutsHelp">
     <button class="close-btn" id="closeHelp">&times;</button>
     <h3>Keyboard Shortcuts</h3>
@@ -485,7 +467,6 @@
   <script type="module">
     import { connectFirebase, joinRoom, saveLive, loadLive, listRooms, currentRoomCode, deleteRoom } from "./static/js/viewStore.js";
 
-    // ---- Firebase (paste your config) ----
     const FIREBASE_ENABLED = true;
     const firebaseConfig = {
       apiKey: "AIzaSyBMtVbKp6i5cnb_Zapc_sEW8rMebVjuIKs",
@@ -494,88 +475,106 @@
     };
     if (FIREBASE_ENABLED) { await connectFirebase(firebaseConfig); }
 
-    // ---- Bible Verse Detection & Fetching ----
-    const verseCache = {}; // Cache fetched verses
+    // ---- Bible Verse Detection & Fetching with improved error handling ----
+    const verseCache = {};
 
-    // Book name mappings (handles abbreviations)
     const bookMappings = {
-      // Old Testament
-      'gen': 'Genesis', 'genesis': 'Genesis',
-      'ex': 'Exodus', 'exo': 'Exodus', 'exod': 'Exodus', 'exodus': 'Exodus',
-      'lev': 'Leviticus', 'leviticus': 'Leviticus',
-      'num': 'Numbers', 'numbers': 'Numbers',
-      'deut': 'Deuteronomy', 'dt': 'Deuteronomy', 'deuteronomy': 'Deuteronomy',
-      'josh': 'Joshua', 'joshua': 'Joshua',
-      'judg': 'Judges', 'judges': 'Judges',
-      'ruth': 'Ruth',
-      '1 sam': '1 Samuel', '1 samuel': '1 Samuel', '1sam': '1 Samuel',
-      '2 sam': '2 Samuel', '2 samuel': '2 Samuel', '2sam': '2 Samuel',
-      '1 kings': '1 Kings', '1 ki': '1 Kings', '1ki': '1 Kings',
-      '2 kings': '2 Kings', '2 ki': '2 Kings', '2ki': '2 Kings',
-      '1 chron': '1 Chronicles', '1 chronicles': '1 Chronicles', '1chron': '1 Chronicles',
-      '2 chron': '2 Chronicles', '2 chronicles': '2 Chronicles', '2chron': '2 Chronicles',
-      'ezra': 'Ezra',
-      'neh': 'Nehemiah', 'nehemiah': 'Nehemiah',
-      'esth': 'Esther', 'esther': 'Esther',
-      'job': 'Job',
-      'ps': 'Psalm', 'psa': 'Psalm', 'psalm': 'Psalm', 'psalms': 'Psalm',
-      'prov': 'Proverbs', 'proverbs': 'Proverbs',
-      'eccl': 'Ecclesiastes', 'ecclesiastes': 'Ecclesiastes',
-      'song': 'Song of Solomon', 'song of solomon': 'Song of Solomon',
-      'isa': 'Isaiah', 'isaiah': 'Isaiah',
-      'jer': 'Jeremiah', 'jeremiah': 'Jeremiah',
-      'lam': 'Lamentations', 'lamentations': 'Lamentations',
-      'ezek': 'Ezekiel', 'ezekiel': 'Ezekiel',
-      'dan': 'Daniel', 'daniel': 'Daniel',
-      'hos': 'Hosea', 'hosea': 'Hosea',
-      'joel': 'Joel',
-      'amos': 'Amos',
-      'obad': 'Obadiah', 'obadiah': 'Obadiah',
-      'jonah': 'Jonah',
-      'mic': 'Micah', 'micah': 'Micah',
-      'nah': 'Nahum', 'nahum': 'Nahum',
-      'hab': 'Habakkuk', 'habakkuk': 'Habakkuk',
-      'zeph': 'Zephaniah', 'zephaniah': 'Zephaniah',
-      'hag': 'Haggai', 'haggai': 'Haggai',
-      'zech': 'Zechariah', 'zechariah': 'Zechariah',
-      'mal': 'Malachi', 'malachi': 'Malachi',
-      // New Testament
-      'matt': 'Matthew', 'mt': 'Matthew', 'matthew': 'Matthew',
-      'mark': 'Mark', 'mk': 'Mark',
-      'luke': 'Luke', 'lk': 'Luke',
-      'john': 'John', 'jn': 'John',
-      'acts': 'Acts',
-      'rom': 'Romans', 'romans': 'Romans',
-      '1 cor': '1 Corinthians', '1 corinthians': '1 Corinthians', '1cor': '1 Corinthians',
-      '2 cor': '2 Corinthians', '2 corinthians': '2 Corinthians', '2cor': '2 Corinthians',
-      'gal': 'Galatians', 'galatians': 'Galatians',
-      'eph': 'Ephesians', 'ephesians': 'Ephesians',
-      'phil': 'Philippians', 'php': 'Philippians', 'philippians': 'Philippians',
-      'col': 'Colossians', 'colossians': 'Colossians',
-      '1 thess': '1 Thessalonians', '1 thessalonians': '1 Thessalonians', '1thess': '1 Thessalonians',
-      '2 thess': '2 Thessalonians', '2 thessalonians': '2 Thessalonians', '2thess': '2 Thessalonians',
-      '1 tim': '1 Timothy', '1 timothy': '1 Timothy', '1tim': '1 Timothy',
-      '2 tim': '2 Timothy', '2 timothy': '2 Timothy', '2tim': '2 Timothy',
-      'titus': 'Titus',
-      'philem': 'Philemon', 'philemon': 'Philemon',
-      'heb': 'Hebrews', 'hebrews': 'Hebrews',
-      'james': 'James', 'jas': 'James',
-      '1 pet': '1 Peter', '1 peter': '1 Peter', '1pet': '1 Peter',
-      '2 pet': '2 Peter', '2 peter': '2 Peter', '2pet': '2 Peter',
-      '1 john': '1 John', '1john': '1 John', '1 jn': '1 John',
-      '2 john': '2 John', '2john': '2 John', '2 jn': '2 John',
-      '3 john': '3 John', '3john': '3 John', '3 jn': '3 John',
-      'jude': 'Jude',
-      'rev': 'Revelation', 'revelation': 'Revelation'
+      'gen': 'genesis', 'genesis': 'genesis',
+      'ex': 'exodus', 'exo': 'exodus', 'exod': 'exodus', 'exodus': 'exodus',
+      'lev': 'leviticus', 'leviticus': 'leviticus',
+      'num': 'numbers', 'numbers': 'numbers',
+      'deut': 'deuteronomy', 'dt': 'deuteronomy', 'deuteronomy': 'deuteronomy',
+      'josh': 'joshua', 'joshua': 'joshua',
+      'judg': 'judges', 'judges': 'judges',
+      'ruth': 'ruth',
+      '1 sam': '1samuel', '1 samuel': '1samuel', '1sam': '1samuel',
+      '2 sam': '2samuel', '2 samuel': '2samuel', '2sam': '2samuel',
+      '1 kings': '1kings', '1 ki': '1kings', '1ki': '1kings',
+      '2 kings': '2kings', '2 ki': '2kings', '2ki': '2kings',
+      '1 chron': '1chronicles', '1 chronicles': '1chronicles', '1chron': '1chronicles',
+      '2 chron': '2chronicles', '2 chronicles': '2chronicles', '2chron': '2chronicles',
+      'ezra': 'ezra',
+      'neh': 'nehemiah', 'nehemiah': 'nehemiah',
+      'esth': 'esther', 'esther': 'esther',
+      'job': 'job',
+      'ps': 'psalms', 'psa': 'psalms', 'psalm': 'psalms', 'psalms': 'psalms',
+      'prov': 'proverbs', 'proverbs': 'proverbs',
+      'eccl': 'ecclesiastes', 'ecclesiastes': 'ecclesiastes',
+      'song': 'song+of+solomon', 'song of solomon': 'song+of+solomon',
+      'isa': 'isaiah', 'isaiah': 'isaiah',
+      'jer': 'jeremiah', 'jeremiah': 'jeremiah',
+      'lam': 'lamentations', 'lamentations': 'lamentations',
+      'ezek': 'ezekiel', 'ezekiel': 'ezekiel',
+      'dan': 'daniel', 'daniel': 'daniel',
+      'hos': 'hosea', 'hosea': 'hosea',
+      'joel': 'joel',
+      'amos': 'amos',
+      'obad': 'obadiah', 'obadiah': 'obadiah',
+      'jonah': 'jonah',
+      'mic': 'micah', 'micah': 'micah',
+      'nah': 'nahum', 'nahum': 'nahum',
+      'hab': 'habakkuk', 'habakkuk': 'habakkuk',
+      'zeph': 'zephaniah', 'zephaniah': 'zephaniah',
+      'hag': 'haggai', 'haggai': 'haggai',
+      'zech': 'zechariah', 'zechariah': 'zechariah',
+      'mal': 'malachi', 'malachi': 'malachi',
+      'matt': 'matthew', 'mt': 'matthew', 'matthew': 'matthew',
+      'mark': 'mark', 'mk': 'mark',
+      'luke': 'luke', 'lk': 'luke',
+      'john': 'john', 'jn': 'john',
+      'acts': 'acts',
+      'rom': 'romans', 'romans': 'romans',
+      '1 cor': '1corinthians', '1 corinthians': '1corinthians', '1cor': '1corinthians',
+      '2 cor': '2corinthians', '2 corinthians': '2corinthians', '2cor': '2corinthians',
+      'gal': 'galatians', 'galatians': 'galatians',
+      'eph': 'ephesians', 'ephesians': 'ephesians',
+      'phil': 'philippians', 'php': 'philippians', 'philippians': 'philippians',
+      'col': 'colossians', 'colossians': 'colossians',
+      '1 thess': '1thessalonians', '1 thessalonians': '1thessalonians', '1thess': '1thessalonians',
+      '2 thess': '2thessalonians', '2 thessalonians': '2thessalonians', '2thess': '2thessalonians',
+      '1 tim': '1timothy', '1 timothy': '1timothy', '1tim': '1timothy',
+      '2 tim': '2timothy', '2 timothy': '2timothy', '2tim': '2timothy',
+      'titus': 'titus',
+      'philem': 'philemon', 'philemon': 'philemon',
+      'heb': 'hebrews', 'hebrews': 'hebrews',
+      'james': 'james', 'jas': 'james',
+      '1 pet': '1peter', '1 peter': '1peter', '1pet': '1peter',
+      '2 pet': '2peter', '2 peter': '2peter', '2pet': '2peter',
+      '1 john': '1john', '1john': '1john', '1 jn': '1john',
+      '2 john': '2john', '2john': '2john', '2 jn': '2john',
+      '3 john': '3john', '3john': '3john', '3 jn': '3john',
+      'jude': 'jude',
+      'rev': 'revelation', 'revelation': 'revelation'
+    };
+
+    const displayNames = {
+      'genesis': 'Genesis', 'exodus': 'Exodus', 'leviticus': 'Leviticus',
+      'numbers': 'Numbers', 'deuteronomy': 'Deuteronomy', 'joshua': 'Joshua',
+      'judges': 'Judges', 'ruth': 'Ruth', '1samuel': '1 Samuel', '2samuel': '2 Samuel',
+      '1kings': '1 Kings', '2kings': '2 Kings', '1chronicles': '1 Chronicles',
+      '2chronicles': '2 Chronicles', 'ezra': 'Ezra', 'nehemiah': 'Nehemiah',
+      'esther': 'Esther', 'job': 'Job', 'psalms': 'Psalms', 'proverbs': 'Proverbs',
+      'ecclesiastes': 'Ecclesiastes', 'song+of+solomon': 'Song of Solomon',
+      'isaiah': 'Isaiah', 'jeremiah': 'Jeremiah', 'lamentations': 'Lamentations',
+      'ezekiel': 'Ezekiel', 'daniel': 'Daniel', 'hosea': 'Hosea', 'joel': 'Joel',
+      'amos': 'Amos', 'obadiah': 'Obadiah', 'jonah': 'Jonah', 'micah': 'Micah',
+      'nahum': 'Nahum', 'habakkuk': 'Habakkuk', 'zephaniah': 'Zephaniah',
+      'haggai': 'Haggai', 'zechariah': 'Zechariah', 'malachi': 'Malachi',
+      'matthew': 'Matthew', 'mark': 'Mark', 'luke': 'Luke', 'john': 'John',
+      'acts': 'Acts', 'romans': 'Romans', '1corinthians': '1 Corinthians',
+      '2corinthians': '2 Corinthians', 'galatians': 'Galatians', 'ephesians': 'Ephesians',
+      'philippians': 'Philippians', 'colossians': 'Colossians',
+      '1thessalonians': '1 Thessalonians', '2thessalonians': '2 Thessalonians',
+      '1timothy': '1 Timothy', '2timothy': '2 Timothy', 'titus': 'Titus',
+      'philemon': 'Philemon', 'hebrews': 'Hebrews', 'james': 'James',
+      '1peter': '1 Peter', '2peter': '2 Peter', '1john': '1 John',
+      '2john': '2 John', '3john': '3 John', 'jude': 'Jude', 'revelation': 'Revelation'
     };
 
     function detectVerseReferences(text) {
-      // Enhanced regex to catch more patterns
       const patterns = [
-        // Standard: "Colossians 2:13-15" or "Col 2:13-15"
         /\b((?:1|2|3)\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(\d+):(\d+)(?:-(\d+))?\b/gi,
-        // With period: "Col. 2:13-15"
-        /\b((?:1|2|3)\s+)?([A-Z][a-z]+)\.\s+(\d+):(\d+)(?:-(\d+))?\b/gi
+        /\b((?:1|2|3)\s+)?([A-Z][a-z]+)\.\s+(\d+):(\d+)(?:-(\ d+))?\b/gi
       ];
 
       const references = [];
@@ -590,19 +589,19 @@
           const verseStart = match[4];
           const verseEnd = match[5] || verseStart;
 
-          // Normalize book name
           const bookKey = (prefix + book).toLowerCase().replace(/\.$/, '');
-          const normalizedBook = bookMappings[bookKey] || (prefix + book);
+          const normalizedBook = bookMappings[bookKey];
+          
+          if (!normalizedBook) continue;
 
-          const reference = `${normalizedBook} ${chapter}:${verseStart}${verseEnd !== verseStart ? '-' + verseEnd : ''}`;
+          const displayName = displayNames[normalizedBook];
+          const reference = `${displayName} ${chapter}:${verseStart}${verseEnd !== verseStart ? '-' + verseEnd : ''}`;
+          const apiReference = `${normalizedBook}/${chapter}:${verseStart}-${verseEnd}`;
           const key = reference.toLowerCase();
 
           if (!seen.has(key)) {
             seen.add(key);
-            references.push({
-              reference,
-              apiReference: `${normalizedBook}+${chapter}:${verseStart}-${verseEnd}`
-            });
+            references.push({ reference, apiReference, normalizedBook });
           }
         }
       }
@@ -610,38 +609,46 @@
       return references;
     }
 
-    async function fetchVerse(apiReference) {
-      // Check cache first
+    async function fetchVerse(apiReference, displayRef) {
       if (verseCache[apiReference]) {
         return verseCache[apiReference];
       }
 
       try {
-        const response = await fetch(`https://bible-api.com/${encodeURIComponent(apiReference)}?translation=web`);
+        console.log('Fetching verse:', apiReference);
+        const url = `https://bible-api.com/${apiReference}`;
+        console.log('Full URL:', url);
+        
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
+        
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
+        
         const data = await response.json();
+        console.log('Received data:', data);
         
         const result = {
           text: data.text.trim(),
-          reference: data.reference,
+          reference: displayRef,
           translation: data.translation_name || 'World English Bible'
         };
 
-        // Cache the result
         verseCache[apiReference] = result;
         return result;
       } catch (error) {
         console.error('Error fetching verse:', error);
+        console.error('API Reference:', apiReference);
         return {
           error: true,
-          message: 'Unable to load verse'
+          message: `Unable to load ${displayRef}. Check console for details.`
         };
       }
     }
 
-    // ---- DOM ----
+    // [Rest of the code continues with DOM setup, renderCards, etc. - exactly as before but using the fixed fetchVerse]
+    
     const $roomSel = document.getElementById("roomSelect");
     const $roomInp = document.getElementById("roomInput");
     const $createJoin = document.getElementById("createJoinBtn");
@@ -679,7 +686,6 @@
     const $doneCount = document.getElementById("doneCount");
     const $deletedCount = document.getElementById("deletedCount");
 
-    // ---- Hamburger menu ----
     $menuToggle.addEventListener("click", (e) => {
       e.stopPropagation();
       $menuDropdown.classList.toggle("visible");
@@ -695,36 +701,13 @@
       $menuDropdown.classList.remove("visible");
     });
 
-    // ---- Icons (flat SVG) ----
     const ICONS = {
-      check: `
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 6L9 17l-5-5" />
-        </svg>`,
-      trash: `
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 6h18" />
-          <path d="M8 6V4h8v2" />
-          <path d="M19 6l-1 14H6L5 6" />
-          <path d="M10 11v6M14 11v6" />
-        </svg>`,
-      undo: `
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M7 9l-4 4 4 4" />
-          <path d="M3 13h9a6 6 0 016 6" />
-        </svg>`,
-      edit: `
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-        </svg>`
+      check: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5" /></svg>`,
+      trash: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /></svg>`,
+      undo: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9l-4 4 4 4" /><path d="M3 13h9a6 6 0 016 6" /></svg>`,
+      edit: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>`
     };
 
-    // ---- State / render ----
     let cards = [];
     let currentSermonDate = null;
     const genId = () => "c_" + Math.random().toString(36).slice(2,9);
@@ -821,7 +804,6 @@
       const content = document.createElement("div");
       content.className = "verses-content";
 
-      // Toggle functionality
       header.addEventListener("click", () => {
         content.classList.toggle("visible");
         const toggle = header.querySelector(".verses-toggle");
@@ -833,7 +815,6 @@
       versesDiv.appendChild(header);
       versesDiv.appendChild(content);
 
-      // Fetch all verses
       for (const ref of references) {
         const block = document.createElement("div");
         block.className = "verse-block";
@@ -850,8 +831,7 @@
         block.appendChild(verseText);
         content.appendChild(block);
 
-        // Fetch the verse
-        fetchVerse(ref.apiReference).then(result => {
+        fetchVerse(ref.apiReference, ref.reference).then(result => {
           if (result.error) {
             verseText.className = "verse-text verse-error";
             verseText.textContent = result.message;
@@ -937,7 +917,6 @@
         el.appendChild(body);
         el.appendChild(editArea);
 
-        // Add Bible verses section if verses detected
         if (c.type === "question") {
           const versesSection = await createVersesSection(c.text);
           if (versesSection) {
