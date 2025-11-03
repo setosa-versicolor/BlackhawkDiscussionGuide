@@ -5,7 +5,6 @@
   <title>Discussion Guide — Rooms</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
   <style>
-    /* [Previous CSS remains exactly the same - copying from page_with_verses.html] */
     :root {
       --bg:#0e0f12; --panel:#161820; --card:#1e2230; --text:#e8ecf3;
       --muted:#9aa3b2; --accent:#7aa2ff; --border:#2a2f3c; --danger:#ff6b6b;
@@ -41,6 +40,7 @@
     .row>*{flex:0 0 auto;} .row .grow{flex:1 1 240px;min-width:240px;}
     .hint{margin-top:8px;} .footer{margin-top:18px;color:var(--muted);font-size:13px;}
 
+    /* three lanes */
     .boards {
       display: grid;
       grid-template-columns: 1fr;
@@ -64,6 +64,7 @@
     .board-muted .card { opacity: .95; }
     .board-muted .drag-handle { opacity: .35; cursor: default; }
 
+    /* compact icon buttons */
     .icon-btn {
       background: transparent; color: var(--text);
       border: 1px solid var(--border); border-radius: 8px;
@@ -73,6 +74,7 @@
     .icon-btn.danger { border-color: #4d2630; }
     .icon-btn svg { width: 16px; height: 16px; display: block; }
 
+    /* "Open PDF" anchor should look like button and not purple when visited */
     #pdfLink, #pdfLink:link, #pdfLink:visited {
       color: var(--text);
       background: #2b3040;
@@ -84,6 +86,7 @@
     }
     #pdfLink:hover { opacity: .9; }
 
+    /* Edit mode styles */
     .card.editing .card-body { display: none; }
     .card:not(.editing) .edit-area { display: none; }
     .edit-area {
@@ -115,6 +118,7 @@
       font-size: 16px;
     }
 
+    /* Bible verses section */
     .card-verses {
       border-top: 1px solid var(--border);
       background: rgba(122, 162, 255, 0.03);
@@ -181,6 +185,7 @@
       font-style: italic;
     }
 
+    /* Title input - hidden by default, shown for sections */
     #newTitle {
       display: none;
     }
@@ -188,6 +193,7 @@
       display: block;
     }
 
+    /* Search/filter bar */
     .filter-bar {
       margin-top: 10px;
       display: flex;
@@ -204,10 +210,12 @@
       white-space: nowrap;
     }
 
+    /* Hide filtered cards */
     .card.filtered {
       display: none;
     }
 
+    /* Edited indicator */
     .edited-badge {
       font-size: 10px;
       padding: 2px 6px;
@@ -217,6 +225,7 @@
       margin-left: 4px;
     }
 
+    /* Hamburger menu */
     .menu-toggle {
       position: relative;
     }
@@ -265,6 +274,7 @@
       color: var(--danger);
     }
 
+    /* Sermon date display */
     .sermon-date {
       font-size: 13px;
       color: var(--muted);
@@ -272,6 +282,7 @@
       white-space: nowrap;
     }
 
+    /* Keyboard shortcuts help */
     .shortcuts-help {
       position: fixed;
       bottom: 20px;
@@ -319,6 +330,7 @@
       line-height: 1;
     }
 
+    /* Mobile optimizations */
     @media (max-width: 768px) {
       html, body {
         font-size: 16px;
@@ -368,6 +380,7 @@
       <span class="muted">Blackhawk Church</span>
     </header>
 
+    <!-- Room Details -->
     <div class="section-title">Room Details</div>
     <div class="bar">
       <select id="roomSelect" title="Rooms"></select>
@@ -381,6 +394,7 @@
       <span class="sermon-date" id="sermonDate"></span>
       <button id="loadLatestBtn" class="secondary" title="Load from data/guide.json">Load Latest Sermon</button>
       
+      <!-- Hamburger Menu -->
       <div class="menu-toggle">
         <button id="menuToggle" title="More options">☰</button>
         <div class="menu-dropdown" id="menuDropdown">
@@ -394,6 +408,7 @@
       <span class="muted" id="status"></span>
     </div>
 
+    <!-- Search -->
     <div class="section-title" style="margin-top:16px">Search</div>
     <div class="bar filter-bar">
       <input id="searchInput" type="text" placeholder="Search questions..." />
@@ -401,6 +416,7 @@
       <span class="filter-count" id="filterCount"></span>
     </div>
 
+    <!-- Add Custom Questions -->
     <div class="section-title" style="margin-top:16px">Add Custom Questions</div>
     <div class="bar">
       <select id="newType">
@@ -412,6 +428,7 @@
       <button id="addBtn">Add</button>
     </div>
 
+    <!-- Boards -->
     <div class="boards">
       <div class="board-wrap">
         <div class="board-title">
@@ -441,6 +458,7 @@
     <div class="footer">blackhawk.church/learn</div>
   </div>
 
+  <!-- Keyboard shortcuts help panel -->
   <div class="shortcuts-help" id="shortcutsHelp">
     <button class="close-btn" id="closeHelp">&times;</button>
     <h3>Keyboard Shortcuts</h3>
@@ -467,6 +485,7 @@
   <script type="module">
     import { connectFirebase, joinRoom, saveLive, loadLive, listRooms, currentRoomCode, deleteRoom } from "./static/js/viewStore.js";
 
+    // ---- Firebase (paste your config) ----
     const FIREBASE_ENABLED = true;
     const firebaseConfig = {
       apiKey: "AIzaSyBMtVbKp6i5cnb_Zapc_sEW8rMebVjuIKs",
@@ -475,9 +494,10 @@
     };
     if (FIREBASE_ENABLED) { await connectFirebase(firebaseConfig); }
 
-    // ---- Bible Verse Detection & Fetching with improved error handling ----
+    // ---- Bible Verse Detection & Fetching ----
     const verseCache = {};
 
+    // Book name mappings (lowercase for API, handles abbreviations)
     const bookMappings = {
       'gen': 'genesis', 'genesis': 'genesis',
       'ex': 'exodus', 'exo': 'exodus', 'exod': 'exodus', 'exodus': 'exodus',
@@ -500,7 +520,7 @@
       'ps': 'psalms', 'psa': 'psalms', 'psalm': 'psalms', 'psalms': 'psalms',
       'prov': 'proverbs', 'proverbs': 'proverbs',
       'eccl': 'ecclesiastes', 'ecclesiastes': 'ecclesiastes',
-      'song': 'song+of+solomon', 'song of solomon': 'song+of+solomon',
+      'song': 'songofsolomon', 'song of solomon': 'songofsolomon',
       'isa': 'isaiah', 'isaiah': 'isaiah',
       'jer': 'jeremiah', 'jeremiah': 'jeremiah',
       'lam': 'lamentations', 'lamentations': 'lamentations',
@@ -547,6 +567,7 @@
       'rev': 'revelation', 'revelation': 'revelation'
     };
 
+    // Display names for UI
     const displayNames = {
       'genesis': 'Genesis', 'exodus': 'Exodus', 'leviticus': 'Leviticus',
       'numbers': 'Numbers', 'deuteronomy': 'Deuteronomy', 'joshua': 'Joshua',
@@ -554,7 +575,7 @@
       '1kings': '1 Kings', '2kings': '2 Kings', '1chronicles': '1 Chronicles',
       '2chronicles': '2 Chronicles', 'ezra': 'Ezra', 'nehemiah': 'Nehemiah',
       'esther': 'Esther', 'job': 'Job', 'psalms': 'Psalms', 'proverbs': 'Proverbs',
-      'ecclesiastes': 'Ecclesiastes', 'song+of+solomon': 'Song of Solomon',
+      'ecclesiastes': 'Ecclesiastes', 'songofsolomon': 'Song of Solomon',
       'isaiah': 'Isaiah', 'jeremiah': 'Jeremiah', 'lamentations': 'Lamentations',
       'ezekiel': 'Ezekiel', 'daniel': 'Daniel', 'hosea': 'Hosea', 'joel': 'Joel',
       'amos': 'Amos', 'obadiah': 'Obadiah', 'jonah': 'Jonah', 'micah': 'Micah',
@@ -574,7 +595,7 @@
     function detectVerseReferences(text) {
       const patterns = [
         /\b((?:1|2|3)\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(\d+):(\d+)(?:-(\d+))?\b/gi,
-        /\b((?:1|2|3)\s+)?([A-Z][a-z]+)\.\s+(\d+):(\d+)(?:-(\ d+))?\b/gi
+        /\b((?:1|2|3)\s+)?([A-Z][a-z]+)\.\s+(\d+):(\d+)(?:-(\d+))?\b/gi
       ];
 
       const references = [];
@@ -601,7 +622,7 @@
 
           if (!seen.has(key)) {
             seen.add(key);
-            references.push({ reference, apiReference, normalizedBook });
+            references.push({ reference, apiReference });
           }
         }
       }
@@ -615,40 +636,97 @@
       }
 
       try {
-        console.log('Fetching verse:', apiReference);
+        console.log('Fetching verse:', displayRef);
         const url = `https://bible-api.com/${apiReference}`;
-        console.log('Full URL:', url);
         
         const response = await fetch(url);
-        console.log('Response status:', response.status);
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Received data:', data);
         
         const result = {
           text: data.text.trim(),
-          reference: displayRef,
-          translation: data.translation_name || 'World English Bible'
+          reference: displayRef
         };
 
         verseCache[apiReference] = result;
+        console.log('Successfully loaded:', displayRef);
         return result;
       } catch (error) {
-        console.error('Error fetching verse:', error);
-        console.error('API Reference:', apiReference);
+        console.error('Error fetching verse:', displayRef, error);
         return {
           error: true,
-          message: `Unable to load ${displayRef}. Check console for details.`
+          message: `Unable to load verse`
         };
       }
     }
 
-    // [Rest of the code continues with DOM setup, renderCards, etc. - exactly as before but using the fixed fetchVerse]
-    
+    async function createVersesSection(text) {
+      const references = detectVerseReferences(text);
+      
+      if (references.length === 0) {
+        return null;
+      }
+
+      const versesDiv = document.createElement("div");
+      versesDiv.className = "card-verses";
+
+      const header = document.createElement("div");
+      header.className = "verses-header";
+      header.innerHTML = `
+        <span class="verses-icon">📖</span>
+        <span class="verses-title">Bible Verses (${references.length})</span>
+        <span class="verses-toggle">Click to expand</span>
+      `;
+
+      const content = document.createElement("div");
+      content.className = "verses-content";
+
+      header.addEventListener("click", () => {
+        content.classList.toggle("visible");
+        const toggle = header.querySelector(".verses-toggle");
+        toggle.textContent = content.classList.contains("visible") 
+          ? "Click to collapse" 
+          : "Click to expand";
+      });
+
+      versesDiv.appendChild(header);
+      versesDiv.appendChild(content);
+
+      for (const ref of references) {
+        const block = document.createElement("div");
+        block.className = "verse-block";
+
+        const refTitle = document.createElement("div");
+        refTitle.className = "verse-reference";
+        refTitle.textContent = ref.reference;
+
+        const verseText = document.createElement("div");
+        verseText.className = "verse-text verse-loading";
+        verseText.textContent = "Loading...";
+
+        block.appendChild(refTitle);
+        block.appendChild(verseText);
+        content.appendChild(block);
+
+        fetchVerse(ref.apiReference, ref.reference).then(result => {
+          if (result.error) {
+            verseText.className = "verse-text verse-error";
+            verseText.textContent = result.message;
+          } else {
+            verseText.className = "verse-text";
+            verseText.textContent = result.text;
+          }
+        });
+      }
+
+      return versesDiv;
+    }
+
+    // ---- DOM ----
     const $roomSel = document.getElementById("roomSelect");
     const $roomInp = document.getElementById("roomInput");
     const $createJoin = document.getElementById("createJoinBtn");
@@ -686,33 +764,61 @@
     const $doneCount = document.getElementById("doneCount");
     const $deletedCount = document.getElementById("deletedCount");
 
+    // ---- Hamburger menu ----
     $menuToggle.addEventListener("click", (e) => {
       e.stopPropagation();
       $menuDropdown.classList.toggle("visible");
     });
 
+    // Close menu when clicking outside
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".menu-toggle")) {
         $menuDropdown.classList.remove("visible");
       }
     });
 
+    // Close menu when clicking a menu item
     $menuDropdown.addEventListener("click", () => {
       $menuDropdown.classList.remove("visible");
     });
 
+    // ---- Icons (flat SVG) ----
     const ICONS = {
-      check: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5" /></svg>`,
-      trash: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /></svg>`,
-      undo: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9l-4 4 4 4" /><path d="M3 13h9a6 6 0 016 6" /></svg>`,
-      edit: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>`
+      check: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>`,
+      trash: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18" />
+          <path d="M8 6V4h8v2" />
+          <path d="M19 6l-1 14H6L5 6" />
+          <path d="M10 11v6M14 11v6" />
+        </svg>`,
+      undo: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 9l-4 4 4 4" />
+          <path d="M3 13h9a6 6 0 016 6" />
+        </svg>`,
+      edit: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+        </svg>`
     };
 
+    // ---- State / render ----
+    // cards: [{ id, type, text, title?, status: 'active'|'done'|'deleted', source: 'pdf'|'custom', originalText?: string }]
     let cards = [];
     let currentSermonDate = null;
     const genId = () => "c_" + Math.random().toString(36).slice(2,9);
     let searchQuery = "";
 
+    // Show/hide title input based on type selection
     $newType.addEventListener("change", () => {
       if ($newType.value === "section") {
         $newTitle.classList.add("visible");
@@ -783,69 +889,9 @@
       updateFilterCount();
     }
 
-    async function createVersesSection(text) {
-      const references = detectVerseReferences(text);
-      
-      if (references.length === 0) {
-        return null;
-      }
-
-      const versesDiv = document.createElement("div");
-      versesDiv.className = "card-verses";
-
-      const header = document.createElement("div");
-      header.className = "verses-header";
-      header.innerHTML = `
-        <span class="verses-icon">📖</span>
-        <span class="verses-title">Bible Verses (${references.length})</span>
-        <span class="verses-toggle">Click to expand</span>
-      `;
-
-      const content = document.createElement("div");
-      content.className = "verses-content";
-
-      header.addEventListener("click", () => {
-        content.classList.toggle("visible");
-        const toggle = header.querySelector(".verses-toggle");
-        toggle.textContent = content.classList.contains("visible") 
-          ? "Click to collapse" 
-          : "Click to expand";
-      });
-
-      versesDiv.appendChild(header);
-      versesDiv.appendChild(content);
-
-      for (const ref of references) {
-        const block = document.createElement("div");
-        block.className = "verse-block";
-
-        const refTitle = document.createElement("div");
-        refTitle.className = "verse-reference";
-        refTitle.textContent = ref.reference;
-
-        const verseText = document.createElement("div");
-        verseText.className = "verse-text verse-loading";
-        verseText.textContent = "Loading...";
-
-        block.appendChild(refTitle);
-        block.appendChild(verseText);
-        content.appendChild(block);
-
-        fetchVerse(ref.apiReference, ref.reference).then(result => {
-          if (result.error) {
-            verseText.className = "verse-text verse-error";
-            verseText.textContent = result.message;
-          } else {
-            verseText.className = "verse-text";
-            verseText.textContent = result.text;
-          }
-        });
-      }
-
-      return versesDiv;
-    }
-
-    async function renderCards(next) {
+    function renderCards(next) {
+      // default to active status for any card missing it
+      // preserve source and originalText if present
       cards = next.map(c => ({ 
         status: 'active', 
         source: 'pdf',
@@ -859,14 +905,15 @@
 
       for (const c of cards) {
         const el = document.createElement("div");
-        el.className = "card"; 
-        el.dataset.id = c.id;
+        el.className = "card"; el.dataset.id = c.id;
 
+        // Determine if edited
         const isEdited = c.originalText && c.originalText !== c.text;
 
         const header = document.createElement("div");
         header.className = "card-header";
         
+        // Determine tag class and text
         let tagClass = "";
         let tagText = c.type === "section" ? "Section" : "Question";
         if (c.source === "custom") {
@@ -903,6 +950,7 @@
         body.className = "card-body";
         body.textContent = c.text;
 
+        // Create edit area (hidden by default)
         const editArea = document.createElement("div");
         editArea.className = "edit-area";
         editArea.innerHTML = `
@@ -917,6 +965,7 @@
         el.appendChild(body);
         el.appendChild(editArea);
 
+        // Add Bible verses section for questions
         if (c.type === "question") {
           const versesSection = await createVersesSection(c.text);
           if (versesSection) {
@@ -947,17 +996,20 @@
       ];
     }
 
+    // Sortable only on Active column
     Sortable.create($boardActive, {
       animation:150, handle:".drag-handle", ghostClass:"ghost", direction:"vertical",
       onEnd(){ cards=getCurrentCards(); autoSave(); }
     });
 
+    // Debounced autosave
     const debounce=(fn,ms=400)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
     const autoSave = debounce(()=>{
       if (!currentRoomCode()) return;
       saveLive(getCurrentCards());
     },400);
 
+    // ✅ Click actions across all three boards
     document.querySelector(".boards").addEventListener("click", (e) => {
       const btn = e.target.closest("button[data-action]");
       if (!btn) return;
@@ -968,6 +1020,7 @@
       const id = card.dataset.id;
       const action = btn.dataset.action;
 
+      // Handle edit mode
       if (action === "edit") {
         card.classList.add("editing");
         const textarea = card.querySelector(".edit-textarea");
@@ -1001,8 +1054,15 @@
         const current = getCurrentCards();
         const next = current.map(c => {
           if (c.id !== id) return c;
+          
+          // Track original text if this is first edit of a PDF card
           const originalText = c.originalText || (c.source === 'pdf' ? c.text : undefined);
-          return { ...c, text: newText, originalText };
+          
+          return { 
+            ...c, 
+            text: newText,
+            originalText
+          };
         });
         
         renderCards(next);
@@ -1010,6 +1070,7 @@
         return;
       }
 
+      // Handle status changes
       let newStatus;
       if (action === "complete") newStatus = "done";
       else if (action === "trash") newStatus = "deleted";
@@ -1023,6 +1084,7 @@
       autoSave();
     });
 
+    // Add new card -> Active (at top)
     document.getElementById("addBtn").addEventListener("click", ()=>{
       const type=$newType.value;
       const title=($newTitle.value||"").trim();
@@ -1033,15 +1095,17 @@
         type, 
         text, 
         status:"active",
-        source: "custom"
+        source: "custom" // Mark as custom-added
       };
       if(type==="section" && title) item.title=title;
       
+      // Add to beginning of cards array (top of active list)
       renderCards([item, ...cards]);
       $newText.value=""; $newTitle.value="";
       autoSave();
     });
 
+    // Search functionality
     $searchInput.addEventListener("input", (e) => {
       searchQuery = e.target.value;
       applySearch();
@@ -1053,8 +1117,11 @@
       applySearch();
     });
 
+    // Keyboard shortcuts
     document.addEventListener("keydown", (e) => {
+      // Ignore if typing in input/textarea
       if (e.target.matches("input, textarea")) {
+        // Esc to clear search when in search input
         if (e.key === "Escape" && e.target === $searchInput) {
           $clearSearch.click();
           $searchInput.blur();
@@ -1062,24 +1129,28 @@
         return;
       }
 
+      // ? to toggle help
       if (e.key === "?") {
         e.preventDefault();
         $shortcutsHelp.classList.toggle("visible");
         return;
       }
 
+      // / to focus search
       if (e.key === "/") {
         e.preventDefault();
         $searchInput.focus();
         return;
       }
 
+      // Esc to clear search
       if (e.key === "Escape") {
         e.preventDefault();
         $clearSearch.click();
         return;
       }
 
+      // n to focus new card input
       if (e.key === "n" || e.key === "N") {
         e.preventDefault();
         $newText.focus();
@@ -1095,6 +1166,7 @@
       $shortcutsHelp.classList.remove("visible");
     });
 
+    // Rooms: list, join, share
     async function refreshRoomsList(selected){
       const rooms = await listRooms();
       $roomSel.innerHTML="";
@@ -1118,6 +1190,7 @@
       renderCards(state);
     }
 
+    // ?room=CODE
     const urlRoom = new URLSearchParams(location.search).get("room");
     await joinAndLoad(urlRoom || null);
     await refreshRoomsList(currentRoomCode());
@@ -1144,6 +1217,7 @@
       alert("Share link copied!");
     });
 
+    // Delete Room (with confirm)
     $deleteRoom.addEventListener("click", async () => {
       const code = currentRoomCode();
 
@@ -1175,9 +1249,11 @@
       location.href = url.toString();
     });
 
+    // Guide.json loader + PDF link
     const guideJsonUrl=(noCache=false)=>{ const u=new URL("data/guide.json",location.href); if(noCache) u.searchParams.set("ts",Date.now()); return u.toString(); };
     
     function extractDateFromUrl(url) {
+      // Extract date from URLs like "Greater-Things-Greater-Sufficiency-11.2.25.pdf"
       const match = url.match(/(\d{1,2})\.(\d{1,2})\.(\d{2})/);
       if (match) {
         const month = parseInt(match[1]);
@@ -1202,6 +1278,7 @@
       $pdfLink.href = u;
       $pdfLink.style.display = "inline-block";
       
+      // Extract and display date
       const dateStr = extractDateFromUrl(u);
       updateSermonDate(dateStr);
     }
@@ -1218,14 +1295,14 @@
             type:"question",
             text:q,
             status:"active",
-            source:"pdf"
+            source:"pdf" // Mark as PDF-sourced
           })),
           ...(data.sections||[]).map(s=>({
             type:"section",
             title:s.title,
             text:s.body,
             status:"active",
-            source:"pdf"
+            source:"pdf" // Mark as PDF-sourced
           }))
         ];
         renderCards(next);
@@ -1237,6 +1314,7 @@
       }
     }
 
+    // Confirmations for overwriting actions
     $loadLatest.addEventListener("click", () => {
       const ok = confirm(
         "Load Latest Sermon will replace the current board with the latest Discussion Guide.\n\nAny changes in this room will be overwritten. Continue?"
@@ -1244,7 +1322,6 @@
       if (!ok) return;
       loadGuideJson(false);
     });
-    
     $refresh.addEventListener("click", () => {
       const ok = confirm(
         "Refresh will re-read the latest guide and overwrite the current Discussion Guide questions.\n\nAny changes will be overwritten. Continue?"
