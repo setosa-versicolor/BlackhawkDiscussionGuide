@@ -495,106 +495,86 @@
     if (FIREBASE_ENABLED) { await connectFirebase(firebaseConfig); }
 
     // ---- Bible Verse Detection & Fetching ----
-    const verseCache = {};
+    const verseCache = {}; // Cache fetched verses
 
-    // Book name mappings (lowercase for API, handles abbreviations)
+    // Book name mappings (handles abbreviations)
     const bookMappings = {
-      'gen': 'genesis', 'genesis': 'genesis',
-      'ex': 'exodus', 'exo': 'exodus', 'exod': 'exodus', 'exodus': 'exodus',
-      'lev': 'leviticus', 'leviticus': 'leviticus',
-      'num': 'numbers', 'numbers': 'numbers',
-      'deut': 'deuteronomy', 'dt': 'deuteronomy', 'deuteronomy': 'deuteronomy',
-      'josh': 'joshua', 'joshua': 'joshua',
-      'judg': 'judges', 'judges': 'judges',
-      'ruth': 'ruth',
-      '1 sam': '1samuel', '1 samuel': '1samuel', '1sam': '1samuel',
-      '2 sam': '2samuel', '2 samuel': '2samuel', '2sam': '2samuel',
-      '1 kings': '1kings', '1 ki': '1kings', '1ki': '1kings',
-      '2 kings': '2kings', '2 ki': '2kings', '2ki': '2kings',
-      '1 chron': '1chronicles', '1 chronicles': '1chronicles', '1chron': '1chronicles',
-      '2 chron': '2chronicles', '2 chronicles': '2chronicles', '2chron': '2chronicles',
-      'ezra': 'ezra',
-      'neh': 'nehemiah', 'nehemiah': 'nehemiah',
-      'esth': 'esther', 'esther': 'esther',
-      'job': 'job',
-      'ps': 'psalms', 'psa': 'psalms', 'psalm': 'psalms', 'psalms': 'psalms',
-      'prov': 'proverbs', 'proverbs': 'proverbs',
-      'eccl': 'ecclesiastes', 'ecclesiastes': 'ecclesiastes',
-      'song': 'songofsolomon', 'song of solomon': 'songofsolomon',
-      'isa': 'isaiah', 'isaiah': 'isaiah',
-      'jer': 'jeremiah', 'jeremiah': 'jeremiah',
-      'lam': 'lamentations', 'lamentations': 'lamentations',
-      'ezek': 'ezekiel', 'ezekiel': 'ezekiel',
-      'dan': 'daniel', 'daniel': 'daniel',
-      'hos': 'hosea', 'hosea': 'hosea',
-      'joel': 'joel',
-      'amos': 'amos',
-      'obad': 'obadiah', 'obadiah': 'obadiah',
-      'jonah': 'jonah',
-      'mic': 'micah', 'micah': 'micah',
-      'nah': 'nahum', 'nahum': 'nahum',
-      'hab': 'habakkuk', 'habakkuk': 'habakkuk',
-      'zeph': 'zephaniah', 'zephaniah': 'zephaniah',
-      'hag': 'haggai', 'haggai': 'haggai',
-      'zech': 'zechariah', 'zechariah': 'zechariah',
-      'mal': 'malachi', 'malachi': 'malachi',
-      'matt': 'matthew', 'mt': 'matthew', 'matthew': 'matthew',
-      'mark': 'mark', 'mk': 'mark',
-      'luke': 'luke', 'lk': 'luke',
-      'john': 'john', 'jn': 'john',
-      'acts': 'acts',
-      'rom': 'romans', 'romans': 'romans',
-      '1 cor': '1corinthians', '1 corinthians': '1corinthians', '1cor': '1corinthians',
-      '2 cor': '2corinthians', '2 corinthians': '2corinthians', '2cor': '2corinthians',
-      'gal': 'galatians', 'galatians': 'galatians',
-      'eph': 'ephesians', 'ephesians': 'ephesians',
-      'phil': 'philippians', 'php': 'philippians', 'philippians': 'philippians',
-      'col': 'colossians', 'colossians': 'colossians',
-      '1 thess': '1thessalonians', '1 thessalonians': '1thessalonians', '1thess': '1thessalonians',
-      '2 thess': '2thessalonians', '2 thessalonians': '2thessalonians', '2thess': '2thessalonians',
-      '1 tim': '1timothy', '1 timothy': '1timothy', '1tim': '1timothy',
-      '2 tim': '2timothy', '2 timothy': '2timothy', '2tim': '2timothy',
-      'titus': 'titus',
-      'philem': 'philemon', 'philemon': 'philemon',
-      'heb': 'hebrews', 'hebrews': 'hebrews',
-      'james': 'james', 'jas': 'james',
-      '1 pet': '1peter', '1 peter': '1peter', '1pet': '1peter',
-      '2 pet': '2peter', '2 peter': '2peter', '2pet': '2peter',
-      '1 john': '1john', '1john': '1john', '1 jn': '1john',
-      '2 john': '2john', '2john': '2john', '2 jn': '2john',
-      '3 john': '3john', '3john': '3john', '3 jn': '3john',
-      'jude': 'jude',
-      'rev': 'revelation', 'revelation': 'revelation'
-    };
-
-    // Display names for UI
-    const displayNames = {
-      'genesis': 'Genesis', 'exodus': 'Exodus', 'leviticus': 'Leviticus',
-      'numbers': 'Numbers', 'deuteronomy': 'Deuteronomy', 'joshua': 'Joshua',
-      'judges': 'Judges', 'ruth': 'Ruth', '1samuel': '1 Samuel', '2samuel': '2 Samuel',
-      '1kings': '1 Kings', '2kings': '2 Kings', '1chronicles': '1 Chronicles',
-      '2chronicles': '2 Chronicles', 'ezra': 'Ezra', 'nehemiah': 'Nehemiah',
-      'esther': 'Esther', 'job': 'Job', 'psalms': 'Psalms', 'proverbs': 'Proverbs',
-      'ecclesiastes': 'Ecclesiastes', 'songofsolomon': 'Song of Solomon',
-      'isaiah': 'Isaiah', 'jeremiah': 'Jeremiah', 'lamentations': 'Lamentations',
-      'ezekiel': 'Ezekiel', 'daniel': 'Daniel', 'hosea': 'Hosea', 'joel': 'Joel',
-      'amos': 'Amos', 'obadiah': 'Obadiah', 'jonah': 'Jonah', 'micah': 'Micah',
-      'nahum': 'Nahum', 'habakkuk': 'Habakkuk', 'zephaniah': 'Zephaniah',
-      'haggai': 'Haggai', 'zechariah': 'Zechariah', 'malachi': 'Malachi',
-      'matthew': 'Matthew', 'mark': 'Mark', 'luke': 'Luke', 'john': 'John',
-      'acts': 'Acts', 'romans': 'Romans', '1corinthians': '1 Corinthians',
-      '2corinthians': '2 Corinthians', 'galatians': 'Galatians', 'ephesians': 'Ephesians',
-      'philippians': 'Philippians', 'colossians': 'Colossians',
-      '1thessalonians': '1 Thessalonians', '2thessalonians': '2 Thessalonians',
-      '1timothy': '1 Timothy', '2timothy': '2 Timothy', 'titus': 'Titus',
-      'philemon': 'Philemon', 'hebrews': 'Hebrews', 'james': 'James',
-      '1peter': '1 Peter', '2peter': '2 Peter', '1john': '1 John',
-      '2john': '2 John', '3john': '3 John', 'jude': 'Jude', 'revelation': 'Revelation'
+      // Old Testament
+      'gen': 'Genesis', 'genesis': 'Genesis',
+      'ex': 'Exodus', 'exo': 'Exodus', 'exod': 'Exodus', 'exodus': 'Exodus',
+      'lev': 'Leviticus', 'leviticus': 'Leviticus',
+      'num': 'Numbers', 'numbers': 'Numbers',
+      'deut': 'Deuteronomy', 'dt': 'Deuteronomy', 'deuteronomy': 'Deuteronomy',
+      'josh': 'Joshua', 'joshua': 'Joshua',
+      'judg': 'Judges', 'judges': 'Judges',
+      'ruth': 'Ruth',
+      '1 sam': '1 Samuel', '1 samuel': '1 Samuel', '1sam': '1 Samuel',
+      '2 sam': '2 Samuel', '2 samuel': '2 Samuel', '2sam': '2 Samuel',
+      '1 kings': '1 Kings', '1 ki': '1 Kings', '1ki': '1 Kings',
+      '2 kings': '2 Kings', '2 ki': '2 Kings', '2ki': '2 Kings',
+      '1 chron': '1 Chronicles', '1 chronicles': '1 Chronicles', '1chron': '1 Chronicles',
+      '2 chron': '2 Chronicles', '2 chronicles': '2 Chronicles', '2chron': '2 Chronicles',
+      'ezra': 'Ezra',
+      'neh': 'Nehemiah', 'nehemiah': 'Nehemiah',
+      'esth': 'Esther', 'esther': 'Esther',
+      'job': 'Job',
+      'ps': 'Psalm', 'psa': 'Psalm', 'psalm': 'Psalm', 'psalms': 'Psalm',
+      'prov': 'Proverbs', 'proverbs': 'Proverbs',
+      'eccl': 'Ecclesiastes', 'ecclesiastes': 'Ecclesiastes',
+      'song': 'Song of Solomon', 'song of solomon': 'Song of Solomon',
+      'isa': 'Isaiah', 'isaiah': 'Isaiah',
+      'jer': 'Jeremiah', 'jeremiah': 'Jeremiah',
+      'lam': 'Lamentations', 'lamentations': 'Lamentations',
+      'ezek': 'Ezekiel', 'ezekiel': 'Ezekiel',
+      'dan': 'Daniel', 'daniel': 'Daniel',
+      'hos': 'Hosea', 'hosea': 'Hosea',
+      'joel': 'Joel',
+      'amos': 'Amos',
+      'obad': 'Obadiah', 'obadiah': 'Obadiah',
+      'jonah': 'Jonah',
+      'mic': 'Micah', 'micah': 'Micah',
+      'nah': 'Nahum', 'nahum': 'Nahum',
+      'hab': 'Habakkuk', 'habakkuk': 'Habakkuk',
+      'zeph': 'Zephaniah', 'zephaniah': 'Zephaniah',
+      'hag': 'Haggai', 'haggai': 'Haggai',
+      'zech': 'Zechariah', 'zechariah': 'Zechariah',
+      'mal': 'Malachi', 'malachi': 'Malachi',
+      // New Testament
+      'matt': 'Matthew', 'mt': 'Matthew', 'matthew': 'Matthew',
+      'mark': 'Mark', 'mk': 'Mark',
+      'luke': 'Luke', 'lk': 'Luke',
+      'john': 'John', 'jn': 'John',
+      'acts': 'Acts',
+      'rom': 'Romans', 'romans': 'Romans',
+      '1 cor': '1 Corinthians', '1 corinthians': '1 Corinthians', '1cor': '1 Corinthians',
+      '2 cor': '2 Corinthians', '2 corinthians': '2 Corinthians', '2cor': '2 Corinthians',
+      'gal': 'Galatians', 'galatians': 'Galatians',
+      'eph': 'Ephesians', 'ephesians': 'Ephesians',
+      'phil': 'Philippians', 'php': 'Philippians', 'philippians': 'Philippians',
+      'col': 'Colossians', 'colossians': 'Colossians',
+      '1 thess': '1 Thessalonians', '1 thessalonians': '1 Thessalonians', '1thess': '1 Thessalonians',
+      '2 thess': '2 Thessalonians', '2 thessalonians': '2 Thessalonians', '2thess': '2 Thessalonians',
+      '1 tim': '1 Timothy', '1 timothy': '1 Timothy', '1tim': '1 Timothy',
+      '2 tim': '2 Timothy', '2 timothy': '2 Timothy', '2tim': '2 Timothy',
+      'titus': 'Titus',
+      'philem': 'Philemon', 'philemon': 'Philemon',
+      'heb': 'Hebrews', 'hebrews': 'Hebrews',
+      'james': 'James', 'jas': 'James',
+      '1 pet': '1 Peter', '1 peter': '1 Peter', '1pet': '1 Peter',
+      '2 pet': '2 Peter', '2 peter': '2 Peter', '2pet': '2 Peter',
+      '1 john': '1 John', '1john': '1 John', '1 jn': '1 John',
+      '2 john': '2 John', '2john': '2 John', '2 jn': '2 John',
+      '3 john': '3 John', '3john': '3 John', '3 jn': '3 John',
+      'jude': 'Jude',
+      'rev': 'Revelation', 'revelation': 'Revelation'
     };
 
     function detectVerseReferences(text) {
+      // Enhanced regex to catch more patterns
       const patterns = [
+        // Standard: "Colossians 2:13-15" or "Col 2:13-15"
         /\b((?:1|2|3)\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(\d+):(\d+)(?:-(\d+))?\b/gi,
+        // With period: "Col. 2:13-15"
         /\b((?:1|2|3)\s+)?([A-Z][a-z]+)\.\s+(\d+):(\d+)(?:-(\d+))?\b/gi
       ];
 
@@ -610,19 +590,19 @@
           const verseStart = match[4];
           const verseEnd = match[5] || verseStart;
 
+          // Normalize book name
           const bookKey = (prefix + book).toLowerCase().replace(/\.$/, '');
-          const normalizedBook = bookMappings[bookKey];
-          
-          if (!normalizedBook) continue;
+          const normalizedBook = bookMappings[bookKey] || (prefix + book);
 
-          const displayName = displayNames[normalizedBook];
-          const reference = `${displayName} ${chapter}:${verseStart}${verseEnd !== verseStart ? '-' + verseEnd : ''}`;
-          const apiReference = `${normalizedBook}/${chapter}:${verseStart}-${verseEnd}`;
+          const reference = `${normalizedBook} ${chapter}:${verseStart}${verseEnd !== verseStart ? '-' + verseEnd : ''}`;
           const key = reference.toLowerCase();
 
           if (!seen.has(key)) {
             seen.add(key);
-            references.push({ reference, apiReference });
+            references.push({
+              reference,
+              apiReference: `${normalizedBook}+${chapter}:${verseStart}-${verseEnd}`
+            });
           }
         }
       }
@@ -630,100 +610,35 @@
       return references;
     }
 
-    async function fetchVerse(apiReference, displayRef) {
+    async function fetchVerse(apiReference) {
+      // Check cache first
       if (verseCache[apiReference]) {
         return verseCache[apiReference];
       }
 
       try {
-        console.log('Fetching verse:', displayRef);
-        const url = `https://bible-api.com/${apiReference}`;
-        
-        const response = await fetch(url);
-        
+        const response = await fetch(`https://bible-api.com/${apiReference}`);
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
-        
         const data = await response.json();
         
         const result = {
           text: data.text.trim(),
-          reference: displayRef
+          reference: data.reference,
+          translation: data.translation_name || 'World English Bible'
         };
 
+        // Cache the result
         verseCache[apiReference] = result;
-        console.log('Successfully loaded:', displayRef);
         return result;
       } catch (error) {
-        console.error('Error fetching verse:', displayRef, error);
+        console.error('Error fetching verse:', error);
         return {
           error: true,
-          message: `Unable to load verse`
+          message: 'Unable to load verse'
         };
       }
-    }
-
-    async function createVersesSection(text) {
-      const references = detectVerseReferences(text);
-      
-      if (references.length === 0) {
-        return null;
-      }
-
-      const versesDiv = document.createElement("div");
-      versesDiv.className = "card-verses";
-
-      const header = document.createElement("div");
-      header.className = "verses-header";
-      header.innerHTML = `
-        <span class="verses-icon">📖</span>
-        <span class="verses-title">Bible Verses (${references.length})</span>
-        <span class="verses-toggle">Click to expand</span>
-      `;
-
-      const content = document.createElement("div");
-      content.className = "verses-content";
-
-      header.addEventListener("click", () => {
-        content.classList.toggle("visible");
-        const toggle = header.querySelector(".verses-toggle");
-        toggle.textContent = content.classList.contains("visible") 
-          ? "Click to collapse" 
-          : "Click to expand";
-      });
-
-      versesDiv.appendChild(header);
-      versesDiv.appendChild(content);
-
-      for (const ref of references) {
-        const block = document.createElement("div");
-        block.className = "verse-block";
-
-        const refTitle = document.createElement("div");
-        refTitle.className = "verse-reference";
-        refTitle.textContent = ref.reference;
-
-        const verseText = document.createElement("div");
-        verseText.className = "verse-text verse-loading";
-        verseText.textContent = "Loading...";
-
-        block.appendChild(refTitle);
-        block.appendChild(verseText);
-        content.appendChild(block);
-
-        fetchVerse(ref.apiReference, ref.reference).then(result => {
-          if (result.error) {
-            verseText.className = "verse-text verse-error";
-            verseText.textContent = result.message;
-          } else {
-            verseText.className = "verse-text";
-            verseText.textContent = result.text;
-          }
-        });
-      }
-
-      return versesDiv;
     }
 
     // ---- DOM ----
@@ -770,14 +685,12 @@
       $menuDropdown.classList.toggle("visible");
     });
 
-    // Close menu when clicking outside
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".menu-toggle")) {
         $menuDropdown.classList.remove("visible");
       }
     });
 
-    // Close menu when clicking a menu item
     $menuDropdown.addEventListener("click", () => {
       $menuDropdown.classList.remove("visible");
     });
@@ -812,13 +725,11 @@
     };
 
     // ---- State / render ----
-    // cards: [{ id, type, text, title?, status: 'active'|'done'|'deleted', source: 'pdf'|'custom', originalText?: string }]
     let cards = [];
     let currentSermonDate = null;
     const genId = () => "c_" + Math.random().toString(36).slice(2,9);
     let searchQuery = "";
 
-    // Show/hide title input based on type selection
     $newType.addEventListener("change", () => {
       if ($newType.value === "section") {
         $newTitle.classList.add("visible");
@@ -889,9 +800,72 @@
       updateFilterCount();
     }
 
+    async function createVersesSection(text) {
+      const references = detectVerseReferences(text);
+      
+      if (references.length === 0) {
+        return null;
+      }
+
+      const versesDiv = document.createElement("div");
+      versesDiv.className = "card-verses";
+
+      const header = document.createElement("div");
+      header.className = "verses-header";
+      header.innerHTML = `
+        <span class="verses-icon">📖</span>
+        <span class="verses-title">Bible Verses (${references.length})</span>
+        <span class="verses-toggle">Click to expand</span>
+      `;
+
+      const content = document.createElement("div");
+      content.className = "verses-content";
+
+      // Toggle functionality
+      header.addEventListener("click", () => {
+        content.classList.toggle("visible");
+        const toggle = header.querySelector(".verses-toggle");
+        toggle.textContent = content.classList.contains("visible") 
+          ? "Click to collapse" 
+          : "Click to expand";
+      });
+
+      versesDiv.appendChild(header);
+      versesDiv.appendChild(content);
+
+      // Fetch all verses
+      for (const ref of references) {
+        const block = document.createElement("div");
+        block.className = "verse-block";
+
+        const refTitle = document.createElement("div");
+        refTitle.className = "verse-reference";
+        refTitle.textContent = ref.reference;
+
+        const verseText = document.createElement("div");
+        verseText.className = "verse-text verse-loading";
+        verseText.textContent = "Loading...";
+
+        block.appendChild(refTitle);
+        block.appendChild(verseText);
+        content.appendChild(block);
+
+        // Fetch the verse
+        fetchVerse(ref.apiReference).then(result => {
+          if (result.error) {
+            verseText.className = "verse-text verse-error";
+            verseText.textContent = result.message;
+          } else {
+            verseText.className = "verse-text";
+            verseText.textContent = result.text;
+          }
+        });
+      }
+
+      return versesDiv;
+    }
+
     async function renderCards(next) {
-      // default to active status for any card missing it
-      // preserve source and originalText if present
       cards = next.map(c => ({ 
         status: 'active', 
         source: 'pdf',
@@ -905,15 +879,14 @@
 
       for (const c of cards) {
         const el = document.createElement("div");
-        el.className = "card"; el.dataset.id = c.id;
+        el.className = "card"; 
+        el.dataset.id = c.id;
 
-        // Determine if edited
         const isEdited = c.originalText && c.originalText !== c.text;
 
         const header = document.createElement("div");
         header.className = "card-header";
         
-        // Determine tag class and text
         let tagClass = "";
         let tagText = c.type === "section" ? "Section" : "Question";
         if (c.source === "custom") {
@@ -950,7 +923,6 @@
         body.className = "card-body";
         body.textContent = c.text;
 
-        // Create edit area (hidden by default)
         const editArea = document.createElement("div");
         editArea.className = "edit-area";
         editArea.innerHTML = `
@@ -965,7 +937,7 @@
         el.appendChild(body);
         el.appendChild(editArea);
 
-        // Add Bible verses section for questions
+        // Add Bible verses section if verses detected
         if (c.type === "question") {
           const versesSection = await createVersesSection(c.text);
           if (versesSection) {
@@ -996,20 +968,17 @@
       ];
     }
 
-    // Sortable only on Active column
     Sortable.create($boardActive, {
       animation:150, handle:".drag-handle", ghostClass:"ghost", direction:"vertical",
       onEnd(){ cards=getCurrentCards(); autoSave(); }
     });
 
-    // Debounced autosave
     const debounce=(fn,ms=400)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
     const autoSave = debounce(()=>{
       if (!currentRoomCode()) return;
       saveLive(getCurrentCards());
     },400);
 
-    // ✅ Click actions across all three boards
     document.querySelector(".boards").addEventListener("click", (e) => {
       const btn = e.target.closest("button[data-action]");
       if (!btn) return;
@@ -1020,7 +989,6 @@
       const id = card.dataset.id;
       const action = btn.dataset.action;
 
-      // Handle edit mode
       if (action === "edit") {
         card.classList.add("editing");
         const textarea = card.querySelector(".edit-textarea");
@@ -1054,15 +1022,8 @@
         const current = getCurrentCards();
         const next = current.map(c => {
           if (c.id !== id) return c;
-          
-          // Track original text if this is first edit of a PDF card
           const originalText = c.originalText || (c.source === 'pdf' ? c.text : undefined);
-          
-          return { 
-            ...c, 
-            text: newText,
-            originalText
-          };
+          return { ...c, text: newText, originalText };
         });
         
         renderCards(next);
@@ -1070,7 +1031,6 @@
         return;
       }
 
-      // Handle status changes
       let newStatus;
       if (action === "complete") newStatus = "done";
       else if (action === "trash") newStatus = "deleted";
@@ -1084,7 +1044,6 @@
       autoSave();
     });
 
-    // Add new card -> Active (at top)
     document.getElementById("addBtn").addEventListener("click", ()=>{
       const type=$newType.value;
       const title=($newTitle.value||"").trim();
@@ -1095,17 +1054,15 @@
         type, 
         text, 
         status:"active",
-        source: "custom" // Mark as custom-added
+        source: "custom"
       };
       if(type==="section" && title) item.title=title;
       
-      // Add to beginning of cards array (top of active list)
       renderCards([item, ...cards]);
       $newText.value=""; $newTitle.value="";
       autoSave();
     });
 
-    // Search functionality
     $searchInput.addEventListener("input", (e) => {
       searchQuery = e.target.value;
       applySearch();
@@ -1117,11 +1074,8 @@
       applySearch();
     });
 
-    // Keyboard shortcuts
     document.addEventListener("keydown", (e) => {
-      // Ignore if typing in input/textarea
       if (e.target.matches("input, textarea")) {
-        // Esc to clear search when in search input
         if (e.key === "Escape" && e.target === $searchInput) {
           $clearSearch.click();
           $searchInput.blur();
@@ -1129,28 +1083,24 @@
         return;
       }
 
-      // ? to toggle help
       if (e.key === "?") {
         e.preventDefault();
         $shortcutsHelp.classList.toggle("visible");
         return;
       }
 
-      // / to focus search
       if (e.key === "/") {
         e.preventDefault();
         $searchInput.focus();
         return;
       }
 
-      // Esc to clear search
       if (e.key === "Escape") {
         e.preventDefault();
         $clearSearch.click();
         return;
       }
 
-      // n to focus new card input
       if (e.key === "n" || e.key === "N") {
         e.preventDefault();
         $newText.focus();
@@ -1166,7 +1116,6 @@
       $shortcutsHelp.classList.remove("visible");
     });
 
-    // Rooms: list, join, share
     async function refreshRoomsList(selected){
       const rooms = await listRooms();
       $roomSel.innerHTML="";
@@ -1190,7 +1139,6 @@
       renderCards(state);
     }
 
-    // ?room=CODE
     const urlRoom = new URLSearchParams(location.search).get("room");
     await joinAndLoad(urlRoom || null);
     await refreshRoomsList(currentRoomCode());
@@ -1217,7 +1165,6 @@
       alert("Share link copied!");
     });
 
-    // Delete Room (with confirm)
     $deleteRoom.addEventListener("click", async () => {
       const code = currentRoomCode();
 
@@ -1249,11 +1196,9 @@
       location.href = url.toString();
     });
 
-    // Guide.json loader + PDF link
     const guideJsonUrl=(noCache=false)=>{ const u=new URL("data/guide.json",location.href); if(noCache) u.searchParams.set("ts",Date.now()); return u.toString(); };
     
     function extractDateFromUrl(url) {
-      // Extract date from URLs like "Greater-Things-Greater-Sufficiency-11.2.25.pdf"
       const match = url.match(/(\d{1,2})\.(\d{1,2})\.(\d{2})/);
       if (match) {
         const month = parseInt(match[1]);
@@ -1278,7 +1223,6 @@
       $pdfLink.href = u;
       $pdfLink.style.display = "inline-block";
       
-      // Extract and display date
       const dateStr = extractDateFromUrl(u);
       updateSermonDate(dateStr);
     }
@@ -1295,14 +1239,14 @@
             type:"question",
             text:q,
             status:"active",
-            source:"pdf" // Mark as PDF-sourced
+            source:"pdf"
           })),
           ...(data.sections||[]).map(s=>({
             type:"section",
             title:s.title,
             text:s.body,
             status:"active",
-            source:"pdf" // Mark as PDF-sourced
+            source:"pdf"
           }))
         ];
         renderCards(next);
@@ -1314,7 +1258,6 @@
       }
     }
 
-    // Confirmations for overwriting actions
     $loadLatest.addEventListener("click", () => {
       const ok = confirm(
         "Load Latest Sermon will replace the current board with the latest Discussion Guide.\n\nAny changes in this room will be overwritten. Continue?"
@@ -1322,6 +1265,7 @@
       if (!ok) return;
       loadGuideJson(false);
     });
+    
     $refresh.addEventListener("click", () => {
       const ok = confirm(
         "Refresh will re-read the latest guide and overwrite the current Discussion Guide questions.\n\nAny changes will be overwritten. Continue?"
