@@ -955,12 +955,10 @@
         el.appendChild(body);
         el.appendChild(editArea);
 
-        // Add Bible verses section if verses detected
-        if (c.type === "question") {
-          const versesSection = await createVersesSection(c.text);
-          if (versesSection) {
-            el.appendChild(versesSection);
-          }
+        // Add Bible verses section if verses detected (works for all card types)
+        const versesSection = await createVersesSection(c.text);
+        if (versesSection) {
+          el.appendChild(versesSection);
         }
 
         if (c.status === "done") $boardDone.appendChild(el);
