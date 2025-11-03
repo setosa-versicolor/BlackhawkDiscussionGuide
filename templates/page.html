@@ -889,7 +889,7 @@
       updateFilterCount();
     }
 
-    function renderCards(next) {
+    async function renderCards(next) {
       // default to active status for any card missing it
       // preserve source and originalText if present
       cards = next.map(c => ({ 
