@@ -68,6 +68,38 @@
       text-decoration: none;
     }
     #pdfLink:hover { opacity: .9; }
+
+    /* Edit mode styles */
+    .card.editing .card-body { display: none; }
+    .card:not(.editing) .edit-area { display: none; }
+    .edit-area {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .edit-area textarea {
+      background: #0f1117;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      font-family: inherit;
+      font-size: inherit;
+      line-height: 1.5;
+      min-height: 80px;
+      resize: vertical;
+      outline: none;
+    }
+    .edit-area .edit-controls {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .edit-area .edit-controls button {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
@@ -181,6 +213,12 @@
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M7 9l-4 4 4 4" />
           <path d="M3 13h9a6 6 0 016 6" />
+        </svg>`,
+      edit: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
         </svg>`
     };
 
@@ -209,6 +247,9 @@
           ${c.title ? `<strong style="margin-left:6px">${escapeHtml(c.title)}</strong>` : ""}
           <div class="spacer"></div>
           ${c.status === 'active' ? `
+            <button class="icon-btn" data-action="edit" title="Edit" aria-label="Edit">
+              ${ICONS.edit}
+            </button>
             <button class="icon-btn" data-action="complete" title="Mark complete" aria-label="Mark complete">
               ${ICONS.check}
             </button>
@@ -221,12 +262,25 @@
             </button>
           `}
         `;
+        
         const body = document.createElement("div");
         body.className = "card-body";
         body.textContent = c.text;
 
+        // Create edit area (hidden by default)
+        const editArea = document.createElement("div");
+        editArea.className = "edit-area";
+        editArea.innerHTML = `
+          <textarea class="edit-textarea">${escapeHtml(c.text)}</textarea>
+          <div class="edit-controls">
+            <button class="secondary" data-action="cancel-edit">Cancel</button>
+            <button data-action="save-edit">Save</button>
+          </div>
+        `;
+
         el.appendChild(header);
         el.appendChild(body);
+        el.appendChild(editArea);
 
         if (c.status === "done") $boardDone.appendChild(el);
         else if (c.status === "deleted") $boardDeleted.appendChild(el);
@@ -263,27 +317,74 @@
     },400);
 
     // ✅ Click actions across all three boards
-      document.querySelector(".boards").addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-action]");
-        if (!btn) return;
+    document.querySelector(".boards").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+    
+      const card = btn.closest(".card");
+      if (!card) return;
       
-        const id = btn.closest(".card")?.dataset.id;
-        if (!id) return;
-      
-        const action = btn.dataset.action;
-        let newStatus;
-        if (action === "complete") newStatus = "done";
-        else if (action === "trash") newStatus = "deleted";
-        else if (action === "undo") newStatus = "active";
-        else return;
-      
-        // Preserve current order, change only the clicked card’s status
+      const id = card.dataset.id;
+      const action = btn.dataset.action;
+
+      // Handle edit mode
+      if (action === "edit") {
+        card.classList.add("editing");
+        const textarea = card.querySelector(".edit-textarea");
+        if (textarea) {
+          textarea.focus();
+          // Move cursor to end
+          textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        }
+        return;
+      }
+
+      if (action === "cancel-edit") {
+        card.classList.remove("editing");
+        // Reset textarea to original value
+        const originalCard = cards.find(c => c.id === id);
+        if (originalCard) {
+          const textarea = card.querySelector(".edit-textarea");
+          if (textarea) textarea.value = originalCard.text;
+        }
+        return;
+      }
+
+      if (action === "save-edit") {
+        const textarea = card.querySelector(".edit-textarea");
+        if (!textarea) return;
+        
+        const newText = textarea.value.trim();
+        if (!newText) {
+          alert("Card text cannot be empty");
+          return;
+        }
+
+        // Update the card text
         const current = getCurrentCards();
-        const next = current.map(c => (c.id === id ? { ...c, status: newStatus } : c));
-      
+        const next = current.map(c => 
+          c.id === id ? { ...c, text: newText } : c
+        );
+        
         renderCards(next);
-        autoSave(); // will persist the new board state
-      });
+        autoSave();
+        return;
+      }
+
+      // Handle status changes
+      let newStatus;
+      if (action === "complete") newStatus = "done";
+      else if (action === "trash") newStatus = "deleted";
+      else if (action === "undo") newStatus = "active";
+      else return;
+    
+      // Preserve current order, change only the clicked card's status
+      const current = getCurrentCards();
+      const next = current.map(c => (c.id === id ? { ...c, status: newStatus } : c));
+    
+      renderCards(next);
+      autoSave();
+    });
 
     // Add new card -> Active
     document.getElementById("addBtn").addEventListener("click", ()=>{
@@ -364,13 +465,13 @@
       }
 
       const ok = confirm(
-        `Delete room “${code}” for everyone?\n\nThis will remove the room for everyone, not just you. Continue?`
+        `Delete room "${code}" for everyone?\n\nThis will remove the room for everyone, not just you. Continue?`
       );
       if (!ok) return;
 
       try {
         await deleteRoom(code);
-        alert(`Room “${code}” deleted.`);
+        alert(`Room "${code}" deleted.`);
       } catch (e) {
         console.error(e);
         alert("Failed to delete room (see console).");
