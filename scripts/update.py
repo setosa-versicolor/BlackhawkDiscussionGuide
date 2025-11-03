@@ -93,6 +93,26 @@ def _extract_dates_from_text(text: str, year_hint: int) -> list[datetime.date]:
                 pass
     return dates
 
+def _extract_date_from_url(url: str, year_hint: int) -> datetime.date | None:
+    """
+    Extract date from URL patterns like:
+    - Discussion-Guide-10.12.25.pdf
+    - Greater-Things-Greater-Sufficiency-11.2.25.pdf
+    """
+    # Pattern: M.D.YY or MM.DD.YY
+    date_in_url = re.search(r'(\d{1,2})\.(\d{1,2})\.(\d{2})', url)
+    if date_in_url:
+        month = int(date_in_url.group(1))
+        day = int(date_in_url.group(2))
+        year_suffix = int(date_in_url.group(3))
+        # Assume 2000s
+        year = 2000 + year_suffix
+        try:
+            return datetime.date(year, month, day)
+        except ValueError:
+            pass
+    return None
+
 def _collect_nearby_text(a_tag, max_ancestors=3) -> str:
     texts = []
     texts.append(a_tag.get_text(" ", strip=True))
@@ -128,42 +148,60 @@ def _first_discussion_link_on_messages_page(today: datetime.date) -> str | None:
     Scan the messages landing page for all discussion guide links and return
     the one that most closely matches today's date.
 
-    The original implementation returned the first matching link in the DOM,
-    which inadvertently selected an older guide when the page lists messages
-    chronologically (oldest first). To robustly choose the current week's
-    guide, we collect every link labeled "Discussion Guide", extract dates from
-    the surrounding context, and pick the newest date not after today. If no
-    dates are found, fall back to the last occurrence in the list.
+    FIXED: Now tries multiple strategies to find dates:
+    1. Look for dates in surrounding context
+    2. Extract date from the URL itself (e.g., Discussion-Guide-11.2.25.pdf)
+    3. If no dates found anywhere, collect undated links as fallback
     """
     soup = get_soup(MESSAGES_URL)
     guides: list[tuple[datetime.date, str]] = []
+    undated_guides: list[str] = []
+    
     for a in soup.find_all("a"):
         if "discussion guide" in a.get_text(strip=True).lower():
-            ctx = _collect_nearby_text(a)
-            # Extract all dates from context, assuming the current year as a hint
-            ds = _extract_dates_from_text(ctx, year_hint=today.year)
-            if not ds:
-                # Skip entries without recognizable dates to avoid mis-selection
-                continue
-            ds_unique = sorted(set(ds))
-            # Prefer dates on or before today
-            candidates = [d for d in ds_unique if d <= today]
-            dt_choice = candidates[-1] if candidates else ds_unique[-1]
             href = a.get("href")
-            if href:
-                guides.append((dt_choice, requests.compat.urljoin(MESSAGES_URL, href)))
-    if not guides:
-        # No dated guides found
+            if not href:
+                continue
+                
+            full_url = requests.compat.urljoin(MESSAGES_URL, href)
+            ctx = _collect_nearby_text(a)
+            
+            # Strategy 1: Extract dates from context text
+            ds = _extract_dates_from_text(ctx, year_hint=today.year)
+            
+            # Strategy 2: If no dates in context, try extracting from URL
+            if not ds:
+                url_date = _extract_date_from_url(full_url, year_hint=today.year)
+                if url_date:
+                    ds = [url_date]
+            
+            if ds:
+                ds_unique = sorted(set(ds))
+                # Prefer dates on or before today
+                candidates = [d for d in ds_unique if d <= today]
+                dt_choice = candidates[-1] if candidates else ds_unique[-1]
+                guides.append((dt_choice, full_url))
+            else:
+                # Collect undated guides as fallback
+                undated_guides.append(full_url)
+    
+    if not guides and not undated_guides:
+        # No guides found at all
         return None
-    # Sort by date so the last element is the latest
-    guides.sort(key=lambda x: x[0])
-    # Choose the guide whose date is closest to (but not after) today
-    filtered = [g for g in guides if g[0] <= today]
-    chosen = filtered[-1] if filtered else guides[-1]
-    return chosen[1]
+    
+    if guides:
+        # Sort by date so the last element is the latest
+        guides.sort(key=lambda x: x[0])
+        # Choose the guide whose date is closest to (but not after) today
+        filtered = [g for g in guides if g[0] <= today]
+        chosen = filtered[-1] if filtered else guides[-1]
+        return chosen[1]
+    else:
+        # Only undated guides found - return the last one (likely most recent)
+        return undated_guides[-1]
 
 def _discussion_link_from_message_page(url: str) -> str | None:
-    """Given a message page, return the final “Discussion Guide” link on that page."""
+    """Given a message page, return the final "Discussion Guide" link on that page."""
     soup = get_soup(url)
     discussion_links: list[str] = []
     for a in soup.find_all("a"):
@@ -179,34 +217,46 @@ def _find_message_page_for_today(today: datetime.date) -> str | None:
     """
     Return the message detail page that corresponds to today's date.
 
-    Similar to `_first_discussion_link_on_messages_page`, the original implementation
-    stopped at the first `/message/` link whose context contained the month/day.
-    Because the messages index may list older messages before newer ones, this
-    could incorrectly choose a past message. We now collect all candidate message
-    links with recognizable dates and choose the most recent date not after today.
+    FIXED: Similar improvements as _first_discussion_link_on_messages_page
     """
     soup = get_soup(MESSAGES_URL)
     candidates: list[tuple[datetime.date, str]] = []
+    undated_candidates: list[str] = []
+    
     for a in soup.find_all("a", href=True):
         href = a["href"]
         if "/message/" not in href:
             continue
+            
+        full_url = requests.compat.urljoin(MESSAGES_URL, href)
         # Extract context text around the link and look for a date
         ctx = a.parent.get_text(" ", strip=True) if a.parent else a.get_text(" ", strip=True)
         ds = _extract_dates_from_text(ctx, year_hint=today.year)
+        
+        # Try extracting from URL if no context dates
         if not ds:
-            # Skip message links without an explicit date
-            continue
-        ds_unique = sorted(set(ds))
-        valid = [d for d in ds_unique if d <= today]
-        dt_choice = valid[-1] if valid else ds_unique[-1]
-        candidates.append((dt_choice, requests.compat.urljoin(MESSAGES_URL, href)))
-    if not candidates:
+            url_date = _extract_date_from_url(full_url, year_hint=today.year)
+            if url_date:
+                ds = [url_date]
+        
+        if ds:
+            ds_unique = sorted(set(ds))
+            valid = [d for d in ds_unique if d <= today]
+            dt_choice = valid[-1] if valid else ds_unique[-1]
+            candidates.append((dt_choice, full_url))
+        else:
+            undated_candidates.append(full_url)
+            
+    if not candidates and not undated_candidates:
         return None
-    candidates.sort(key=lambda x: x[0])
-    filtered = [c for c in candidates if c[0] <= today]
-    chosen = filtered[-1] if filtered else candidates[-1]
-    return chosen[1]
+        
+    if candidates:
+        candidates.sort(key=lambda x: x[0])
+        filtered = [c for c in candidates if c[0] <= today]
+        chosen = filtered[-1] if filtered else candidates[-1]
+        return chosen[1]
+    else:
+        return undated_candidates[-1]
 
 def find_current_series_resources_url() -> str:
     soup = get_soup(LEARN_URL)
@@ -262,16 +312,26 @@ def find_today_discussion_pdf_or_page(series_url: str, today: datetime.date) -> 
     guides = []
     for a in soup_r.find_all("a"):
         if "discussion guide" in a.get_text(strip=True).lower():
+            href = a.get("href")
+            if not href:
+                continue
+                
+            full_url = requests.compat.urljoin(series_url, href)
             ctx = _collect_nearby_text(a)
             ds = _extract_dates_from_text(ctx, year_hint=today.year)
+            
+            # Try URL extraction if no context dates
+            if not ds:
+                url_date = _extract_date_from_url(full_url, year_hint=today.year)
+                if url_date:
+                    ds = [url_date]
+            
             if not ds:
                 continue
             ds_unique = sorted(set(ds))
             candidates = [d for d in ds_unique if d <= today]
             dt_choice = candidates[-1] if candidates else ds_unique[-1]
-            href = a.get("href")
-            if href:
-                guides.append((dt_choice, requests.compat.urljoin(series_url, href), ctx))
+            guides.append((dt_choice, full_url, ctx))
 
     if guides:
         guides.sort(key=lambda x: x[0])
@@ -406,7 +466,7 @@ def _normalize_pdf_text(raw: str) -> str:
     #    Common patterns: "? –", "? -", ": –", ": -"
     raw = re.sub(r"(\?|:)\s*[–\-•]\s+", r"\1\n– ", raw)
 
-    # 5) Normalize all bullet markers to an en-dash and make sure they’re at line starts
+    # 5) Normalize all bullet markers to an en-dash and make sure they're at line starts
     #    Turn lines like "  •  text" or " - text" into "– text"
     raw = re.sub(r"^[\s]*[•\-]\s+", "– ", raw, flags=re.M)
 
