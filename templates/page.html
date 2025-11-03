@@ -585,6 +585,7 @@
       for (const pattern of patterns) {
         let match;
         while ((match = pattern.exec(text)) !== null) {
+          console.log('Regex matched:', match[0], 'Book:', match[2], 'Chapter:', match[3]);
           const prefix = match[1] ? match[1].trim() + ' ' : '';
           const book = match[2];
           const chapter = match[3];
@@ -593,10 +594,16 @@
 
           // Normalize book name
           const bookKey = (prefix + book).toLowerCase().replace(/\.$/, '');
+          console.log('Looking up bookKey:', bookKey);
           const normalizedBook = bookMappings[bookKey];
           
+          console.log('Normalized book:', normalizedBook);
+          
           // Skip if book name not recognized
-          if (!normalizedBook) continue;
+          if (!normalizedBook) {
+            console.log('Skipping unrecognized book:', bookKey);
+            continue;
+          }
 
           const reference = `${normalizedBook} ${chapter}:${verseStart}${verseEnd !== verseStart ? '-' + verseEnd : ''}`;
           const key = reference.toLowerCase();
