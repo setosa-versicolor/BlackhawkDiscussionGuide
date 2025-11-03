@@ -498,7 +498,10 @@
     const verseCache = {}; // Cache fetched verses
     
     // *** PUT YOUR ESV API KEY HERE ***
-    const ESV_API_KEY = '{a5311a98777073babe8991b3c87ec889572f5c7b}';
+    const ESV_API_KEY = 'a5311a98777073babe8991b3c87ec889572f5c7b';
+    
+    // CORS proxy to allow browser requests to ESV API
+    const CORS_PROXY = 'https://corsproxy.io/?';
 
     // Book name mappings (handles abbreviations)
     const bookMappings = {
@@ -620,10 +623,7 @@
           seen.add(key);
           references.push({
             reference,
-            bookName: normalizedBook,
-            chapter: chapter,
-            verseStart: verseStart,
-            verseEnd: verseEnd
+            apiReference: `${normalizedBook}+${chapter}:${verseStart}-${verseEnd}`
           });
         }
       }
@@ -641,12 +641,14 @@
       }
 
       try {
-        // Format the query: "Colossians 2:13-15"
+        // Format the query for ESV API
         const query = `${bookName} ${chapter}:${verseStart}-${verseEnd}`;
+        const esvUrl = `https://api.esv.org/v3/passage/text/?q=${encodeURIComponent(query)}&include-headings=false&include-footnotes=false&include-verse-numbers=false&include-short-copyright=false&include-passage-references=false`;
         
-        console.log('Fetching verse:', displayRef, 'Query:', query);
+        // Use CORS proxy to bypass browser restrictions
+        const url = CORS_PROXY + encodeURIComponent(esvUrl);
         
-        const url = `https://api.esv.org/v3/passage/text/?q=${encodeURIComponent(query)}&include-headings=false&include-footnotes=false&include-verse-numbers=false&include-short-copyright=false&include-passage-references=false`;
+        console.log('Fetching verse:', displayRef);
         
         const response = await fetch(url, {
           headers: {
@@ -660,7 +662,6 @@
         
         const data = await response.json();
         
-        // ESV API returns passages as an array
         const result = {
           text: data.passages[0].trim(),
           reference: displayRef
@@ -977,10 +978,12 @@
         el.appendChild(body);
         el.appendChild(editArea);
 
-        // Add Bible verses section if verses detected (for both questions and sections)
-        const versesSection = await createVersesSection(c.text);
-        if (versesSection) {
-          el.appendChild(versesSection);
+        // Add Bible verses section if verses detected
+        if (c.type === "question") {
+          const versesSection = await createVersesSection(c.text);
+          if (versesSection) {
+            el.appendChild(versesSection);
+          }
         }
 
         if (c.status === "done") $boardDone.appendChild(el);
