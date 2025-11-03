@@ -570,6 +570,7 @@
     };
 
     function detectVerseReferences(text) {
+      console.log('Detecting verses in:', text.substring(0, 100) + '...');
       // Enhanced regex to catch more patterns
       const patterns = [
         // Standard: "Colossians 2:13-15" or "Col 2:13-15"
@@ -610,6 +611,7 @@
         }
       }
 
+      console.log('Detected references:', references);
       return references;
     }
 
@@ -805,6 +807,8 @@
 
     async function createVersesSection(text) {
       const references = detectVerseReferences(text);
+      
+      console.log('createVersesSection called, found', references.length, 'references');
       
       if (references.length === 0) {
         return null;
