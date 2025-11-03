@@ -8,6 +8,7 @@
     :root {
       --bg:#0e0f12; --panel:#161820; --card:#1e2230; --text:#e8ecf3;
       --muted:#9aa3b2; --accent:#7aa2ff; --border:#2a2f3c; --danger:#ff6b6b;
+      --custom:#9b6bff; --edited:#ff9b6b;
     }
     html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
       font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
@@ -25,10 +26,12 @@
     .muted{color:var(--muted);} .spacer{flex:1}
     .board{display:block;margin-top:8px;}
     .card{width:100%;box-sizing:border-box;margin:12px 0;background:var(--card);
-      border:1px solid var(--border);border-radius:16px;}
+      border:1px solid var(--border);border-radius:16px;position:relative;}
     .card-header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);}
     .drag-handle{cursor:grab;user-select:none;font-weight:900;letter-spacing:1px;opacity:.7;}
     .tag{font-size:12px;padding:2px 8px;border-radius:999px;background:#2b3142;color:#cfe;}
+    .tag.custom{background:var(--custom);color:#fff;}
+    .tag.edited{background:var(--edited);color:#fff;}
     .card-body{padding:12px;white-space:pre-wrap;}
     .ghost{opacity:.5;}
     .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
@@ -38,12 +41,24 @@
     /* three lanes */
     .boards {
       display: grid;
-      grid-template-columns: 1fr;   /* always one column */
+      grid-template-columns: 1fr;
       gap: 14px;
       margin-top: 12px;
     }
     .board-wrap { background: transparent; }
-    .board-title { font-weight: 700; color: var(--muted); margin: 4px 0 2px; }
+    .board-title { 
+      font-weight: 700; 
+      color: var(--muted); 
+      margin: 4px 0 2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .board-title .count {
+      font-size: 13px;
+      color: var(--muted);
+      opacity: 0.7;
+    }
     .board-muted .card { opacity: .95; }
     .board-muted .drag-handle { opacity: .35; cursor: default; }
 
@@ -100,6 +115,94 @@
       padding: 6px 12px;
       font-size: 13px;
     }
+
+    /* Title input - hidden by default, shown for sections */
+    #newTitle {
+      display: none;
+    }
+    #newTitle.visible {
+      display: block;
+    }
+
+    /* Search/filter bar */
+    .filter-bar {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .filter-bar input {
+      flex: 1;
+      min-width: 200px;
+    }
+    .filter-bar .filter-count {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    /* Hide filtered cards */
+    .card.filtered {
+      display: none;
+    }
+
+    /* Edited indicator */
+    .edited-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--edited);
+      color: #fff;
+      margin-left: 4px;
+    }
+
+    /* Keyboard shortcuts help */
+    .shortcuts-help {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: none;
+      max-width: 300px;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .shortcuts-help.visible {
+      display: block;
+    }
+    .shortcuts-help h3 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .shortcuts-help .shortcut {
+      display: flex;
+      justify-content: space-between;
+      margin: 6px 0;
+      font-size: 13px;
+    }
+    .shortcuts-help .key {
+      background: #2b3040;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .shortcuts-help .close-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px;
+      font-size: 18px;
+      line-height: 1;
+    }
   </style>
 </head>
 <body>
@@ -121,8 +224,16 @@
       <div class="spacer"></div>
       <button id="loadLatestBtn" class="secondary" title="Load from data/guide.json">Load Latest Sermon</button>
       <button id="refreshBtn" class="secondary" title="Re-read data/guide.json with no cache">Refresh</button>
+      <button id="helpBtn" class="secondary" title="Show keyboard shortcuts (?)">?</button>
       <button id="deleteRoomBtn" class="danger" title="Delete this room for everyone">Delete Room</button>
       <span class="muted" id="status"></span>
+    </div>
+
+    <!-- Search/Filter bar -->
+    <div class="bar filter-bar">
+      <input id="searchInput" type="text" placeholder="Search questions..." />
+      <button id="clearSearchBtn" class="secondary">Clear</button>
+      <span class="filter-count" id="filterCount"></span>
     </div>
 
     <!-- Add new card -->
@@ -131,7 +242,7 @@
         <option value="question">Question</option>
         <option value="section">Section</option>
       </select>
-      <input id="newTitle" type="text" placeholder="(optional) Title for section" />
+      <input id="newTitle" type="text" placeholder="Section title" />
       <input id="newText" class="grow" type="text" placeholder="Type your question/section text…" />
       <button id="addBtn">Add</button>
     </div>
@@ -139,22 +250,53 @@
     <!-- Boards -->
     <div class="boards">
       <div class="board-wrap">
-        <div class="board-title">Active</div>
+        <div class="board-title">
+          Active
+          <span class="count" id="activeCount"></span>
+        </div>
         <div id="boardActive" class="board"></div>
       </div>
       <div class="board-wrap">
-        <div class="board-title">Completed</div>
+        <div class="board-title">
+          Completed
+          <span class="count" id="doneCount"></span>
+        </div>
         <div id="boardDone" class="board board-muted"></div>
       </div>
       <div class="board-wrap">
-        <div class="board-title">Deleted</div>
+        <div class="board-title">
+          Deleted
+          <span class="count" id="deletedCount"></span>
+        </div>
         <div id="boardDeleted" class="board board-muted"></div>
       </div>
     </div>
 
     <div class="hint muted">If you don't see anything on the page, start by clicking "Load Latest Sermon"</div>
-    <div class="hint muted">Rooms allow you to share your view with others and collaborate in real time.</div>
+    <div class="hint muted">Rooms allow you to share your view with others and collaborate in real time. Press <strong>?</strong> for keyboard shortcuts.</div>
     <div class="footer">blackhawk.church/learn</div>
+  </div>
+
+  <!-- Keyboard shortcuts help panel -->
+  <div class="shortcuts-help" id="shortcutsHelp">
+    <button class="close-btn" id="closeHelp">&times;</button>
+    <h3>Keyboard Shortcuts</h3>
+    <div class="shortcut">
+      <span>Show/hide help</span>
+      <span class="key">?</span>
+    </div>
+    <div class="shortcut">
+      <span>Search</span>
+      <span class="key">/</span>
+    </div>
+    <div class="shortcut">
+      <span>Clear search</span>
+      <span class="key">Esc</span>
+    </div>
+    <div class="shortcut">
+      <span>Add new card</span>
+      <span class="key">n</span>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" crossorigin="anonymous"></script>
@@ -193,6 +335,18 @@
     const $loadLatest = document.getElementById("loadLatestBtn");
     const $refresh = document.getElementById("refreshBtn");
 
+    const $searchInput = document.getElementById("searchInput");
+    const $clearSearch = document.getElementById("clearSearchBtn");
+    const $filterCount = document.getElementById("filterCount");
+
+    const $helpBtn = document.getElementById("helpBtn");
+    const $shortcutsHelp = document.getElementById("shortcutsHelp");
+    const $closeHelp = document.getElementById("closeHelp");
+
+    const $activeCount = document.getElementById("activeCount");
+    const $doneCount = document.getElementById("doneCount");
+    const $deletedCount = document.getElementById("deletedCount");
+
     // ---- Icons (flat SVG) ----
     const ICONS = {
       check: `
@@ -219,17 +373,89 @@
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
           <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+        </svg>`,
+      copy: `
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
         </svg>`
     };
 
     // ---- State / render ----
-    // cards: [{ id, type, text, title?, status: 'active'|'done'|'deleted' }]
+    // cards: [{ id, type, text, title?, status: 'active'|'done'|'deleted', source: 'pdf'|'custom', originalText?: string }]
     let cards = [];
     const genId = () => "c_" + Math.random().toString(36).slice(2,9);
+    let searchQuery = "";
+
+    // Show/hide title input based on type selection
+    $newType.addEventListener("change", () => {
+      if ($newType.value === "section") {
+        $newTitle.classList.add("visible");
+      } else {
+        $newTitle.classList.remove("visible");
+        $newTitle.value = "";
+      }
+    });
+
+    function updateCardCounts() {
+      const active = cards.filter(c => c.status === 'active').length;
+      const done = cards.filter(c => c.status === 'done').length;
+      const deleted = cards.filter(c => c.status === 'deleted').length;
+      
+      $activeCount.textContent = `(${active})`;
+      $doneCount.textContent = `(${done})`;
+      $deletedCount.textContent = `(${deleted})`;
+    }
+
+    function updateFilterCount() {
+      if (!searchQuery) {
+        $filterCount.textContent = "";
+        return;
+      }
+      const visible = cards.filter(c => {
+        const text = (c.text || "").toLowerCase();
+        const title = (c.title || "").toLowerCase();
+        const query = searchQuery.toLowerCase();
+        return text.includes(query) || title.includes(query);
+      }).length;
+      $filterCount.textContent = `Showing ${visible} of ${cards.length}`;
+    }
+
+    function applySearch() {
+      const query = searchQuery.toLowerCase();
+      document.querySelectorAll(".card").forEach(cardEl => {
+        if (!query) {
+          cardEl.classList.remove("filtered");
+          return;
+        }
+        const id = cardEl.dataset.id;
+        const card = cards.find(c => c.id === id);
+        if (!card) {
+          cardEl.classList.add("filtered");
+          return;
+        }
+        const text = (card.text || "").toLowerCase();
+        const title = (card.title || "").toLowerCase();
+        const matches = text.includes(query) || title.includes(query);
+        if (matches) {
+          cardEl.classList.remove("filtered");
+        } else {
+          cardEl.classList.add("filtered");
+        }
+      });
+      updateFilterCount();
+    }
 
     function renderCards(next) {
       // default to active status for any card missing it
-      cards = next.map(c => ({ status: 'active', ...c, id: c.id || genId() }));
+      // preserve source and originalText if present
+      cards = next.map(c => ({ 
+        status: 'active', 
+        source: 'pdf',
+        ...c, 
+        id: c.id || genId() 
+      }));
 
       $boardActive.innerHTML  = "";
       $boardDone.innerHTML    = "";
@@ -239,14 +465,32 @@
         const el = document.createElement("div");
         el.className = "card"; el.dataset.id = c.id;
 
+        // Determine if edited
+        const isEdited = c.originalText && c.originalText !== c.text;
+
         const header = document.createElement("div");
         header.className = "card-header";
+        
+        // Determine tag class and text
+        let tagClass = "";
+        let tagText = c.type === "section" ? "Section" : "Question";
+        if (c.source === "custom") {
+          tagClass = "custom";
+          tagText = c.type === "section" ? "Section" : "Custom Question";
+        } else if (isEdited) {
+          tagClass = "edited";
+        }
+
         header.innerHTML = `
           <span class="drag-handle">⋮⋮</span>
-          <span class="tag">${c.type === "section" ? "Section" : "Question"}</span>
+          <span class="tag ${tagClass}">${tagText}</span>
           ${c.title ? `<strong style="margin-left:6px">${escapeHtml(c.title)}</strong>` : ""}
+          ${isEdited ? '<span class="edited-badge">EDITED</span>' : ''}
           <div class="spacer"></div>
           ${c.status === 'active' ? `
+            <button class="icon-btn" data-action="duplicate" title="Duplicate" aria-label="Duplicate">
+              ${ICONS.copy}
+            </button>
             <button class="icon-btn" data-action="edit" title="Edit" aria-label="Edit">
               ${ICONS.edit}
             </button>
@@ -286,6 +530,9 @@
         else if (c.status === "deleted") $boardDeleted.appendChild(el);
         else $boardActive.appendChild(el);
       }
+
+      updateCardCounts();
+      applySearch();
     }
 
     function getCurrentCards() {
@@ -307,7 +554,6 @@
       animation:150, handle:".drag-handle", ghostClass:"ghost", direction:"vertical",
       onEnd(){ cards=getCurrentCards(); autoSave(); }
     });
-    // Done/Deleted columns are read-only
 
     // Debounced autosave
     const debounce=(fn,ms=400)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
@@ -327,13 +573,29 @@
       const id = card.dataset.id;
       const action = btn.dataset.action;
 
+      // Handle duplicate
+      if (action === "duplicate") {
+        const originalCard = cards.find(c => c.id === id);
+        if (!originalCard) return;
+        
+        const duplicated = {
+          ...originalCard,
+          id: genId(),
+          source: 'custom', // duplicates are always custom
+          originalText: undefined // clear edit tracking
+        };
+        
+        renderCards([...cards, duplicated]);
+        autoSave();
+        return;
+      }
+
       // Handle edit mode
       if (action === "edit") {
         card.classList.add("editing");
         const textarea = card.querySelector(".edit-textarea");
         if (textarea) {
           textarea.focus();
-          // Move cursor to end
           textarea.setSelectionRange(textarea.value.length, textarea.value.length);
         }
         return;
@@ -341,7 +603,6 @@
 
       if (action === "cancel-edit") {
         card.classList.remove("editing");
-        // Reset textarea to original value
         const originalCard = cards.find(c => c.id === id);
         if (originalCard) {
           const textarea = card.querySelector(".edit-textarea");
@@ -360,11 +621,19 @@
           return;
         }
 
-        // Update the card text
         const current = getCurrentCards();
-        const next = current.map(c => 
-          c.id === id ? { ...c, text: newText } : c
-        );
+        const next = current.map(c => {
+          if (c.id !== id) return c;
+          
+          // Track original text if this is first edit of a PDF card
+          const originalText = c.originalText || (c.source === 'pdf' ? c.text : undefined);
+          
+          return { 
+            ...c, 
+            text: newText,
+            originalText
+          };
+        });
         
         renderCards(next);
         autoSave();
@@ -378,7 +647,6 @@
       else if (action === "undo") newStatus = "active";
       else return;
     
-      // Preserve current order, change only the clicked card's status
       const current = getCurrentCards();
       const next = current.map(c => (c.id === id ? { ...c, status: newStatus } : c));
     
@@ -392,11 +660,78 @@
       const title=($newTitle.value||"").trim();
       const text=($newText.value||"").trim();
       if(!text) return;
-      const item={ id: genId(), type, text, status:"active" };
+      const item={ 
+        id: genId(), 
+        type, 
+        text, 
+        status:"active",
+        source: "custom" // Mark as custom-added
+      };
       if(type==="section" && title) item.title=title;
       renderCards([...cards, item]);
       $newText.value=""; $newTitle.value="";
       autoSave();
+    });
+
+    // Search functionality
+    $searchInput.addEventListener("input", (e) => {
+      searchQuery = e.target.value;
+      applySearch();
+    });
+
+    $clearSearch.addEventListener("click", () => {
+      searchQuery = "";
+      $searchInput.value = "";
+      applySearch();
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener("keydown", (e) => {
+      // Ignore if typing in input/textarea
+      if (e.target.matches("input, textarea")) {
+        // Esc to clear search when in search input
+        if (e.key === "Escape" && e.target === $searchInput) {
+          $clearSearch.click();
+          $searchInput.blur();
+        }
+        return;
+      }
+
+      // ? to toggle help
+      if (e.key === "?") {
+        e.preventDefault();
+        $shortcutsHelp.classList.toggle("visible");
+        return;
+      }
+
+      // / to focus search
+      if (e.key === "/") {
+        e.preventDefault();
+        $searchInput.focus();
+        return;
+      }
+
+      // Esc to clear search
+      if (e.key === "Escape") {
+        e.preventDefault();
+        $clearSearch.click();
+        return;
+      }
+
+      // n to focus new card input
+      if (e.key === "n" || e.key === "N") {
+        e.preventDefault();
+        $newText.focus();
+        return;
+      }
+    });
+
+    $helpBtn.addEventListener("click", () => {
+      $shortcutsHelp.classList.toggle("visible");
+    });
+
+    $closeHelp.addEventListener("click", () => {
+      $shortcutsHelp.classList.remove("visible");
     });
 
     // Rooms: list, join, share
@@ -500,11 +835,22 @@
         const data=await res.json();
         updateGuideLink(data);
         const next=[
-          ...(data.questions||[]).map(q=>({type:"question",text:q,status:"active"})),
-          ...(data.sections||[]).map(s=>({type:"section",title:s.title,text:s.body,status:"active"}))
+          ...(data.questions||[]).map(q=>({
+            type:"question",
+            text:q,
+            status:"active",
+            source:"pdf" // Mark as PDF-sourced
+          })),
+          ...(data.sections||[]).map(s=>({
+            type:"section",
+            title:s.title,
+            text:s.body,
+            status:"active",
+            source:"pdf" // Mark as PDF-sourced
+          }))
         ];
         renderCards(next);
-        autoSave(); // persist to room
+        autoSave();
         $status.textContent=`Loaded: ${next.length} cards`;
       } catch (e) {
         console.error(e);
