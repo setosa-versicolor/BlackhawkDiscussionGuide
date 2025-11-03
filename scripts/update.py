@@ -163,17 +163,18 @@ def _first_discussion_link_on_messages_page(today: datetime.date) -> str | None:
     return chosen[1]
 
 def _discussion_link_from_message_page(url: str) -> str | None:
-        soup = get_soup(url)
-        discussion_links = []
-            for a in soup.find_all("a"):
-                if "discussion guide" in a.get_text(strip=True).lower():
-                    href = a.get("href")
-                    if href:
-                        discussion_links.append(requests.compat.urljoin(url, href))
-                if discussion_links:
-            # Return the last discussion guide link (most recent)
-            return discussion_links[-1]
-        return None
+    """Given a message page, return the final “Discussion Guide” link on that page."""
+    soup = get_soup(url)
+    discussion_links: list[str] = []
+    for a in soup.find_all("a"):
+        if "discussion guide" in a.get_text(strip=True).lower():
+            href = a.get("href")
+            if href:
+                discussion_links.append(requests.compat.urljoin(url, href))
+    if discussion_links:
+        return discussion_links[-1]
+    return None
+    
 def _find_message_page_for_today(today: datetime.date) -> str | None:
     """
     Return the message detail page that corresponds to today's date.
