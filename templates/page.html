@@ -571,50 +571,54 @@
 
     function detectVerseReferences(text) {
       console.log('Detecting verses in:', text.substring(0, 100) + '...');
-      // Enhanced regex to catch more patterns
-      const patterns = [
-        // Standard: "Colossians 2:13-15" or "Col 2:13-15"
-        /\b((?:1|2|3)\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(\d+):(\d+)(?:-(\d+))?\b/gi,
-        // With period: "Col. 2:13-15"
-        /\b((?:1|2|3)\s+)?([A-Z][a-z]+)\.\s+(\d+):(\d+)(?:-(\d+))?\b/gi
-      ];
+      
+      // More specific pattern - matches book names followed by chapter:verse
+      // This won't match "Read Colossians" because we'll check against known books only
+      const pattern = /\b((?:1|2|3)\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\.?)\s+(\d+):(\d+)(?:-(\d+))?\b/gi;
 
       const references = [];
       const seen = new Set();
 
-      for (const pattern of patterns) {
-        let match;
-        while ((match = pattern.exec(text)) !== null) {
-          console.log('Regex matched:', match[0], 'Book:', match[2], 'Chapter:', match[3]);
-          const prefix = match[1] ? match[1].trim() + ' ' : '';
-          const book = match[2];
-          const chapter = match[3];
-          const verseStart = match[4];
-          const verseEnd = match[5] || verseStart;
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        console.log('Regex matched:', match[0], 'Book part:', match[2], 'Chapter:', match[3]);
+        const prefix = match[1] ? match[1].trim() + ' ' : '';
+        const bookRaw = match[2].replace(/\.$/, ''); // Remove trailing period
+        const chapter = match[3];
+        const verseStart = match[4];
+        const verseEnd = match[5] || verseStart;
 
-          // Normalize book name
-          const bookKey = (prefix + book).toLowerCase().replace(/\.$/, '');
-          console.log('Looking up bookKey:', bookKey);
-          const normalizedBook = bookMappings[bookKey];
-          
-          console.log('Normalized book:', normalizedBook);
-          
-          // Skip if book name not recognized
-          if (!normalizedBook) {
-            console.log('Skipping unrecognized book:', bookKey);
-            continue;
-          }
+        // Try with full captured text first
+        let bookKey = (prefix + bookRaw).toLowerCase();
+        console.log('Trying bookKey:', bookKey);
+        let normalizedBook = bookMappings[bookKey];
+        
+        // If not found and there are multiple words, try just the last word (likely the actual book name)
+        if (!normalizedBook && bookRaw.includes(' ')) {
+          const words = bookRaw.split(/\s+/);
+          const lastWord = words[words.length - 1];
+          bookKey = (prefix + lastWord).toLowerCase();
+          console.log('Trying last word as bookKey:', bookKey);
+          normalizedBook = bookMappings[bookKey];
+        }
+        
+        console.log('Normalized book:', normalizedBook);
+        
+        // Skip if book name not recognized
+        if (!normalizedBook) {
+          console.log('Skipping unrecognized book:', bookKey);
+          continue;
+        }
 
-          const reference = `${normalizedBook} ${chapter}:${verseStart}${verseEnd !== verseStart ? '-' + verseEnd : ''}`;
-          const key = reference.toLowerCase();
+        const reference = `${normalizedBook} ${chapter}:${verseStart}${verseEnd !== verseStart ? '-' + verseEnd : ''}`;
+        const key = reference.toLowerCase();
 
-          if (!seen.has(key)) {
-            seen.add(key);
-            references.push({
-              reference,
-              apiReference: `${normalizedBook}+${chapter}:${verseStart}-${verseEnd}`
-            });
-          }
+        if (!seen.has(key)) {
+          seen.add(key);
+          references.push({
+            reference,
+            apiReference: `${normalizedBook}+${chapter}:${verseStart}-${verseEnd}`
+          });
         }
       }
 
