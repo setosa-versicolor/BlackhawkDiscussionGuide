@@ -47,9 +47,10 @@ MONTH_NAME_PAT = re.compile(
     r"\.?\s+(?P<day>\d{1,2})\b",
     re.IGNORECASE
 )
-# Numeric patterns: "9/28", "09/28", "9-28"
-# Recognize numeric dates separated by slash, hyphen or period (e.g. 9/28, 9-28, 9.28)
-NUMERIC_DATE_PAT = re.compile(r"\b(?P<m>\d{1,2})[\/\.\-](?P<d>\d{1,2})\b")
+
+NUMERIC_DATE_PAT = re.compile(
+    r"\b(?P<m>\d{1,2})[\/\.\-](?P<d>\d{1,2})\b"
+)
 
 MONTHS = {
     "jan": 1, "january": 1,
