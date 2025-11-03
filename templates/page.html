@@ -496,6 +496,10 @@
 
     // ---- Bible Verse Detection & Fetching ----
     const verseCache = {}; // Cache fetched verses
+    
+    // *** PUT YOUR CLOUDFLARE WORKER URL HERE ***
+    // Example: https://esv-bible-proxy.johnston-thayer.workers.dev
+    const ESV_WORKER_URL = 'https://esv-bible-proxy.johnston-thayer.workers.dev';
 
     // Book name mappings (handles abbreviations)
     const bookMappings = {
@@ -633,20 +637,27 @@
       }
 
       try {
-        const response = await fetch(`https://bible-api.com/${apiReference}`);
+        // Convert apiReference format: "Colossians+2:13-15" to "Colossians 2:13-15"
+        const query = apiReference.replace(/\+/g, ' ');
+        
+        console.log('Fetching verse:', query);
+        
+        // Call your Cloudflare Worker
+        const response = await fetch(`${ESV_WORKER_URL}?q=${encodeURIComponent(query)}`);
+        
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
         const data = await response.json();
         
         const result = {
-          text: data.text.trim(),
-          reference: data.reference,
-          translation: data.translation_name || 'World English Bible'
+          text: data.passages[0].trim(),
+          reference: query
         };
 
         // Cache the result
         verseCache[apiReference] = result;
+        console.log('Successfully loaded:', query);
         return result;
       } catch (error) {
         console.error('Error fetching verse:', error);
