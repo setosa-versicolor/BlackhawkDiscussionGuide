@@ -496,6 +496,9 @@
 
     // ---- Bible Verse Detection & Fetching ----
     const verseCache = {}; // Cache fetched verses
+    
+    // *** PUT YOUR ESV API KEY HERE ***
+    const ESV_API_KEY = '{a5311a98777073babe8991b3c87ec889572f5c7b}';
 
     // Book name mappings (handles abbreviations)
     const bookMappings = {
@@ -617,7 +620,10 @@
           seen.add(key);
           references.push({
             reference,
-            apiReference: `${normalizedBook}+${chapter}:${verseStart}-${verseEnd}`
+            bookName: normalizedBook,
+            chapter: chapter,
+            verseStart: verseStart,
+            verseEnd: verseEnd
           });
         }
       }
@@ -626,30 +632,46 @@
       return references;
     }
 
-    async function fetchVerse(apiReference) {
+    async function fetchVerse(bookName, chapter, verseStart, verseEnd, displayRef) {
+      const cacheKey = `${bookName}-${chapter}:${verseStart}-${verseEnd}`;
+      
       // Check cache first
-      if (verseCache[apiReference]) {
-        return verseCache[apiReference];
+      if (verseCache[cacheKey]) {
+        return verseCache[cacheKey];
       }
 
       try {
-        const response = await fetch(`https://bible-api.com/${apiReference}?translation=niv`);
+        // Format the query: "Colossians 2:13-15"
+        const query = `${bookName} ${chapter}:${verseStart}-${verseEnd}`;
+        
+        console.log('Fetching verse:', displayRef, 'Query:', query);
+        
+        const url = `https://api.esv.org/v3/passage/text/?q=${encodeURIComponent(query)}&include-headings=false&include-footnotes=false&include-verse-numbers=false&include-short-copyright=false&include-passage-references=false`;
+        
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Token ${ESV_API_KEY}`
+          }
+        });
+        
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
+        
         const data = await response.json();
         
+        // ESV API returns passages as an array
         const result = {
-          text: data.text.trim(),
-          reference: data.reference,
-          translation: data.translation_name || 'World English Bible'
+          text: data.passages[0].trim(),
+          reference: displayRef
         };
 
         // Cache the result
-        verseCache[apiReference] = result;
+        verseCache[cacheKey] = result;
+        console.log('Successfully loaded:', displayRef);
         return result;
       } catch (error) {
-        console.error('Error fetching verse:', error);
+        console.error('Error fetching verse:', displayRef, error);
         return {
           error: true,
           message: 'Unable to load verse'
@@ -869,7 +891,7 @@
         content.appendChild(block);
 
         // Fetch the verse
-        fetchVerse(ref.apiReference).then(result => {
+        fetchVerse(ref.bookName, ref.chapter, ref.verseStart, ref.verseEnd, ref.reference).then(result => {
           if (result.error) {
             verseText.className = "verse-text verse-error";
             verseText.textContent = result.message;
