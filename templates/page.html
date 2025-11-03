@@ -633,7 +633,7 @@
       }
 
       try {
-        const response = await fetch(`https://bible-api.com/${apiReference}`);
+        const response = await fetch(`https://bible-api.com/${apiReference}?translation=niv`);
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
@@ -955,12 +955,10 @@
         el.appendChild(body);
         el.appendChild(editArea);
 
-        // Add Bible verses section if verses detected
-        if (c.type === "question") {
-          const versesSection = await createVersesSection(c.text);
-          if (versesSection) {
-            el.appendChild(versesSection);
-          }
+        // Add Bible verses section if verses detected (for both questions and sections)
+        const versesSection = await createVersesSection(c.text);
+        if (versesSection) {
+          el.appendChild(versesSection);
         }
 
         if (c.status === "done") $boardDone.appendChild(el);
