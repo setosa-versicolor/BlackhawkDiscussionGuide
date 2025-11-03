@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <title>Discussion Guide — Rooms</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
   <style>
     :root {
       --bg:#0e0f12; --panel:#161820; --card:#1e2230; --text:#e8ecf3;
@@ -11,16 +11,16 @@
       --custom:#9b6bff; --edited:#ff9b6b;
     }
     html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-      font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
     .wrap{max-width:1100px;margin:28px auto 80px;padding:0 16px;}
     header{display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
     header h1{font-size:20px;margin:0 12px 0 0;font-weight:700;}
     .bar{background:var(--panel);border:1px solid var(--border);border-radius:12px;
       padding:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
     input[type="text"],select{background:#0f1117;color:var(--text);border:1px solid var(--border);
-      border-radius:10px;padding:8px 10px;outline:none;min-width:180px;}
+      border-radius:10px;padding:8px 10px;outline:none;min-width:180px;font-size:16px;}
     button{background:var(--accent);color:#0a0b0f;border:none;border-radius:10px;padding:9px 12px;
-      font-weight:700;cursor:pointer;}
+      font-weight:700;cursor:pointer;font-size:16px;}
     button.secondary{background:#2b3040;color:var(--text);}
     button.danger{background:var(--danger);color:#101114;}
     .muted{color:var(--muted);} .spacer{flex:1}
@@ -32,7 +32,7 @@
     .tag{font-size:12px;padding:2px 8px;border-radius:999px;background:#2b3142;color:#cfe;}
     .tag.custom{background:var(--custom);color:#fff;}
     .tag.edited{background:var(--edited);color:#fff;}
-    .card-body{padding:12px;white-space:pre-wrap;}
+    .card-body{padding:12px;white-space:pre-wrap;font-size:16px;}
     .ghost{opacity:.5;}
     .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
     .row>*{flex:0 0 auto;} .row .grow{flex:1 1 240px;min-width:240px;}
@@ -100,7 +100,7 @@
       border-radius: 10px;
       padding: 10px;
       font-family: inherit;
-      font-size: inherit;
+      font-size: 16px;
       line-height: 1.5;
       min-height: 80px;
       resize: vertical;
@@ -113,7 +113,7 @@
     }
     .edit-area .edit-controls button {
       padding: 6px 12px;
-      font-size: 13px;
+      font-size: 16px;
     }
 
     /* Title input - hidden by default, shown for sections */
@@ -202,6 +202,44 @@
       padding: 4px;
       font-size: 18px;
       line-height: 1;
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+      html, body {
+        font-size: 16px;
+      }
+      .wrap {
+        padding: 0 12px;
+        margin: 20px auto 60px;
+      }
+      .bar {
+        padding: 8px;
+        gap: 6px;
+      }
+      button {
+        padding: 8px 10px;
+        font-size: 15px;
+      }
+      input[type="text"], select {
+        min-width: 140px;
+        font-size: 16px;
+        padding: 10px;
+      }
+      .card-body {
+        padding: 14px;
+        font-size: 16px;
+        line-height: 1.6;
+      }
+      .edit-area textarea {
+        font-size: 16px;
+        padding: 12px;
+      }
+      .shortcuts-help {
+        right: 10px;
+        bottom: 10px;
+        max-width: calc(100vw - 40px);
+      }
     }
   </style>
 </head>
@@ -373,12 +411,6 @@
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
           <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-        </svg>`,
-      copy: `
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
         </svg>`
     };
 
@@ -488,9 +520,6 @@
           ${isEdited ? '<span class="edited-badge">EDITED</span>' : ''}
           <div class="spacer"></div>
           ${c.status === 'active' ? `
-            <button class="icon-btn" data-action="duplicate" title="Duplicate" aria-label="Duplicate">
-              ${ICONS.copy}
-            </button>
             <button class="icon-btn" data-action="edit" title="Edit" aria-label="Edit">
               ${ICONS.edit}
             </button>
@@ -572,23 +601,6 @@
       
       const id = card.dataset.id;
       const action = btn.dataset.action;
-
-      // Handle duplicate
-      if (action === "duplicate") {
-        const originalCard = cards.find(c => c.id === id);
-        if (!originalCard) return;
-        
-        const duplicated = {
-          ...originalCard,
-          id: genId(),
-          source: 'custom', // duplicates are always custom
-          originalText: undefined // clear edit tracking
-        };
-        
-        renderCards([...cards, duplicated]);
-        autoSave();
-        return;
-      }
 
       // Handle edit mode
       if (action === "edit") {
