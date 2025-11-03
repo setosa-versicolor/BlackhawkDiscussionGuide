@@ -497,11 +497,10 @@
     // ---- Bible Verse Detection & Fetching ----
     const verseCache = {}; // Cache fetched verses
     
-    // *** PUT YOUR ESV API KEY HERE ***
-    const ESV_API_KEY = 'a5311a98777073babe8991b3c87ec889572f5c7b';
-    
-    // CORS proxy to allow browser requests to ESV API
-    const CORS_PROXY = 'https://corsproxy.io/?';
+    // *** PUT YOUR CLOUDFLARE WORKER URL HERE ***
+    // After deploying your worker, it will be something like:
+    // https://esv-proxy.your-subdomain.workers.dev
+    const ESV_PROXY_URL = 'https://esv-bible-proxy.johnston-thayer.workers.dev/';
 
     // Book name mappings (handles abbreviations)
     const bookMappings = {
@@ -643,18 +642,11 @@
       try {
         // Format the query for ESV API
         const query = `${bookName} ${chapter}:${verseStart}-${verseEnd}`;
-        const esvUrl = `https://api.esv.org/v3/passage/text/?q=${encodeURIComponent(query)}&include-headings=false&include-footnotes=false&include-verse-numbers=false&include-short-copyright=false&include-passage-references=false`;
         
-        // Use CORS proxy to bypass browser restrictions
-        const url = CORS_PROXY + encodeURIComponent(esvUrl);
+        console.log('Fetching verse:', displayRef, 'Query:', query);
         
-        console.log('Fetching verse:', displayRef);
-        
-        const response = await fetch(url, {
-          headers: {
-            'Authorization': `Token ${ESV_API_KEY}`
-          }
-        });
+        // Call your Cloudflare Worker
+        const response = await fetch(`${ESV_PROXY_URL}?q=${encodeURIComponent(query)}`);
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
@@ -662,6 +654,7 @@
         
         const data = await response.json();
         
+        // ESV API returns passages as an array
         const result = {
           text: data.passages[0].trim(),
           reference: displayRef
