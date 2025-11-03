@@ -592,7 +592,10 @@
 
           // Normalize book name
           const bookKey = (prefix + book).toLowerCase().replace(/\.$/, '');
-          const normalizedBook = bookMappings[bookKey] || (prefix + book);
+          const normalizedBook = bookMappings[bookKey];
+          
+          // Skip if book name not recognized
+          if (!normalizedBook) continue;
 
           const reference = `${normalizedBook} ${chapter}:${verseStart}${verseEnd !== verseStart ? '-' + verseEnd : ''}`;
           const key = reference.toLowerCase();
