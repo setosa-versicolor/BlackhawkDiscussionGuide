@@ -880,14 +880,9 @@
       margin-right: auto;
     }
 
-    /* Swipe hint on mobile */
+    /* Swipe hint on mobile - removed */
     .swipe-hint {
       display: none;
-      font-size: 12px;
-      color: var(--muted);
-      text-align: center;
-      padding: 8px;
-      margin-top: -4px;
     }
 
     /* Mobile optimizations */
@@ -964,18 +959,7 @@
       }
     }
     
-    /* Touch device card swipe styles */
-    .card.swiping {
-      transition: none !important;
-    }
-    
-    .card.swipe-complete {
-      background: linear-gradient(90deg, var(--success-glow) 0%, var(--card) 30%);
-    }
-    
-    .card.swipe-delete {
-      background: linear-gradient(270deg, var(--danger-glow) 0%, var(--card) 30%);
-    }
+
   </style>
 </head>
 <body>
@@ -1044,7 +1028,6 @@
             <span class="count" id="activeCount">0</span>
           </div>
         </div>
-        <div class="swipe-hint">Swipe right to complete • Swipe left to delete</div>
         <div id="boardActive" class="board"></div>
       </div>
       
@@ -1520,62 +1503,6 @@
       return versesDiv;
     }
 
-    // ---- Swipe gestures for mobile ----
-    function setupSwipeGestures(cardEl, cardId) {
-      let startX = 0;
-      let currentX = 0;
-      let isDragging = false;
-      const threshold = 80;
-
-      cardEl.addEventListener('touchstart', (e) => {
-        if (cardEl.closest('.board-muted')) return;
-        startX = e.touches[0].clientX;
-        isDragging = true;
-        cardEl.classList.add('swiping');
-      }, { passive: true });
-
-      cardEl.addEventListener('touchmove', (e) => {
-        if (!isDragging) return;
-        currentX = e.touches[0].clientX;
-        const diff = currentX - startX;
-        
-        cardEl.classList.remove('swipe-complete', 'swipe-delete');
-        if (diff > threshold) {
-          cardEl.classList.add('swipe-complete');
-        } else if (diff < -threshold) {
-          cardEl.classList.add('swipe-delete');
-        }
-      }, { passive: true });
-
-      cardEl.addEventListener('touchend', () => {
-        if (!isDragging) return;
-        isDragging = false;
-        cardEl.classList.remove('swiping');
-        
-        const diff = currentX - startX;
-        
-        if (diff > threshold) {
-          // Swipe right - complete
-          const current = getCurrentCards();
-          const next = current.map(c => (c.id === cardId ? { ...c, status: 'done' } : c));
-          renderCards(next);
-          autoSave();
-          showToast('Marked as complete', 'success');
-        } else if (diff < -threshold) {
-          // Swipe left - delete
-          const current = getCurrentCards();
-          const next = current.map(c => (c.id === cardId ? { ...c, status: 'deleted' } : c));
-          renderCards(next);
-          autoSave();
-          showToast('Moved to deleted', 'warning');
-        }
-        
-        cardEl.classList.remove('swipe-complete', 'swipe-delete');
-        startX = 0;
-        currentX = 0;
-      }, { passive: true });
-    }
-
     async function renderCards(next) {
       cards = next.map(c => ({ 
         status: 'active', 
@@ -1660,11 +1587,6 @@
         const versesSection = await createVersesSection(c.text);
         if (versesSection) {
           el.appendChild(versesSection);
-        }
-
-        // Setup swipe gestures for active cards
-        if (c.status === "active") {
-          setupSwipeGestures(el, c.id);
         }
 
         if (c.status === "done") $boardDone.appendChild(el);
