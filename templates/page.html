@@ -588,6 +588,29 @@
       display: block;
     }
 
+    /* Auto-expanding textarea for new questions */
+    #newText {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      outline: none;
+      font-size: 15px;
+      font-family: inherit;
+      line-height: 1.5;
+      resize: none;
+      overflow: hidden;
+      min-height: 42px;
+      max-height: 200px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    #newText:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
     /* Search filter bar */
     .filter-bar {
       margin-top: 10px;
@@ -1013,7 +1036,7 @@
         <option value="section">Section</option>
       </select>
       <input id="newTitle" type="text" placeholder="Section title" />
-      <input id="newText" class="grow" type="text" placeholder="Type your question/section text…" />
+      <textarea id="newText" class="grow" placeholder="Type here…" rows="1"></textarea>
       <button id="addBtn">Add</button>
     </div>
 
@@ -1373,6 +1396,19 @@
       }
     });
 
+    // Auto-expand textarea as user types
+    function autoExpandTextarea(textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+    }
+    
+    $newText.addEventListener('input', () => autoExpandTextarea($newText));
+    
+    // Also handle paste events
+    $newText.addEventListener('paste', () => {
+      setTimeout(() => autoExpandTextarea($newText), 0);
+    });
+
     function updateSermonDate(dateStr) {
       if (dateStr) {
         currentSermonDate = dateStr;
@@ -1723,6 +1759,7 @@
       
       renderCards([item, ...cards]);
       $newText.value = "";
+      $newText.style.height = 'auto'; // Reset height after clearing
       $newTitle.value = "";
       autoSave();
       showToast("Card added", "success");
