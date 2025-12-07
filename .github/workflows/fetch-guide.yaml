@@ -3,7 +3,7 @@ name: Fetch Guide (Blackhawk auto)
 
 on:
   schedule:
-    - cron: '0 12 * * 5'   # Fridays noon UTC; adjust if you want
+    - cron: '00 17 * * 0'   # Sunday at 11 CT; adjust if you want
   workflow_dispatch: {}
 
 permissions:
