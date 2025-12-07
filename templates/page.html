@@ -1,282 +1,705 @@
+
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>Discussion Guide — Rooms</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:#0e0f12; --panel:#161820; --card:#1e2230; --text:#e8ecf3;
-      --muted:#9aa3b2; --accent:#7aa2ff; --border:#2a2f3c; --danger:#ff6b6b;
-      --custom:#9b6bff; --edited:#ff9b6b;
+      --bg: #0a0b0e;
+      --panel: #12141a;
+      --card: #181b24;
+      --card-hover: #1e222d;
+      --text: #e8ecf3;
+      --muted: #7a8494;
+      --accent: #6b9fff;
+      --accent-glow: rgba(107, 159, 255, 0.15);
+      --border: #252a38;
+      --danger: #ff6b6b;
+      --danger-glow: rgba(255, 107, 107, 0.15);
+      --custom: #a78bfa;
+      --custom-glow: rgba(167, 139, 250, 0.15);
+      --edited: #f59e0b;
+      --edited-glow: rgba(245, 158, 11, 0.15);
+      --section: #10b981;
+      --section-glow: rgba(16, 185, 129, 0.15);
+      --success: #34d399;
+      --success-glow: rgba(52, 211, 153, 0.2);
+      
+      /* Card border colors */
+      --border-question: var(--accent);
+      --border-custom: var(--custom);
+      --border-section: var(--section);
+      --border-edited: var(--edited);
     }
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
-    .wrap{max-width:1100px;margin:28px auto 80px;padding:0 16px;}
-    header{display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
-    header h1{font-size:20px;margin:0 12px 0 0;font-weight:700;}
-    .bar{background:var(--panel);border:1px solid var(--border);border-radius:12px;
-      padding:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;position:relative;}
-    .section-title{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px;
-      text-transform:uppercase;letter-spacing:0.5px;}
-    input[type="text"],select{background:#0f1117;color:var(--text);border:1px solid var(--border);
-      border-radius:10px;padding:8px 10px;outline:none;min-width:180px;font-size:16px;}
-    button{background:var(--accent);color:#0a0b0f;border:none;border-radius:10px;padding:9px 12px;
-      font-weight:700;cursor:pointer;font-size:16px;}
-    button.secondary{background:#2b3040;color:var(--text);}
-    button.danger{background:var(--danger);color:#101114;}
-    .muted{color:var(--muted);} .spacer{flex:1}
-    .board{display:block;margin-top:8px;}
-    .card{width:100%;box-sizing:border-box;margin:12px 0;background:var(--card);
-      border:1px solid var(--border);border-radius:16px;position:relative;}
-    .card-header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);}
-    .drag-handle{cursor:grab;user-select:none;font-weight:900;letter-spacing:1px;opacity:.7;}
-    .tag{font-size:12px;padding:2px 8px;border-radius:999px;background:#2b3142;color:#cfe;}
-    .tag.custom{background:var(--custom);color:#fff;}
-    .tag.edited{background:var(--edited);color:#fff;}
-    .card-body{padding:12px;white-space:pre-wrap;font-size:16px;}
-    .ghost{opacity:.5;}
-    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-    .row>*{flex:0 0 auto;} .row .grow{flex:1 1 240px;min-width:240px;}
-    .hint{margin-top:8px;} .footer{margin-top:18px;color:var(--muted);font-size:13px;}
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.55 'DM Sans', system-ui, -apple-system, sans-serif;
+    }
+    
+    /* Subtle grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        linear-gradient(rgba(107, 159, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(107, 159, 255, 0.02) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 28px auto 100px;
+      padding: 0 20px;
+    }
+    
+    /* Header */
+    header {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    header h1 {
+      font-size: 24px;
+      margin: 0 12px 0 0;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .church-name {
+      color: var(--muted);
+      font-weight: 500;
+    }
+    
+    /* Control bars */
+    .bar {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      position: relative;
+      transition: border-color 0.2s ease;
+    }
+    
+    .bar:focus-within {
+      border-color: rgba(107, 159, 255, 0.3);
+    }
+    
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    
+    /* Form elements */
+    input[type="text"], select {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      outline: none;
+      min-width: 180px;
+      font-size: 15px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+    
+    input[type="text"]:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    
+    select {
+      cursor: pointer;
+    }
+    
+    button {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+    
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    button.secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    
+    button.secondary:hover {
+      background: var(--card-hover);
+      box-shadow: none;
+    }
+    
+    button.danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    
+    button.danger:hover {
+      box-shadow: 0 4px 12px var(--danger-glow);
+    }
+    
+    .muted { color: var(--muted); }
+    .spacer { flex: 1; }
+    
+    /* Cards */
+    .board {
+      display: block;
+      margin-top: 8px;
+      min-height: 20px;
+    }
+    
+    .card {
+      width: 100%;
+      margin: 10px 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.25s ease;
+      border-left: 3px solid var(--border-question);
+    }
+    
+    .card:hover {
+      background: var(--card-hover);
+      transform: translateX(2px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .card.custom-card {
+      border-left-color: var(--border-custom);
+    }
+    
+    .card.section-card {
+      border-left-color: var(--border-section);
+      background: linear-gradient(135deg, var(--card) 0%, rgba(16, 185, 129, 0.05) 100%);
+    }
+    
+    .card.edited-card {
+      border-left-color: var(--border-edited);
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .drag-handle {
+      cursor: grab;
+      user-select: none;
+      font-weight: 900;
+      letter-spacing: 2px;
+      opacity: 0.3;
+      transition: opacity 0.2s ease;
+      padding: 4px;
+    }
+    
+    .card:hover .drag-handle {
+      opacity: 0.7;
+    }
+    
+    .drag-handle:hover {
+      opacity: 1 !important;
+    }
+    
+    .tag {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: var(--accent-glow);
+      color: var(--accent);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .tag.custom {
+      background: var(--custom-glow);
+      color: var(--custom);
+    }
+    
+    .tag.edited {
+      background: var(--edited-glow);
+      color: var(--edited);
+    }
+    
+    .tag.section {
+      background: var(--section-glow);
+      color: var(--section);
+    }
+    
+    .card-body {
+      padding: 14px 16px;
+      white-space: pre-wrap;
+      font-size: 15px;
+      line-height: 1.65;
+    }
+    
+    .section-card .card-body {
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .ghost {
+      opacity: 0.4;
+      transform: rotate(1deg);
+    }
+    
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    .row > * { flex: 0 0 auto; }
+    .row .grow { flex: 1 1 240px; min-width: 240px; }
+    
+    .hint {
+      margin-top: 10px;
+      font-size: 13px;
+    }
+    
+    .footer {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 13px;
+      opacity: 0.7;
+    }
 
-    /* three lanes */
+    /* Collapsible board sections */
     .boards {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
-      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 16px;
     }
-    .board-wrap { background: transparent; }
-    .board-title { 
-      font-weight: 700; 
-      color: var(--muted); 
-      margin: 4px 0 2px;
+    
+    .board-wrap {
+      background: transparent;
+    }
+    
+    .board-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      padding: 8px 0;
+      user-select: none;
+      transition: opacity 0.2s ease;
+    }
+    
+    .board-header:hover {
+      opacity: 0.8;
+    }
+    
+    .board-title {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 14px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
+    
     .board-title .count {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--muted);
+      font-weight: 500;
+      background: var(--card);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    
+    .board-toggle {
+      font-size: 12px;
+      color: var(--muted);
+      transition: transform 0.3s ease;
+    }
+    
+    .board-wrap.collapsed .board-toggle {
+      transform: rotate(-90deg);
+    }
+    
+    .board-wrap.collapsed .board {
+      display: none;
+    }
+    
+    .board-muted .card {
       opacity: 0.7;
     }
-    .board-muted .card { opacity: .95; }
-    .board-muted .drag-handle { opacity: .35; cursor: default; }
-
-    /* compact icon buttons */
-    .icon-btn {
-      background: transparent; color: var(--text);
-      border: 1px solid var(--border); border-radius: 8px;
-      padding: 4px 8px; line-height: 1; display: inline-flex; align-items: center;
+    
+    .board-muted .card:hover {
+      opacity: 1;
     }
-    .icon-btn:hover { opacity: .9; }
-    .icon-btn.danger { border-color: #4d2630; }
-    .icon-btn svg { width: 16px; height: 16px; display: block; }
+    
+    .board-muted .drag-handle {
+      opacity: 0.2;
+      cursor: default;
+    }
 
-    /* "Open PDF" anchor should look like button and not purple when visited */
+    /* Icon buttons */
+    .icon-btn {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 6px 8px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+    
+    .icon-btn:hover {
+      background: var(--card);
+      border-color: var(--border);
+      color: var(--text);
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .icon-btn.danger:hover {
+      background: var(--danger-glow);
+      border-color: rgba(255, 107, 107, 0.3);
+      color: var(--danger);
+    }
+    
+    .icon-btn.success:hover {
+      background: var(--success-glow);
+      border-color: rgba(52, 211, 153, 0.3);
+      color: var(--success);
+    }
+    
+    .icon-btn svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+
+    /* PDF link button */
     #pdfLink, #pdfLink:link, #pdfLink:visited {
       color: var(--text);
-      background: #2b3040;
+      background: var(--card);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 9px 12px;
+      padding: 10px 14px;
       display: inline-block;
       text-decoration: none;
+      font-weight: 500;
+      font-size: 14px;
+      transition: all 0.2s ease;
     }
-    #pdfLink:hover { opacity: .9; }
+    
+    #pdfLink:hover {
+      background: var(--card-hover);
+      border-color: var(--accent);
+    }
 
-    /* Edit mode styles */
+    /* Edit mode */
     .card.editing .card-body { display: none; }
     .card:not(.editing) .edit-area { display: none; }
+    
     .edit-area {
-      padding: 12px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
+    
     .edit-area textarea {
-      background: #0f1117;
+      background: var(--bg);
       color: var(--text);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 10px;
+      padding: 12px;
       font-family: inherit;
-      font-size: 16px;
-      line-height: 1.5;
-      min-height: 80px;
+      font-size: 15px;
+      line-height: 1.55;
+      min-height: 100px;
       resize: vertical;
       outline: none;
+      transition: all 0.2s ease;
     }
+    
+    .edit-area textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    
     .edit-area .edit-controls {
       display: flex;
       gap: 8px;
       justify-content: flex-end;
     }
+    
     .edit-area .edit-controls button {
-      padding: 6px 12px;
-      font-size: 16px;
+      padding: 8px 14px;
+      font-size: 14px;
     }
 
     /* Bible verses section */
     .card-verses {
       border-top: 1px solid var(--border);
-      background: rgba(122, 162, 255, 0.03);
+      background: rgba(107, 159, 255, 0.02);
     }
+    
     .verses-header {
-      padding: 10px 12px;
+      padding: 12px 14px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       cursor: pointer;
       user-select: none;
+      transition: background 0.2s ease;
     }
+    
     .verses-header:hover {
-      background: rgba(122, 162, 255, 0.05);
+      background: rgba(107, 159, 255, 0.04);
     }
+    
     .verses-icon {
       font-size: 16px;
     }
+    
     .verses-title {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--accent);
       flex: 1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
+    
     .verses-toggle {
       font-size: 12px;
       color: var(--muted);
+      transition: transform 0.3s ease;
     }
+    
     .verses-content {
-      padding: 0 12px 12px 12px;
-      display: none;
+      padding: 0 14px 14px 14px;
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.3s ease;
     }
+    
     .verses-content.visible {
-      display: block;
+      max-height: 2000px;
     }
+    
     .verse-block {
       margin-bottom: 16px;
     }
+    
     .verse-block:last-child {
       margin-bottom: 0;
     }
+    
     .verse-reference {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--accent);
       margin-bottom: 6px;
     }
+    
     .verse-text {
-      font-size: 15px;
+      font-size: 14px;
       line-height: 1.7;
       color: var(--text);
       font-style: italic;
-      padding-left: 12px;
-      border-left: 3px solid var(--accent);
+      padding-left: 14px;
+      border-left: 2px solid var(--accent);
+      opacity: 0.9;
     }
+    
     .verse-loading {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--muted);
       font-style: italic;
     }
+    
     .verse-error {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--danger);
       font-style: italic;
     }
 
-    /* Title input - hidden by default, shown for sections */
+    /* Title input */
     #newTitle {
       display: none;
     }
+    
     #newTitle.visible {
       display: block;
     }
 
-    /* Search/filter bar */
+    /* Search filter bar */
     .filter-bar {
       margin-top: 10px;
       display: flex;
-      gap: 8px;
+      gap: 10px;
       align-items: center;
     }
+    
     .filter-bar input {
       flex: 1;
       min-width: 200px;
     }
+    
     .filter-bar .filter-count {
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       white-space: nowrap;
     }
 
-    /* Hide filtered cards */
+    /* Hidden filtered cards */
     .card.filtered {
       display: none;
     }
 
-    /* Edited indicator */
+    /* Edited badge */
     .edited-badge {
-      font-size: 10px;
-      padding: 2px 6px;
+      font-size: 9px;
+      padding: 3px 6px;
       border-radius: 4px;
       background: var(--edited);
       color: #fff;
-      margin-left: 4px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
     }
 
     /* Hamburger menu */
     .menu-toggle {
       position: relative;
     }
-    .menu-toggle button {
-      background: #2b3040;
+    
+    .menu-toggle > button {
+      background: var(--card);
       color: var(--text);
       border: 1px solid var(--border);
       padding: 8px 12px;
       cursor: pointer;
-      font-size: 20px;
+      font-size: 18px;
       line-height: 1;
     }
+    
     .menu-dropdown {
       position: absolute;
       top: 100%;
       right: 0;
-      margin-top: 4px;
+      margin-top: 6px;
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 4px;
+      border-radius: 12px;
+      padding: 6px;
       display: none;
       flex-direction: column;
       gap: 2px;
-      min-width: 180px;
+      min-width: 200px;
       z-index: 1000;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      animation: menuSlide 0.2s ease;
     }
+    
+    @keyframes menuSlide {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
     .menu-dropdown.visible {
       display: flex;
     }
+    
     .menu-dropdown button {
       background: transparent;
       color: var(--text);
       border: none;
-      padding: 10px 12px;
+      padding: 12px 14px;
       text-align: left;
       border-radius: 8px;
       font-weight: 500;
-      font-size: 15px;
+      font-size: 14px;
     }
+    
     .menu-dropdown button:hover {
-      background: #2b3040;
+      background: var(--card);
+      transform: none;
+      box-shadow: none;
     }
+    
     .menu-dropdown button.danger {
       color: var(--danger);
+      background: transparent;
+    }
+    
+    .menu-dropdown button.danger:hover {
+      background: var(--danger-glow);
     }
 
-    /* Sermon date display */
+    /* Sermon date */
     .sermon-date {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--muted);
       font-style: italic;
       white-space: nowrap;
@@ -285,42 +708,63 @@
     /* Keyboard shortcuts help */
     .shortcuts-help {
       position: fixed;
-      bottom: 20px;
-      right: 20px;
+      bottom: 24px;
+      right: 24px;
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
+      border-radius: 14px;
+      padding: 18px;
       display: none;
-      max-width: 300px;
+      max-width: 320px;
       z-index: 1000;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      animation: helpSlide 0.25s ease;
     }
+    
+    @keyframes helpSlide {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
     .shortcuts-help.visible {
       display: block;
     }
+    
     .shortcuts-help h3 {
-      margin: 0 0 12px 0;
+      margin: 0 0 14px 0;
       font-size: 14px;
       color: var(--text);
+      font-weight: 600;
     }
+    
     .shortcuts-help .shortcut {
       display: flex;
       justify-content: space-between;
-      margin: 6px 0;
+      margin: 8px 0;
       font-size: 13px;
+      color: var(--muted);
     }
+    
     .shortcuts-help .key {
-      background: #2b3040;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-family: monospace;
-      font-size: 12px;
+      background: var(--card);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+      color: var(--text);
+      border: 1px solid var(--border);
     }
+    
     .shortcuts-help .close-btn {
       position: absolute;
-      top: 8px;
-      right: 8px;
+      top: 12px;
+      right: 12px;
       background: transparent;
       border: none;
       color: var(--muted);
@@ -329,47 +773,208 @@
       font-size: 18px;
       line-height: 1;
     }
+    
+    .shortcuts-help .close-btn:hover {
+      color: var(--text);
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Toast notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    
+    .toast {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      animation: toastIn 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+    }
+    
+    .toast.success {
+      border-color: rgba(52, 211, 153, 0.3);
+    }
+    
+    .toast.success::before {
+      content: '✓';
+      color: var(--success);
+      font-weight: bold;
+    }
+    
+    .toast.warning {
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+    
+    .toast.warning::before {
+      content: '⚠';
+      color: var(--edited);
+    }
+    
+    .toast.hiding {
+      animation: toastOut 0.3s ease forwards;
+    }
+    
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes toastOut {
+      from {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    
+    .empty-state svg {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+      opacity: 0.4;
+    }
+    
+    .empty-state h3 {
+      font-size: 18px;
+      color: var(--text);
+      margin: 0 0 8px 0;
+      font-weight: 600;
+    }
+    
+    .empty-state p {
+      font-size: 14px;
+      margin: 0 0 20px 0;
+      max-width: 320px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Swipe hint on mobile */
+    .swipe-hint {
+      display: none;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      padding: 8px;
+      margin-top: -4px;
+    }
 
     /* Mobile optimizations */
     @media (max-width: 768px) {
       html, body {
         font-size: 16px;
       }
+      
       .wrap {
-        padding: 0 12px;
-        margin: 20px auto 60px;
+        padding: 0 14px;
+        margin: 16px auto 80px;
       }
+      
+      header h1 {
+        font-size: 20px;
+      }
+      
       .bar {
-        padding: 8px;
-        gap: 6px;
+        padding: 10px 12px;
+        gap: 8px;
+        border-radius: 12px;
       }
+      
       button {
-        padding: 8px 10px;
-        font-size: 15px;
+        padding: 10px 14px;
+        font-size: 14px;
       }
+      
       input[type="text"], select {
-        min-width: 140px;
+        min-width: 120px;
         font-size: 16px;
-        padding: 10px;
+        padding: 10px 12px;
       }
+      
+      .card {
+        border-radius: 12px;
+        margin: 8px 0;
+      }
+      
       .card-body {
         padding: 14px;
-        font-size: 16px;
+        font-size: 15px;
         line-height: 1.6;
       }
+      
       .edit-area textarea {
         font-size: 16px;
         padding: 12px;
       }
+      
       .shortcuts-help {
-        right: 10px;
-        bottom: 10px;
-        max-width: calc(100vw - 40px);
+        right: 12px;
+        bottom: 12px;
+        max-width: calc(100vw - 48px);
       }
+      
       .menu-dropdown {
         right: 0;
-        min-width: 160px;
+        min-width: 180px;
       }
+      
+      .swipe-hint {
+        display: block;
+      }
+      
+      .toast-container {
+        left: 14px;
+        right: 14px;
+        transform: none;
+      }
+      
+      .toast {
+        width: 100%;
+      }
+    }
+    
+    /* Touch device card swipe styles */
+    .card.swiping {
+      transition: none !important;
+    }
+    
+    .card.swipe-complete {
+      background: linear-gradient(90deg, var(--success-glow) 0%, var(--card) 30%);
+    }
+    
+    .card.swipe-delete {
+      background: linear-gradient(270deg, var(--danger-glow) 0%, var(--card) 30%);
     }
   </style>
 </head>
@@ -377,7 +982,7 @@
   <div class="wrap">
     <header>
       <h1>Discussion Guide</h1>
-      <span class="muted">Blackhawk Church</span>
+      <span class="church-name">Blackhawk Church</span>
     </header>
 
     <!-- Room Details -->
@@ -398,10 +1003,10 @@
       <div class="menu-toggle">
         <button id="menuToggle" title="More options">☰</button>
         <div class="menu-dropdown" id="menuDropdown">
-          <button id="shareBtn" class="secondary">Copy Share Link</button>
-          <button id="refreshBtn" class="secondary">Refresh</button>
-          <button id="helpBtn" class="secondary">Keyboard Shortcuts (?)</button>
-          <button id="deleteRoomBtn" class="danger">Delete Room</button>
+          <button id="shareBtn" class="secondary">📋 Copy Share Link</button>
+          <button id="refreshBtn" class="secondary">🔄 Refresh</button>
+          <button id="helpBtn" class="secondary">⌨️ Keyboard Shortcuts</button>
+          <button id="deleteRoomBtn" class="danger">🗑️ Delete Room</button>
         </div>
       </div>
       
@@ -409,7 +1014,7 @@
     </div>
 
     <!-- Search -->
-    <div class="section-title" style="margin-top:16px">Search</div>
+    <div class="section-title" style="margin-top:18px">Search</div>
     <div class="bar filter-bar">
       <input id="searchInput" type="text" placeholder="Search questions..." />
       <button id="clearSearchBtn" class="secondary">Clear</button>
@@ -417,7 +1022,7 @@
     </div>
 
     <!-- Add Custom Questions -->
-    <div class="section-title" style="margin-top:16px">Add Custom Questions</div>
+    <div class="section-title" style="margin-top:18px">Add Custom Questions</div>
     <div class="bar">
       <select id="newType">
         <option value="question">Question</option>
@@ -430,33 +1035,60 @@
 
     <!-- Boards -->
     <div class="boards">
-      <div class="board-wrap">
-        <div class="board-title">
-          Active
-          <span class="count" id="activeCount"></span>
+      <!-- Active Board -->
+      <div class="board-wrap" id="activeWrap">
+        <div class="board-header" data-board="active">
+          <span class="board-toggle">▼</span>
+          <div class="board-title">
+            Active
+            <span class="count" id="activeCount">0</span>
+          </div>
         </div>
+        <div class="swipe-hint">Swipe right to complete • Swipe left to delete</div>
         <div id="boardActive" class="board"></div>
       </div>
-      <div class="board-wrap">
-        <div class="board-title">
-          Completed
-          <span class="count" id="doneCount"></span>
+      
+      <!-- Completed Board -->
+      <div class="board-wrap collapsed" id="doneWrap">
+        <div class="board-header" data-board="done">
+          <span class="board-toggle">▼</span>
+          <div class="board-title">
+            Completed
+            <span class="count" id="doneCount">0</span>
+          </div>
         </div>
         <div id="boardDone" class="board board-muted"></div>
       </div>
-      <div class="board-wrap">
-        <div class="board-title">
-          Deleted
-          <span class="count" id="deletedCount"></span>
+      
+      <!-- Deleted Board -->
+      <div class="board-wrap collapsed" id="deletedWrap">
+        <div class="board-header" data-board="deleted">
+          <span class="board-toggle">▼</span>
+          <div class="board-title">
+            Deleted
+            <span class="count" id="deletedCount">0</span>
+          </div>
         </div>
         <div id="boardDeleted" class="board board-muted"></div>
       </div>
     </div>
 
-    <div class="hint muted">If you don't see anything on the page, start by clicking "Load Latest Sermon"</div>
-    <div class="hint muted">Rooms allow you to share your view with others and collaborate in real time. Press <strong>?</strong> for keyboard shortcuts.</div>
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+      </svg>
+      <h3>No discussion questions yet</h3>
+      <p>Click "Load Latest Sermon" to get started with this week's discussion guide.</p>
+      <button id="emptyLoadBtn">Load Latest Sermon</button>
+    </div>
+
+    <div class="hint muted" id="hintText">Press <strong>?</strong> for keyboard shortcuts</div>
     <div class="footer">blackhawk.church/learn</div>
   </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
 
   <!-- Keyboard shortcuts help panel -->
   <div class="shortcuts-help" id="shortcutsHelp">
@@ -494,14 +1126,24 @@
     };
     if (FIREBASE_ENABLED) { await connectFirebase(firebaseConfig); }
 
+    // ---- Toast Notifications ----
+    function showToast(message, type = 'success', duration = 3000) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+
     // ---- Bible Verse Detection & Fetching ----
-    const verseCache = {}; // Cache fetched verses
-    
-    // *** PUT YOUR CLOUDFLARE WORKER URL HERE ***
-    // Example: https://esv-bible-proxy.johnston-thayer.workers.dev
+    const verseCache = {};
     const ESV_WORKER_URL = 'https://esv-bible-proxy.johnston-thayer.workers.dev';
 
-    // Book name mappings (handles abbreviations)
     const bookMappings = {
       // Old Testament
       'gen': 'Genesis', 'genesis': 'Genesis',
@@ -574,45 +1216,29 @@
     };
 
     function detectVerseReferences(text) {
-      console.log('Detecting verses in:', text.substring(0, 100) + '...');
-      
-      // More specific pattern - matches book names followed by chapter:verse
-      // This won't match "Read Colossians" because we'll check against known books only
       const pattern = /\b((?:1|2|3)\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\.?)\s+(\d+):(\d+)(?:-(\d+))?\b/gi;
-
       const references = [];
       const seen = new Set();
 
       let match;
       while ((match = pattern.exec(text)) !== null) {
-        console.log('Regex matched:', match[0], 'Book part:', match[2], 'Chapter:', match[3]);
         const prefix = match[1] ? match[1].trim() + ' ' : '';
-        const bookRaw = match[2].replace(/\.$/, ''); // Remove trailing period
+        const bookRaw = match[2].replace(/\.$/, '');
         const chapter = match[3];
         const verseStart = match[4];
         const verseEnd = match[5] || verseStart;
 
-        // Try with full captured text first
         let bookKey = (prefix + bookRaw).toLowerCase();
-        console.log('Trying bookKey:', bookKey);
         let normalizedBook = bookMappings[bookKey];
         
-        // If not found and there are multiple words, try just the last word (likely the actual book name)
         if (!normalizedBook && bookRaw.includes(' ')) {
           const words = bookRaw.split(/\s+/);
           const lastWord = words[words.length - 1];
           bookKey = (prefix + lastWord).toLowerCase();
-          console.log('Trying last word as bookKey:', bookKey);
           normalizedBook = bookMappings[bookKey];
         }
         
-        console.log('Normalized book:', normalizedBook);
-        
-        // Skip if book name not recognized
-        if (!normalizedBook) {
-          console.log('Skipping unrecognized book:', bookKey);
-          continue;
-        }
+        if (!normalizedBook) continue;
 
         const reference = `${normalizedBook} ${chapter}:${verseStart}${verseEnd !== verseStart ? '-' + verseEnd : ''}`;
         const key = reference.toLowerCase();
@@ -626,28 +1252,19 @@
         }
       }
 
-      console.log('Detected references:', references);
       return references;
     }
 
     async function fetchVerse(apiReference) {
-      // Check cache first
       if (verseCache[apiReference]) {
         return verseCache[apiReference];
       }
 
       try {
-        // Convert apiReference format: "Colossians+2:13-15" to "Colossians 2:13-15"
         const query = apiReference.replace(/\+/g, ' ');
-        
-        console.log('Fetching verse:', query);
-        
-        // Call your Cloudflare Worker
         const response = await fetch(`${ESV_WORKER_URL}?q=${encodeURIComponent(query)}`);
         
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         
         const result = {
@@ -655,16 +1272,11 @@
           reference: query
         };
 
-        // Cache the result
         verseCache[apiReference] = result;
-        console.log('Successfully loaded:', query);
         return result;
       } catch (error) {
         console.error('Error fetching verse:', error);
-        return {
-          error: true,
-          message: 'Unable to load verse'
-        };
+        return { error: true, message: 'Unable to load verse' };
       }
     }
 
@@ -706,6 +1318,18 @@
     const $doneCount = document.getElementById("doneCount");
     const $deletedCount = document.getElementById("deletedCount");
 
+    const $emptyState = document.getElementById("emptyState");
+    const $emptyLoadBtn = document.getElementById("emptyLoadBtn");
+    const $hintText = document.getElementById("hintText");
+
+    // ---- Board collapse toggle ----
+    document.querySelectorAll('.board-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const wrap = header.closest('.board-wrap');
+        wrap.classList.toggle('collapsed');
+      });
+    });
+
     // ---- Hamburger menu ----
     $menuToggle.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -722,7 +1346,7 @@
       $menuDropdown.classList.remove("visible");
     });
 
-    // ---- Icons (flat SVG) ----
+    // ---- Icons ----
     const ICONS = {
       check: `
         <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
@@ -751,7 +1375,7 @@
         </svg>`
     };
 
-    // ---- State / render ----
+    // ---- State ----
     let cards = [];
     let currentSermonDate = null;
     const genId = () => "c_" + Math.random().toString(36).slice(2,9);
@@ -783,9 +1407,18 @@
       const done = cards.filter(c => c.status === 'done').length;
       const deleted = cards.filter(c => c.status === 'deleted').length;
       
-      $activeCount.textContent = `(${active})`;
-      $doneCount.textContent = `(${done})`;
-      $deletedCount.textContent = `(${deleted})`;
+      $activeCount.textContent = active;
+      $doneCount.textContent = done;
+      $deletedCount.textContent = deleted;
+      
+      // Show/hide empty state
+      if (cards.length === 0) {
+        $emptyState.style.display = 'block';
+        $hintText.style.display = 'none';
+      } else {
+        $emptyState.style.display = 'none';
+        $hintText.style.display = 'block';
+      }
     }
 
     function updateFilterCount() {
@@ -830,11 +1463,7 @@
     async function createVersesSection(text) {
       const references = detectVerseReferences(text);
       
-      console.log('createVersesSection called, found', references.length, 'references');
-      
-      if (references.length === 0) {
-        return null;
-      }
+      if (references.length === 0) return null;
 
       const versesDiv = document.createElement("div");
       versesDiv.className = "card-verses";
@@ -844,25 +1473,23 @@
       header.innerHTML = `
         <span class="verses-icon">📖</span>
         <span class="verses-title">Bible Verses (${references.length})</span>
-        <span class="verses-toggle">Click to expand</span>
+        <span class="verses-toggle">▼</span>
       `;
 
       const content = document.createElement("div");
       content.className = "verses-content";
 
-      // Toggle functionality
       header.addEventListener("click", () => {
         content.classList.toggle("visible");
         const toggle = header.querySelector(".verses-toggle");
-        toggle.textContent = content.classList.contains("visible") 
-          ? "Click to collapse" 
-          : "Click to expand";
+        toggle.style.transform = content.classList.contains("visible") 
+          ? "rotate(0deg)" 
+          : "rotate(-90deg)";
       });
 
       versesDiv.appendChild(header);
       versesDiv.appendChild(content);
 
-      // Fetch all verses
       for (const ref of references) {
         const block = document.createElement("div");
         block.className = "verse-block";
@@ -879,7 +1506,6 @@
         block.appendChild(verseText);
         content.appendChild(block);
 
-        // Fetch the verse
         fetchVerse(ref.apiReference).then(result => {
           if (result.error) {
             verseText.className = "verse-text verse-error";
@@ -892,6 +1518,62 @@
       }
 
       return versesDiv;
+    }
+
+    // ---- Swipe gestures for mobile ----
+    function setupSwipeGestures(cardEl, cardId) {
+      let startX = 0;
+      let currentX = 0;
+      let isDragging = false;
+      const threshold = 80;
+
+      cardEl.addEventListener('touchstart', (e) => {
+        if (cardEl.closest('.board-muted')) return;
+        startX = e.touches[0].clientX;
+        isDragging = true;
+        cardEl.classList.add('swiping');
+      }, { passive: true });
+
+      cardEl.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        currentX = e.touches[0].clientX;
+        const diff = currentX - startX;
+        
+        cardEl.classList.remove('swipe-complete', 'swipe-delete');
+        if (diff > threshold) {
+          cardEl.classList.add('swipe-complete');
+        } else if (diff < -threshold) {
+          cardEl.classList.add('swipe-delete');
+        }
+      }, { passive: true });
+
+      cardEl.addEventListener('touchend', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        cardEl.classList.remove('swiping');
+        
+        const diff = currentX - startX;
+        
+        if (diff > threshold) {
+          // Swipe right - complete
+          const current = getCurrentCards();
+          const next = current.map(c => (c.id === cardId ? { ...c, status: 'done' } : c));
+          renderCards(next);
+          autoSave();
+          showToast('Marked as complete', 'success');
+        } else if (diff < -threshold) {
+          // Swipe left - delete
+          const current = getCurrentCards();
+          const next = current.map(c => (c.id === cardId ? { ...c, status: 'deleted' } : c));
+          renderCards(next);
+          autoSave();
+          showToast('Moved to deleted', 'warning');
+        }
+        
+        cardEl.classList.remove('swipe-complete', 'swipe-delete');
+        startX = 0;
+        currentX = 0;
+      }, { passive: true });
     }
 
     async function renderCards(next) {
@@ -908,19 +1590,28 @@
 
       for (const c of cards) {
         const el = document.createElement("div");
-        el.className = "card"; 
+        el.className = "card";
         el.dataset.id = c.id;
 
         const isEdited = c.originalText && c.originalText !== c.text;
+        const isCustom = c.source === "custom";
+        const isSection = c.type === "section";
+
+        // Add card type classes
+        if (isCustom) el.classList.add('custom-card');
+        if (isSection) el.classList.add('section-card');
+        if (isEdited && !isCustom) el.classList.add('edited-card');
 
         const header = document.createElement("div");
         header.className = "card-header";
         
         let tagClass = "";
-        let tagText = c.type === "section" ? "Section" : "Question";
-        if (c.source === "custom") {
+        let tagText = isSection ? "Section" : "Question";
+        if (isCustom) {
           tagClass = "custom";
-          tagText = c.type === "section" ? "Section" : "Custom Question";
+          tagText = isSection ? "Custom Section" : "Custom";
+        } else if (isSection) {
+          tagClass = "section";
         } else if (isEdited) {
           tagClass = "edited";
         }
@@ -935,7 +1626,7 @@
             <button class="icon-btn" data-action="edit" title="Edit" aria-label="Edit">
               ${ICONS.edit}
             </button>
-            <button class="icon-btn" data-action="complete" title="Mark complete" aria-label="Mark complete">
+            <button class="icon-btn success" data-action="complete" title="Mark complete" aria-label="Mark complete">
               ${ICONS.check}
             </button>
             <button class="icon-btn danger" data-action="trash" title="Move to deleted" aria-label="Move to deleted">
@@ -966,10 +1657,14 @@
         el.appendChild(body);
         el.appendChild(editArea);
 
-        // Add Bible verses section if verses detected (works for all card types)
         const versesSection = await createVersesSection(c.text);
         if (versesSection) {
           el.appendChild(versesSection);
+        }
+
+        // Setup swipe gestures for active cards
+        if (c.status === "active") {
+          setupSwipeGestures(el, c.id);
         }
 
         if (c.status === "done") $boardDone.appendChild(el);
@@ -996,15 +1691,22 @@
     }
 
     Sortable.create($boardActive, {
-      animation:150, handle:".drag-handle", ghostClass:"ghost", direction:"vertical",
-      onEnd(){ cards=getCurrentCards(); autoSave(); }
+      animation: 150,
+      handle: ".drag-handle",
+      ghostClass: "ghost",
+      direction: "vertical",
+      onEnd() { cards = getCurrentCards(); autoSave(); }
     });
 
-    const debounce=(fn,ms=400)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
-    const autoSave = debounce(()=>{
+    const debounce = (fn, ms = 400) => {
+      let t;
+      return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+    };
+    
+    const autoSave = debounce(() => {
       if (!currentRoomCode()) return;
       saveLive(getCurrentCards());
-    },400);
+    }, 400);
 
     document.querySelector(".boards").addEventListener("click", (e) => {
       const btn = e.target.closest("button[data-action]");
@@ -1042,7 +1744,7 @@
         
         const newText = textarea.value.trim();
         if (!newText) {
-          alert("Card text cannot be empty");
+          showToast("Card text cannot be empty", "warning");
           return;
         }
 
@@ -1055,39 +1757,53 @@
         
         renderCards(next);
         autoSave();
+        showToast("Changes saved", "success");
         return;
       }
 
       let newStatus;
-      if (action === "complete") newStatus = "done";
-      else if (action === "trash") newStatus = "deleted";
-      else if (action === "undo") newStatus = "active";
-      else return;
+      let toastMsg;
+      if (action === "complete") {
+        newStatus = "done";
+        toastMsg = "Marked as complete";
+      } else if (action === "trash") {
+        newStatus = "deleted";
+        toastMsg = "Moved to deleted";
+      } else if (action === "undo") {
+        newStatus = "active";
+        toastMsg = "Restored to active";
+      } else {
+        return;
+      }
     
       const current = getCurrentCards();
       const next = current.map(c => (c.id === id ? { ...c, status: newStatus } : c));
     
       renderCards(next);
       autoSave();
+      showToast(toastMsg, action === "trash" ? "warning" : "success");
     });
 
-    document.getElementById("addBtn").addEventListener("click", ()=>{
-      const type=$newType.value;
-      const title=($newTitle.value||"").trim();
-      const text=($newText.value||"").trim();
-      if(!text) return;
-      const item={ 
+    document.getElementById("addBtn").addEventListener("click", () => {
+      const type = $newType.value;
+      const title = ($newTitle.value || "").trim();
+      const text = ($newText.value || "").trim();
+      if (!text) return;
+      
+      const item = { 
         id: genId(), 
         type, 
         text, 
-        status:"active",
+        status: "active",
         source: "custom"
       };
-      if(type==="section" && title) item.title=title;
+      if (type === "section" && title) item.title = title;
       
       renderCards([item, ...cards]);
-      $newText.value=""; $newTitle.value="";
+      $newText.value = "";
+      $newTitle.value = "";
       autoSave();
+      showToast("Card added", "success");
     });
 
     $searchInput.addEventListener("input", (e) => {
@@ -1124,6 +1840,7 @@
 
       if (e.key === "Escape") {
         e.preventDefault();
+        $shortcutsHelp.classList.remove("visible");
         $clearSearch.click();
         return;
       }
@@ -1143,23 +1860,25 @@
       $shortcutsHelp.classList.remove("visible");
     });
 
-    async function refreshRoomsList(selected){
+    async function refreshRoomsList(selected) {
       const rooms = await listRooms();
-      $roomSel.innerHTML="";
-      for(const r of rooms){
-        const opt=document.createElement("option"); opt.value=r; opt.textContent=r;
+      $roomSel.innerHTML = "";
+      for (const r of rooms) {
+        const opt = document.createElement("option");
+        opt.value = r;
+        opt.textContent = r;
         $roomSel.appendChild(opt);
       }
-      if(selected && rooms.includes(selected)) $roomSel.value=selected;
+      if (selected && rooms.includes(selected)) $roomSel.value = selected;
     }
 
-    async function joinAndLoad(room){
-      await joinRoom(room, ()=>{
+    async function joinAndLoad(room) {
+      await joinRoom(room, () => {
         const state = loadLive();
         renderCards(state);
         $status.textContent = currentRoomCode()
-          ? `Connected to room ${currentRoomCode()}`
-          : `Local mode (not in a room)`;
+          ? `Connected: ${currentRoomCode()}`
+          : `Local mode`;
       });
       await refreshRoomsList(currentRoomCode());
       const state = loadLive();
@@ -1170,52 +1889,54 @@
     await joinAndLoad(urlRoom || null);
     await refreshRoomsList(currentRoomCode());
 
-    $createJoin.addEventListener("click", async ()=>{
+    $createJoin.addEventListener("click", async () => {
       const name = ($roomInp.value || "").trim();
-      if(!name) return;
+      if (!name) return;
       await joinAndLoad(name);
-      const url = new URL(location.href); url.searchParams.set("room", name);
+      const url = new URL(location.href);
+      url.searchParams.set("room", name);
+      history.replaceState(null, "", url.toString());
+      showToast(`Joined room: ${name}`, "success");
+    });
+
+    $roomSel.addEventListener("change", async () => {
+      const name = $roomSel.value;
+      await joinAndLoad(name);
+      const url = new URL(location.href);
+      url.searchParams.set("room", name);
       history.replaceState(null, "", url.toString());
     });
 
-    $roomSel.addEventListener("change", async ()=>{
-      const name=$roomSel.value;
-      await joinAndLoad(name);
-      const url=new URL(location.href); url.searchParams.set("room", name);
-      history.replaceState(null, "", url.toString());
-    });
-
-    $share.addEventListener("click", async ()=>{
-      const code=currentRoomCode(); if(!code){ alert("Join a room first."); return; }
-      const url=new URL(location.href); url.searchParams.set("room", code);
+    $share.addEventListener("click", async () => {
+      const code = currentRoomCode();
+      if (!code) {
+        showToast("Join a room first", "warning");
+        return;
+      }
+      const url = new URL(location.href);
+      url.searchParams.set("room", code);
       await navigator.clipboard.writeText(url.toString());
-      alert("Share link copied!");
+      showToast("Share link copied!", "success");
     });
 
     $deleteRoom.addEventListener("click", async () => {
       const code = currentRoomCode();
 
       if (!code) {
-        const ok = confirm(
-          "You are not in a room. This will clear ALL local cached rooms on this device. Continue?"
-        );
-        if (!ok) return;
+        if (!confirm("Clear ALL local cached rooms on this device?")) return;
         localStorage.removeItem("bhq-rooms-v1");
         location.reload();
         return;
       }
 
-      const ok = confirm(
-        `Delete room "${code}" for everyone?\n\nThis will remove the room for everyone, not just you. Continue?`
-      );
-      if (!ok) return;
+      if (!confirm(`Delete room "${code}" for everyone?\n\nThis will remove the room for everyone, not just you.`)) return;
 
       try {
         await deleteRoom(code);
-        alert(`Room "${code}" deleted.`);
+        showToast(`Room "${code}" deleted`, "success");
       } catch (e) {
         console.error(e);
-        alert("Failed to delete room (see console).");
+        showToast("Failed to delete room", "warning");
       }
 
       const url = new URL(location.href);
@@ -1223,7 +1944,11 @@
       location.href = url.toString();
     });
 
-    const guideJsonUrl=(noCache=false)=>{ const u=new URL("data/guide.json",location.href); if(noCache) u.searchParams.set("ts",Date.now()); return u.toString(); };
+    const guideJsonUrl = (noCache = false) => {
+      const u = new URL("data/guide.json", location.href);
+      if (noCache) u.searchParams.set("ts", Date.now());
+      return u.toString();
+    };
     
     function extractDateFromUrl(url) {
       const match = url.match(/(\d{1,2})\.(\d{1,2})\.(\d{2})/);
@@ -1237,7 +1962,7 @@
       return null;
     }
     
-    function updateGuideLink(meta){
+    function updateGuideLink(meta) {
       const u = (meta && meta.url) ? String(meta.url) : "";
       if (!u) { 
         $pdfLink.style.display = "none";
@@ -1254,54 +1979,62 @@
       updateSermonDate(dateStr);
     }
     
-    async function loadGuideJson(noCache=false){
-      $status.textContent="Loading…";
-      try{
-        const res=await fetch(guideJsonUrl(noCache),{cache:noCache?"no-store":"default"});
-        if(!res.ok) throw new Error("HTTP "+res.status);
-        const data=await res.json();
+    async function loadGuideJson(noCache = false) {
+      $status.textContent = "Loading…";
+      try {
+        const res = await fetch(guideJsonUrl(noCache), { cache: noCache ? "no-store" : "default" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
         updateGuideLink(data);
-        const next=[
-          ...(data.questions||[]).map(q=>({
-            type:"question",
-            text:q,
-            status:"active",
-            source:"pdf"
+        const next = [
+          ...(data.questions || []).map(q => ({
+            type: "question",
+            text: q,
+            status: "active",
+            source: "pdf"
           })),
-          ...(data.sections||[]).map(s=>({
-            type:"section",
-            title:s.title,
-            text:s.body,
-            status:"active",
-            source:"pdf"
+          ...(data.sections || []).map(s => ({
+            type: "section",
+            title: s.title,
+            text: s.body,
+            status: "active",
+            source: "pdf"
           }))
         ];
         renderCards(next);
         autoSave();
-        $status.textContent=`Loaded: ${next.length} cards`;
+        $status.textContent = `Loaded: ${next.length} cards`;
+        showToast(`Loaded ${next.length} cards`, "success");
       } catch (e) {
         console.error(e);
-        $status.textContent="Failed to load data/guide.json";
+        $status.textContent = "Failed to load";
+        showToast("Failed to load discussion guide", "warning");
       }
     }
 
     $loadLatest.addEventListener("click", () => {
-      const ok = confirm(
-        "Load Latest Sermon will replace the current board with the latest Discussion Guide.\n\nAny changes in this room will be overwritten. Continue?"
-      );
-      if (!ok) return;
+      if (!confirm("Load Latest Sermon will replace the current board.\n\nAny changes will be overwritten. Continue?")) return;
+      loadGuideJson(false);
+    });
+
+    $emptyLoadBtn.addEventListener("click", () => {
       loadGuideJson(false);
     });
     
     $refresh.addEventListener("click", () => {
-      const ok = confirm(
-        "Refresh will re-read the latest guide and overwrite the current Discussion Guide questions.\n\nAny changes will be overwritten. Continue?"
-      );
-      if (!ok) return;
+      if (!confirm("Refresh will re-read and overwrite the current guide.\n\nAny changes will be overwritten. Continue?")) return;
       loadGuideJson(true);
     });
 
-    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m])); }
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, m => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#039;"
+      }[m]));
+    }
   </script>
 </body>
 </html>
