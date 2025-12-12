@@ -3,7 +3,7 @@
 // Single-live-view-per-room store with optional Firestore sync.
 // If Firebase isn't connected, everything stays local (per-room in localStorage).
 
-const LS_KEY = "bhq-rooms-v1";
+const LS_KEY = "bhg-rooms-v1";
 
 let memory = { rooms: {} }; // { CODE: { live: { cards, ts } } }
 let currentRoom = null;
