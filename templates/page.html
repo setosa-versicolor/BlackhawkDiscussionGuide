@@ -1146,25 +1146,6 @@
       }, duration);
     }
 
-    // ---- PDF Link Persistence ----
-    const PDF_STORAGE_KEY = 'bhq-pdf-link';
-    
-    function savePdfLink(url, dateStr) {
-      if (url) {
-        localStorage.setItem(PDF_STORAGE_KEY, JSON.stringify({ url: url, date: dateStr }));
-      }
-    }
-    
-    function loadSavedPdfLink() {
-      try {
-        const saved = localStorage.getItem(PDF_STORAGE_KEY);
-        if (saved) {
-          return JSON.parse(saved);
-        }
-      } catch (e) {}
-      return null;
-    }
-
     // ---- Bible Verse Detection & Fetching ----
     const verseCache = {};
     const ESV_WORKER_URL = 'https://esv-bible-proxy.johnston-thayer.workers.dev';
@@ -1866,18 +1847,6 @@
     const urlRoom = new URLSearchParams(location.search).get("room");
     await joinAndLoad(urlRoom || null);
     await refreshRoomsList(currentRoomCode());
-    
-    // Restore saved PDF link on page load
-    const savedPdf = loadSavedPdfLink();
-    if (savedPdf && savedPdf.url) {
-      const isPdf = savedPdf.url.toLowerCase().endsWith(".pdf");
-      $pdfLink.textContent = isPdf ? "Open PDF" : "Open Source Page";
-      $pdfLink.href = savedPdf.url;
-      $pdfLink.style.display = "inline-block";
-      if (savedPdf.date) {
-        updateSermonDate(savedPdf.date);
-      }
-    }
 
     $createJoin.addEventListener("click", async () => {
       const name = ($roomInp.value || "").trim();
@@ -1967,9 +1936,6 @@
       
       const dateStr = extractDateFromUrl(u);
       updateSermonDate(dateStr);
-      
-      // Save to localStorage for persistence
-      savePdfLink(u, dateStr);
     }
     
     async function loadGuideJson(noCache = false) {
