@@ -1012,10 +1012,10 @@ button.danger:hover {
   <div class="menu-toggle">
     <button id="menuToggle" title="More options">☰</button>
     <div class="menu-dropdown" id="menuDropdown">
-      <button id="shareBtn" class="secondary">📋 Copy Share Link</button>
-      <button id="refreshBtn" class="secondary">🔄 Refresh</button>
-      <button id="helpBtn" class="secondary">⌨️ Keyboard Shortcuts</button>
-      <button id="deleteRoomBtn" class="danger">🗑️ Delete Room</button>
+      <button id="shareBtn" class="secondary">Copy Share Link</button>
+      <button id="refreshBtn" class="secondary">Refresh</button>
+      <button id="helpBtn" class="secondary">Keyboard Shortcuts</button>
+      <button id="deleteRoomBtn" class="danger">Delete Room</button>
     </div>
   </div>
   
@@ -1434,8 +1434,7 @@ button.danger:hover {
         $pdfLink.style.display = "none";
         return;
       }
-      
-      const isPdf = url.toLowerCase().endsWith(".pdf");
+      var isPdf = url.toLowerCase().endsWith(".pdf");
       $pdfLink.textContent = isPdf ? "Open PDF" : "Open Source Page";
       $pdfLink.href = url;
       $pdfLink.style.display = "inline-block";
@@ -1683,16 +1682,16 @@ const debounce = (fn, ms = 400) => {
   return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
 };
 
-const autoSave = debounce(() => {
+const autoSave = debounce(function() {
   if (!currentRoomCode()) return;
-  const state = {
+  var saveData = {
     cards: getCurrentCards(),
     meta: {
       pdfUrl: currentPdfUrl,
       sermonDate: currentSermonDate
     }
   };
-  saveLive(state);
+  saveLive(saveData);
 }, 400);
 
 document.querySelector(".boards").addEventListener("click", (e) => {
@@ -1861,9 +1860,8 @@ async function refreshRoomsList(selected) {
 }
 
 async function joinAndLoad(room) {
-  await joinRoom(room, () => {
-    const state = loadLive();
-    // Handle both old format (array) and new format (object with cards + meta)
+  await joinRoom(room, function() {
+    var state = loadLive();
     if (Array.isArray(state)) {
       renderCards(state);
     } else {
@@ -1874,12 +1872,11 @@ async function joinAndLoad(room) {
       }
     }
     $status.textContent = currentRoomCode()
-      ? `Connected: ${currentRoomCode()}`
-      : `Local mode`;
+      ? "Connected: " + currentRoomCode()
+      : "Local mode";
   });
   await refreshRoomsList(currentRoomCode());
-  const state = loadLive();
-  // Handle both old format (array) and new format (object with cards + meta)
+  var state = loadLive();
   if (Array.isArray(state)) {
     renderCards(state);
   } else {
@@ -1969,9 +1966,9 @@ function extractDateFromUrl(url) {
 }
 
 function updateGuideLink(meta) {
-  const u = (meta && meta.url) ? String(meta.url) : "";
+  var u = (meta && meta.url) ? String(meta.url) : "";
   updatePdfLink(u);
-  const dateStr = u ? extractDateFromUrl(u) : null;
+  var dateStr = u ? extractDateFromUrl(u) : null;
   updateSermonDate(dateStr);
 }
 
