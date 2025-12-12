@@ -1,9 +1,8 @@
-
 // static/js/viewStore.js
 // Single-live-view-per-room store with optional Firestore sync.
 // If Firebase isn't connected, everything stays local (per-room in localStorage).
 
-const LS_KEY = "bhg-rooms-v1";
+const LS_KEY = "bhq-rooms-v1";
 
 let memory = { rooms: {} }; // { CODE: { live: { cards, ts } } }
 let currentRoom = null;
@@ -25,7 +24,7 @@ export async function connectFirebase(config) {
   // Add Auth + App Check imports
   const [
     { initializeApp },
-    { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, serverTimestamp },
+    { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, serverTimestamp, deleteDoc },
     { getAuth, signInAnonymously },
     { initializeAppCheck, ReCaptchaEnterpriseProvider } // or ReCaptchaV3Provider
   ] = await Promise.all([
@@ -42,7 +41,7 @@ export async function connectFirebase(config) {
   const auth = getAuth(app);
   await signInAnonymously(auth).catch(console.error);
   
-  fb = { app, db, auth, firestore: { doc, setDoc, getDoc, onSnapshot, collection, getDocs, serverTimestamp } };
+  fb = { app, db, auth, firestore: { doc, setDoc, getDoc, onSnapshot, collection, getDocs, serverTimestamp, deleteDoc } };
 
   return fb;
 }
