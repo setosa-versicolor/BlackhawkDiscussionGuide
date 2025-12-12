@@ -168,6 +168,13 @@ export function loadLive() {
 loadLS();
 const code = currentRoom || “**local**”;
 const live = memory.rooms[code]?.live;
+
+// Backward compatibility: if live.cards doesn’t exist but live is an array,
+// it’s old format data
+if (Array.isArray(live)) {
+return { cards: live, pdfUrl: null };
+}
+
 return {
 cards: live?.cards || [],
 pdfUrl: live?.pdfUrl || null
