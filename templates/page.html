@@ -1685,7 +1685,7 @@
       saveLive(getCurrentCards());
     }, 400);
 
-    document.querySelector(".boards").addEventListener("click", (e) => {
+    document.querySelector(".boards").addEventListener("click", async (e) => {
       const btn = e.target.closest("button[data-action]");
       if (!btn) return;
     
@@ -1732,7 +1732,7 @@
           return { ...c, text: newText, originalText };
         });
         
-        renderCards(next);
+        await renderCards(next);
         autoSave();
         showToast("Changes saved", "success");
         return;
@@ -1756,12 +1756,12 @@
       const current = getCurrentCards();
       const next = current.map(c => (c.id === id ? { ...c, status: newStatus } : c));
     
-      renderCards(next);
+      await renderCards(next);
       autoSave();
       showToast(toastMsg, action === "trash" ? "warning" : "success");
     });
 
-    document.getElementById("addBtn").addEventListener("click", () => {
+    document.getElementById("addBtn").addEventListener("click", async () => {
       const type = $newType.value;
       const title = ($newTitle.value || "").trim();
       const text = ($newText.value || "").trim();
@@ -1776,7 +1776,7 @@
       };
       if (type === "section" && title) item.title = title;
       
-      renderCards([item, ...cards]);
+      await renderCards([item, ...cards]);
       $newText.value = "";
       $newText.style.height = 'auto'; // Reset height after clearing
       $newTitle.value = "";
@@ -1994,7 +1994,7 @@
             source: "pdf"
           }))
         ];
-        renderCards(next);
+        await renderCards(next);
         autoSave();
         $status.textContent = `Loaded: ${next.length} cards`;
         showToast(`Loaded ${next.length} cards`, "success");
