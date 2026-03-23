@@ -27,6 +27,11 @@ jobs:
         run: pip install -r requirements.txt
       - name: Build site
         run: python scripts/update.py
+      - name: Generate hero image
+        if: env.OPENAI_API_KEY != ''
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python scripts/generate_hero.py --json site/data/guide.json --out site/data/hero.webp
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
