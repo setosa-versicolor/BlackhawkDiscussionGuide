@@ -1,5 +1,4 @@
 <!doctype html>
-
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -33,662 +32,659 @@
       --radius-lg: 12px;
     }
 
-```
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-html, body {
-  background: var(--bg);
-  color: var(--text);
-  font: 15px/1.6 'Outfit', sans-serif;
-  font-weight: 400;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* ===== LAYOUT ===== */
-.wrap {
-  max-width: 740px;
-  margin: 0 auto;
-  padding: 0 20px 100px;
-}
-
-/* ===== HERO HEADER ===== */
-.hero {
-  position: relative;
-  margin: 0 -20px 32px;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-  overflow: hidden;
-  min-height: 140px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 28px 24px 22px;
-  background: var(--surface);
-}
-
-.hero-image {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.35;
-  z-index: 0;
-}
-
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, var(--bg) 0%, transparent 100%);
-  z-index: 1;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 2;
-}
-
-.hero h1 {
-  font-family: 'Source Serif 4', Georgia, serif;
-  font-size: 28px;
-  font-weight: 600;
-  letter-spacing: -0.3px;
-  color: #fff;
-  line-height: 1.25;
-}
-
-.hero-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 6px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  font-weight: 400;
-}
-
-.hero-meta a {
-  color: var(--accent);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.hero-meta a:hover { text-decoration: underline; }
-
-/* ===== TOOLBAR ===== */
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.toolbar-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.spacer { flex: 1; }
-
-input[type="text"], select, textarea {
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 8px 12px;
-  outline: none;
-  font: inherit;
-  font-size: 14px;
-  transition: border-color 0.15s;
-}
-
-input[type="text"]:focus, select:focus, textarea:focus {
-  border-color: var(--accent);
-}
-
-select { cursor: pointer; }
-
-button {
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  border: none;
-  border-radius: var(--radius);
-  padding: 8px 14px;
-  cursor: pointer;
-  transition: all 0.15s;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-}
-
-.btn-primary {
-  background: var(--accent);
-  color: #fff;
-}
-.btn-primary:hover { opacity: 0.88; }
-
-.btn-ghost {
-  background: transparent;
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
-}
-.btn-ghost:hover {
-  background: var(--surface);
-  color: var(--text);
-}
-
-.btn-icon {
-  background: transparent;
-  color: var(--text-secondary);
-  border: none;
-  padding: 6px;
-  border-radius: var(--radius);
-  line-height: 1;
-}
-.btn-icon:hover {
-  background: var(--surface);
-  color: var(--text);
-}
-.btn-icon svg { width: 18px; height: 18px; display: block; }
-
-.btn-danger { color: var(--danger); }
-.btn-danger:hover { background: var(--danger-dim); color: var(--danger); }
-
-/* ===== COLLAPSIBLE SECTIONS ===== */
-.section-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--text-secondary);
-  margin: 24px 0 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 12px 14px;
-  margin-bottom: 12px;
-}
-
-/* ===== SEARCH ===== */
-.search-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.search-bar input {
-  flex: 1;
-  min-width: 0;
-}
-
-.filter-count {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-/* ===== ADD FORM ===== */
-.add-form {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  flex-wrap: wrap;
-}
-
-.add-form textarea {
-  flex: 1;
-  min-width: 200px;
-  resize: none;
-  overflow: hidden;
-  min-height: 38px;
-  line-height: 1.5;
-}
-
-#newTitle { display: none; }
-#newTitle.visible { display: block; min-width: 160px; }
-
-/* ===== BOARD HEADERS ===== */
-.board-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 0;
-  cursor: pointer;
-  user-select: none;
-}
-
-.board-header:hover { opacity: 0.8; }
-
-.board-toggle {
-  font-size: 10px;
-  color: var(--text-secondary);
-  transition: transform 0.2s;
-}
-
-.board-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.board-count {
-  font-size: 11px;
-  color: var(--text-secondary);
-  background: var(--surface);
-  padding: 1px 8px;
-  border-radius: 10px;
-  font-weight: 500;
-}
-
-.board-wrap.collapsed .board-toggle { transform: rotate(-90deg); }
-.board-wrap.collapsed .board { display: none; }
-
-.board { min-height: 8px; }
-.board-muted .card { opacity: 0.6; }
-.board-muted .card:hover { opacity: 0.85; }
-
-/* ===== CARDS ===== */
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  margin: 6px 0;
-  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
-  position: relative;
-}
-
-.card:hover {
-  background: var(--card-hover);
-}
-
-/* Left accent strip */
-.card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 12px;
-  bottom: 12px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--accent);
-  opacity: 0.7;
-}
-
-.card.custom-card::before { background: var(--custom); }
-.card.section-card::before { background: var(--section); }
-.card.edited-card::before { background: var(--edited); }
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px 0 16px;
-}
-
-.drag-handle {
-  cursor: grab;
-  user-select: none;
-  color: var(--text-secondary);
-  opacity: 0.35;
-  transition: opacity 0.15s;
-  font-size: 14px;
-  line-height: 1;
-  padding: 2px;
-}
-
-.card:hover .drag-handle { opacity: 0.6; }
-.drag-handle:active { cursor: grabbing; }
-
-.tag {
-  font-size: 10px;
-  padding: 2px 7px;
-  border-radius: 4px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  background: var(--accent-dim);
-  color: var(--accent);
-}
-
-.tag.custom { background: var(--custom-dim); color: var(--custom); }
-.tag.edited { background: var(--edited-dim); color: var(--edited); }
-.tag.section { background: var(--section-dim); color: var(--section); }
-
-.edited-badge {
-  font-size: 9px;
-  padding: 2px 5px;
-  border-radius: 3px;
-  background: var(--edited);
-  color: #fff;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-}
-
-.card-body {
-  padding: 8px 14px 12px 16px;
-  font-size: 14.5px;
-  line-height: 1.65;
-  white-space: pre-wrap;
-  color: var(--text);
-}
-
-.section-card .card-body {
-  font-family: 'Source Serif 4', Georgia, serif;
-  font-size: 15px;
-  font-weight: 400;
-}
-
-/* Card action buttons */
-.card-actions {
-  display: flex;
-  gap: 2px;
-  margin-left: auto;
-}
-
-/* Drag states */
-.ghost { opacity: 0.3; }
-.sortable-chosen {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-  transform: scale(1.01);
-  z-index: 100;
-}
-.sortable-drag { opacity: 0.9; }
-
-.card.filtered { display: none; }
-
-/* ===== EDIT MODE ===== */
-.card.editing .card-body { display: none; }
-.card:not(.editing) .edit-area { display: none; }
-
-.edit-area {
-  padding: 8px 14px 12px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.edit-area textarea {
-  min-height: 80px;
-  resize: vertical;
-  font-size: 14px;
-}
-
-.edit-controls {
-  display: flex;
-  gap: 6px;
-  justify-content: flex-end;
-}
-
-/* ===== BIBLE VERSES ===== */
-.card-verses {
-  border-top: 1px solid var(--border);
-}
-
-.verses-header {
-  padding: 8px 14px 8px 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-  font-size: 12px;
-}
-
-.verses-header:hover { background: rgba(91, 141, 239, 0.04); }
-
-.verses-icon { font-size: 14px; }
-.verses-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  flex: 1;
-}
-
-.verses-toggle {
-  font-size: 10px;
-  color: var(--text-secondary);
-  transition: transform 0.2s;
-}
-
-.verses-content {
-  padding: 0 14px 0 16px;
-  max-height: 0;
-  overflow: hidden;
-  transition: all 0.25s ease;
-}
-
-.verses-content.visible { max-height: 2000px; padding-bottom: 12px; }
-
-.verse-block { margin-bottom: 12px; }
-.verse-block:last-child { margin-bottom: 0; }
-
-.verse-reference {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
-  margin-bottom: 4px;
-}
-
-.verse-text {
-  font-family: 'Source Serif 4', Georgia, serif;
-  font-size: 13.5px;
-  line-height: 1.7;
-  color: var(--text);
-  font-style: italic;
-  padding-left: 12px;
-  border-left: 2px solid var(--border-light);
-  opacity: 0.85;
-}
-
-.verse-loading { font-size: 12px; color: var(--text-secondary); font-style: italic; }
-.verse-error { font-size: 12px; color: var(--danger); font-style: italic; }
-
-/* ===== MENU ===== */
-.menu-toggle { position: relative; }
-
-.menu-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 4px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 4px;
-  display: none;
-  flex-direction: column;
-  min-width: 190px;
-  z-index: 1000;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-}
-
-.menu-dropdown.visible { display: flex; }
-
-.menu-dropdown button {
-  background: transparent;
-  color: var(--text);
-  border: none;
-  padding: 10px 12px;
-  text-align: left;
-  border-radius: var(--radius);
-  font-size: 13px;
-  font-weight: 400;
-  justify-content: flex-start;
-}
-
-.menu-dropdown button:hover { background: var(--card); }
-.menu-dropdown button.btn-danger { color: var(--danger); }
-.menu-dropdown button.btn-danger:hover { background: var(--danger-dim); }
-
-/* ===== KEYBOARD SHORTCUTS ===== */
-.shortcuts-help {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  display: none;
-  max-width: 280px;
-  z-index: 1000;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-}
-
-.shortcuts-help.visible { display: block; }
-
-.shortcuts-help h3 {
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-
-.shortcut {
-  display: flex;
-  justify-content: space-between;
-  margin: 6px 0;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.key {
-  background: var(--card);
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-family: 'SF Mono', Monaco, monospace;
-  font-size: 11px;
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-
-.shortcuts-help .close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 2px;
-  font-size: 16px;
-}
-
-/* ===== TOAST ===== */
-.toast-container {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2000;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  pointer-events: none;
-}
-
-.toast {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px 16px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-  animation: toastIn 0.25s ease;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  pointer-events: auto;
-}
-
-.toast.success { border-color: rgba(61,174,142,0.3); }
-.toast.success::before { content: '✓'; color: var(--success); font-weight: bold; font-size: 14px; }
-.toast.warning { border-color: rgba(212,148,58,0.3); }
-.toast.warning::before { content: '!'; color: var(--edited); font-weight: bold; font-size: 14px; }
-.toast.hiding { animation: toastOut 0.2s ease forwards; }
-
-@keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-8px); } }
-
-/* ===== EMPTY STATE ===== */
-.empty-state {
-  text-align: center;
-  padding: 48px 20px;
-  color: var(--text-secondary);
-}
-
-.empty-state svg {
-  width: 56px;
-  height: 56px;
-  margin-bottom: 16px;
-  opacity: 0.3;
-}
-
-.empty-state h3 {
-  font-family: 'Source Serif 4', Georgia, serif;
-  font-size: 18px;
-  color: var(--text);
-  margin-bottom: 6px;
-  font-weight: 600;
-}
-
-.empty-state p {
-  font-size: 13px;
-  margin-bottom: 16px;
-  max-width: 300px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.hint {
-  margin-top: 16px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  opacity: 0.6;
-}
-
-.footer {
-  margin-top: 20px;
-  color: var(--text-secondary);
-  font-size: 12px;
-  opacity: 0.5;
-}
-
-/* ===== ROOM BAR ===== */
-.room-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.room-bar select { min-width: 130px; }
-.room-bar input { min-width: 140px; }
-.status-text { font-size: 12px; color: var(--text-secondary); }
-
-/* ===== MOBILE ===== */
-@media (max-width: 768px) {
-  .wrap { padding: 0 14px 80px; }
-  .hero { margin: 0 -14px 24px; padding: 24px 18px 18px; }
-  .hero h1 { font-size: 22px; }
-  .card-body { font-size: 14px; }
-  input[type="text"], select { font-size: 16px; }
-  .shortcuts-help { right: 10px; bottom: 10px; max-width: calc(100vw - 40px); }
-  .toast-container { left: 14px; right: 14px; transform: none; }
-  .toast { width: 100%; }
-}
-```
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.6 'Outfit', sans-serif;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== LAYOUT ===== */
+    .wrap {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 0 20px 100px;
+    }
+
+    /* ===== HERO HEADER ===== */
+    .hero {
+      position: relative;
+      margin: 0 -20px 32px;
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      overflow: hidden;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 28px 24px 22px;
+      background: var(--surface);
+    }
+
+    .hero-image {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.35;
+      z-index: 0;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, var(--bg) 0%, transparent 100%);
+      z-index: 1;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero h1 {
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      color: #fff;
+      line-height: 1.25;
+    }
+
+    .hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .hero-meta a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .hero-meta a:hover { text-decoration: underline; }
+
+    /* ===== TOOLBAR ===== */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .spacer { flex: 1; }
+
+    input[type="text"], select, textarea {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      outline: none;
+      font: inherit;
+      font-size: 14px;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    select { cursor: pointer; }
+
+    button {
+      font: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      border-radius: var(--radius);
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .btn-icon {
+      background: transparent;
+      color: var(--text-secondary);
+      border: none;
+      padding: 6px;
+      border-radius: var(--radius);
+      line-height: 1;
+    }
+    .btn-icon:hover {
+      background: var(--surface);
+      color: var(--text);
+    }
+    .btn-icon svg { width: 18px; height: 18px; display: block; }
+
+    .btn-danger { color: var(--danger); }
+    .btn-danger:hover { background: var(--danger-dim); color: var(--danger); }
+
+    /* ===== COLLAPSIBLE SECTIONS ===== */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-secondary);
+      margin: 24px 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+
+    /* ===== SEARCH ===== */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .search-bar input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .filter-count {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* ===== ADD FORM ===== */
+    .add-form {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .add-form textarea {
+      flex: 1;
+      min-width: 200px;
+      resize: none;
+      overflow: hidden;
+      min-height: 38px;
+      line-height: 1.5;
+    }
+
+    #newTitle { display: none; }
+    #newTitle.visible { display: block; min-width: 160px; }
+
+    /* ===== BOARD HEADERS ===== */
+    .board-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .board-header:hover { opacity: 0.8; }
+
+    .board-toggle {
+      font-size: 10px;
+      color: var(--text-secondary);
+      transition: transform 0.2s;
+    }
+
+    .board-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .board-count {
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: var(--surface);
+      padding: 1px 8px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+
+    .board-wrap.collapsed .board-toggle { transform: rotate(-90deg); }
+    .board-wrap.collapsed .board { display: none; }
+
+    .board { min-height: 8px; }
+    .board-muted .card { opacity: 0.6; }
+    .board-muted .card:hover { opacity: 0.85; }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin: 6px 0;
+      transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+      position: relative;
+    }
+
+    .card:hover {
+      background: var(--card-hover);
+    }
+
+    /* Left accent strip */
+    .card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 12px;
+      bottom: 12px;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: var(--accent);
+      opacity: 0.7;
+    }
+
+    .card.custom-card::before { background: var(--custom); }
+    .card.section-card::before { background: var(--section); }
+    .card.edited-card::before { background: var(--edited); }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px 0 16px;
+    }
+
+    .drag-handle {
+      cursor: grab;
+      user-select: none;
+      color: var(--text-secondary);
+      opacity: 0.35;
+      transition: opacity 0.15s;
+      font-size: 14px;
+      line-height: 1;
+      padding: 2px;
+    }
+
+    .card:hover .drag-handle { opacity: 0.6; }
+    .drag-handle:active { cursor: grabbing; }
+
+    .tag {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .tag.custom { background: var(--custom-dim); color: var(--custom); }
+    .tag.edited { background: var(--edited-dim); color: var(--edited); }
+    .tag.section { background: var(--section-dim); color: var(--section); }
+
+    .edited-badge {
+      font-size: 9px;
+      padding: 2px 5px;
+      border-radius: 3px;
+      background: var(--edited);
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .card-body {
+      padding: 8px 14px 12px 16px;
+      font-size: 14.5px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      color: var(--text);
+    }
+
+    .section-card .card-body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 15px;
+      font-weight: 400;
+    }
+
+    /* Card action buttons */
+    .card-actions {
+      display: flex;
+      gap: 2px;
+      margin-left: auto;
+    }
+
+    /* Drag states */
+    .ghost { opacity: 0.3; }
+    .sortable-chosen {
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      transform: scale(1.01);
+      z-index: 100;
+    }
+    .sortable-drag { opacity: 0.9; }
+
+    .card.filtered { display: none; }
+
+    /* ===== EDIT MODE ===== */
+    .card.editing .card-body { display: none; }
+    .card:not(.editing) .edit-area { display: none; }
+
+    .edit-area {
+      padding: 8px 14px 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .edit-area textarea {
+      min-height: 80px;
+      resize: vertical;
+      font-size: 14px;
+    }
+
+    .edit-controls {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    /* ===== BIBLE VERSES ===== */
+    .card-verses {
+      border-top: 1px solid var(--border);
+    }
+
+    .verses-header {
+      padding: 8px 14px 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 12px;
+    }
+
+    .verses-header:hover { background: rgba(91, 141, 239, 0.04); }
+
+    .verses-icon { font-size: 14px; }
+    .verses-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      flex: 1;
+    }
+
+    .verses-toggle {
+      font-size: 10px;
+      color: var(--text-secondary);
+      transition: transform 0.2s;
+    }
+
+    .verses-content {
+      padding: 0 14px 0 16px;
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.25s ease;
+    }
+
+    .verses-content.visible { max-height: 2000px; padding-bottom: 12px; }
+
+    .verse-block { margin-bottom: 12px; }
+    .verse-block:last-child { margin-bottom: 0; }
+
+    .verse-reference {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .verse-text {
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: var(--text);
+      font-style: italic;
+      padding-left: 12px;
+      border-left: 2px solid var(--border-light);
+      opacity: 0.85;
+    }
+
+    .verse-loading { font-size: 12px; color: var(--text-secondary); font-style: italic; }
+    .verse-error { font-size: 12px; color: var(--danger); font-style: italic; }
+
+    /* ===== MENU ===== */
+    .menu-toggle { position: relative; }
+
+    .menu-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 4px;
+      display: none;
+      flex-direction: column;
+      min-width: 190px;
+      z-index: 1000;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+
+    .menu-dropdown.visible { display: flex; }
+
+    .menu-dropdown button {
+      background: transparent;
+      color: var(--text);
+      border: none;
+      padding: 10px 12px;
+      text-align: left;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 400;
+      justify-content: flex-start;
+    }
+
+    .menu-dropdown button:hover { background: var(--card); }
+    .menu-dropdown button.btn-danger { color: var(--danger); }
+    .menu-dropdown button.btn-danger:hover { background: var(--danger-dim); }
+
+    /* ===== KEYBOARD SHORTCUTS ===== */
+    .shortcuts-help {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: none;
+      max-width: 280px;
+      z-index: 1000;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+
+    .shortcuts-help.visible { display: block; }
+
+    .shortcuts-help h3 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .shortcut {
+      display: flex;
+      justify-content: space-between;
+      margin: 6px 0;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .key {
+      background: var(--card);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .shortcuts-help .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 2px;
+      font-size: 16px;
+    }
+
+    /* ===== TOAST ===== */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      animation: toastIn 0.25s ease;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .toast.success { border-color: rgba(61,174,142,0.3); }
+    .toast.success::before { content: '✓'; color: var(--success); font-weight: bold; font-size: 14px; }
+    .toast.warning { border-color: rgba(212,148,58,0.3); }
+    .toast.warning::before { content: '!'; color: var(--edited); font-weight: bold; font-size: 14px; }
+    .toast.hiding { animation: toastOut 0.2s ease forwards; }
+
+    @keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-8px); } }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state svg {
+      width: 56px;
+      height: 56px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+
+    .empty-state h3 {
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 18px;
+      color: var(--text);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+      margin-bottom: 16px;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hint {
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      opacity: 0.6;
+    }
+
+    .footer {
+      margin-top: 20px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      opacity: 0.5;
+    }
+
+    /* ===== ROOM BAR ===== */
+    .room-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .room-bar select { min-width: 130px; }
+    .room-bar input { min-width: 140px; }
+    .status-text { font-size: 12px; color: var(--text-secondary); }
+
+    /* ===== MOBILE ===== */
+    @media (max-width: 768px) {
+      .wrap { padding: 0 14px 80px; }
+      .hero { margin: 0 -14px 24px; padding: 24px 18px 18px; }
+      .hero h1 { font-size: 22px; }
+      .card-body { font-size: 14px; }
+      input[type="text"], select { font-size: 16px; }
+      .shortcuts-help { right: 10px; bottom: 10px; max-width: calc(100vw - 40px); }
+      .toast-container { left: 14px; right: 14px; transform: none; }
+      .toast { width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -707,108 +703,103 @@ button {
       </div>
     </div>
 
-```
-<!-- ===== ROOM & TOOLBAR ===== -->
-<div class="toolbar">
-  <div class="toolbar-group room-bar">
-    <select id="roomSelect" title="Rooms"></select>
-    <input id="roomInput" type="text" placeholder="New room…" />
-    <button class="btn-primary" id="createJoinBtn">Join</button>
-  </div>
-  <div class="spacer"></div>
-  <span class="status-text" id="status"></span>
-  <button class="btn-ghost" id="loadLatestBtn">Load Sermon</button>
-  <div class="menu-toggle">
-    <button class="btn-icon" id="menuToggle" title="More">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-    </button>
-    <div class="menu-dropdown" id="menuDropdown">
-      <button id="shareBtn">Copy share link</button>
-      <button id="refreshBtn">Refresh guide</button>
-      <button id="helpBtn">Keyboard shortcuts</button>
-      <button id="deleteRoomBtn" class="btn-danger">Delete room</button>
+    <!-- ===== ROOM & TOOLBAR ===== -->
+    <div class="toolbar">
+      <div class="toolbar-group room-bar">
+        <select id="roomSelect" title="Rooms"></select>
+        <input id="roomInput" type="text" placeholder="New room…" />
+        <button class="btn-primary" id="createJoinBtn">Join</button>
+      </div>
+      <div class="spacer"></div>
+      <span class="status-text" id="status"></span>
+      <button class="btn-ghost" id="loadLatestBtn">Load Sermon</button>
+      <div class="menu-toggle">
+        <button class="btn-icon" id="menuToggle" title="More">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+        <div class="menu-dropdown" id="menuDropdown">
+          <button id="shareBtn">Copy share link</button>
+          <button id="refreshBtn">Refresh guide</button>
+          <button id="helpBtn">Keyboard shortcuts</button>
+          <button id="deleteRoomBtn" class="btn-danger">Delete room</button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- ===== SEARCH ===== -->
-<div class="search-bar">
-  <input id="searchInput" type="text" placeholder="Search questions…" style="flex:1" />
-  <button class="btn-ghost" id="clearSearchBtn">Clear</button>
-  <span class="filter-count" id="filterCount"></span>
-</div>
-
-<!-- ===== ADD ===== -->
-<details class="add-section" style="margin-bottom:16px">
-  <summary style="cursor:pointer;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);padding:6px 0;list-style:none;display:flex;align-items:center;gap:6px">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    Add Custom
-  </summary>
-  <div class="panel" style="margin-top:6px">
-    <div class="add-form">
-      <select id="newType">
-        <option value="question">Question</option>
-        <option value="section">Section</option>
-      </select>
-      <input id="newTitle" type="text" placeholder="Section title" />
-      <textarea id="newText" placeholder="Type here…" rows="1"></textarea>
-      <button class="btn-primary" id="addBtn">Add</button>
+    <!-- ===== SEARCH ===== -->
+    <div class="search-bar">
+      <input id="searchInput" type="text" placeholder="Search questions…" style="flex:1" />
+      <button class="btn-ghost" id="clearSearchBtn">Clear</button>
+      <span class="filter-count" id="filterCount"></span>
     </div>
-  </div>
-</details>
 
-<!-- ===== BOARDS ===== -->
-<div class="boards">
-  <div class="board-wrap" id="activeWrap">
-    <div class="board-header" data-board="active">
-      <span class="board-toggle">▾</span>
-      <span class="board-title">Active</span>
-      <span class="board-count" id="activeCount">0</span>
+    <!-- ===== ADD ===== -->
+    <details class="add-section" style="margin-bottom:16px">
+      <summary style="cursor:pointer;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);padding:6px 0;list-style:none;display:flex;align-items:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Custom
+      </summary>
+      <div class="panel" style="margin-top:6px">
+        <div class="add-form">
+          <select id="newType">
+            <option value="question">Question</option>
+            <option value="section">Section</option>
+          </select>
+          <input id="newTitle" type="text" placeholder="Section title" />
+          <textarea id="newText" placeholder="Type here…" rows="1"></textarea>
+          <button class="btn-primary" id="addBtn">Add</button>
+        </div>
+      </div>
+    </details>
+
+    <!-- ===== BOARDS ===== -->
+    <div class="boards">
+      <div class="board-wrap" id="activeWrap">
+        <div class="board-header" data-board="active">
+          <span class="board-toggle">▾</span>
+          <span class="board-title">Active</span>
+          <span class="board-count" id="activeCount">0</span>
+        </div>
+        <div id="boardActive" class="board"></div>
+      </div>
+
+      <div class="board-wrap collapsed" id="doneWrap">
+        <div class="board-header" data-board="done">
+          <span class="board-toggle">▾</span>
+          <span class="board-title">Completed</span>
+          <span class="board-count" id="doneCount">0</span>
+        </div>
+        <div id="boardDone" class="board board-muted"></div>
+      </div>
+
+      <div class="board-wrap collapsed" id="deletedWrap">
+        <div class="board-header" data-board="deleted">
+          <span class="board-toggle">▾</span>
+          <span class="board-title">Deleted</span>
+          <span class="board-count" id="deletedCount">0</span>
+        </div>
+        <div id="boardDeleted" class="board board-muted"></div>
+      </div>
     </div>
-    <div id="boardActive" class="board"></div>
-  </div>
 
-  <div class="board-wrap collapsed" id="doneWrap">
-    <div class="board-header" data-board="done">
-      <span class="board-toggle">▾</span>
-      <span class="board-title">Completed</span>
-      <span class="board-count" id="doneCount">0</span>
+    <!-- ===== EMPTY STATE ===== -->
+    <div class="empty-state" id="emptyState" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+      </svg>
+      <h3>No discussion questions yet</h3>
+      <p>Load this week's discussion guide to get started.</p>
+      <button class="btn-primary" id="emptyLoadBtn">Load Latest Sermon</button>
     </div>
-    <div id="boardDone" class="board board-muted"></div>
-  </div>
 
-  <div class="board-wrap collapsed" id="deletedWrap">
-    <div class="board-header" data-board="deleted">
-      <span class="board-toggle">▾</span>
-      <span class="board-title">Deleted</span>
-      <span class="board-count" id="deletedCount">0</span>
-    </div>
-    <div id="boardDeleted" class="board board-muted"></div>
-  </div>
-</div>
-
-<!-- ===== EMPTY STATE ===== -->
-<div class="empty-state" id="emptyState" style="display:none">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-  </svg>
-  <h3>No discussion questions yet</h3>
-  <p>Load this week's discussion guide to get started.</p>
-  <button class="btn-primary" id="emptyLoadBtn">Load Latest Sermon</button>
-</div>
-
-<div class="hint" id="hintText">Press <strong>?</strong> for shortcuts</div>
-<div class="footer">blackhawk.church/learn</div>
-```
-
+    <div class="hint" id="hintText">Press <strong>?</strong> for shortcuts</div>
+    <div class="footer">blackhawk.church/learn</div>
   </div>
 
   <!-- Toast -->
-
   <div class="toast-container" id="toastContainer"></div>
 
   <!-- Shortcuts -->
-
   <div class="shortcuts-help" id="shortcutsHelp">
     <button class="close-btn" id="closeHelp">&times;</button>
     <h3>Keyboard Shortcuts</h3>
@@ -1148,334 +1139,330 @@ button {
         editArea.className = "edit-area";
         editArea.innerHTML = `
           <textarea class="edit-textarea">${escapeHtml(c.text)}</textarea>
+          <div class="edit-controls">
+            <button class="btn-ghost" data-action="cancel-edit">Cancel</button>
+            <button class="btn-primary" data-action="save-edit">Save</button>
+          </div>
+        `;
 
-```
-      <div class="edit-controls">
-        <button class="btn-ghost" data-action="cancel-edit">Cancel</button>
-        <button class="btn-primary" data-action="save-edit">Save</button>
-      </div>
-    `;
+        el.appendChild(header);
+        el.appendChild(body);
+        el.appendChild(editArea);
 
-    el.appendChild(header);
-    el.appendChild(body);
-    el.appendChild(editArea);
+        const versesSection = await createVersesSection(c.text);
+        if (versesSection) el.appendChild(versesSection);
 
-    const versesSection = await createVersesSection(c.text);
-    if (versesSection) el.appendChild(versesSection);
+        if (c.status === "done") $boardDone.appendChild(el);
+        else if (c.status === "deleted") $boardDeleted.appendChild(el);
+        else $boardActive.appendChild(el);
+      }
 
-    if (c.status === "done") $boardDone.appendChild(el);
-    else if (c.status === "deleted") $boardDeleted.appendChild(el);
-    else $boardActive.appendChild(el);
-  }
+      updateCardCounts();
+      applySearch();
+    }
 
-  updateCardCounts();
-  applySearch();
-}
+    function getCurrentCards() {
+      const byId = Object.fromEntries(cards.map(c => [c.id, c]));
+      const read = (container, status) =>
+        [...container.querySelectorAll(".card")].map(n => ({ ...byId[n.dataset.id], status }));
+      return [...read($boardActive, 'active'), ...read($boardDone, 'done'), ...read($boardDeleted, 'deleted')];
+    }
 
-function getCurrentCards() {
-  const byId = Object.fromEntries(cards.map(c => [c.id, c]));
-  const read = (container, status) =>
-    [...container.querySelectorAll(".card")].map(n => ({ ...byId[n.dataset.id], status }));
-  return [...read($boardActive, 'active'), ...read($boardDone, 'done'), ...read($boardDeleted, 'deleted')];
-}
-
-// ---- Sortable with improved feel ----
-Sortable.create($boardActive, {
-  animation: 200,
-  handle: ".drag-handle",
-  ghostClass: "ghost",
-  chosenClass: "sortable-chosen",
-  dragClass: "sortable-drag",
-  direction: "vertical",
-  forceFallback: true,         // bypass native HTML5 DnD for smoother feel
-  fallbackTolerance: 3,        // dead-zone before drag starts (prevents accidental drags)
-  swapThreshold: 0.55,         // tighter swap zone
-  delay: 80,                   // slight delay prevents accidental drags on mobile
-  delayOnTouchOnly: true,      // delay only applies on touch devices
-  onEnd() { cards = getCurrentCards(); autoSave(); }
-});
-
-const debounce = (fn, ms = 400) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
-
-const autoSave = debounce(() => {
-  saveLive(getCurrentCards());
-}, 400);
-
-// ---- Card actions ----
-document.querySelector(".boards").addEventListener("click", async (e) => {
-  const btn = e.target.closest("button[data-action]");
-  if (!btn) return;
-  const card = btn.closest(".card");
-  if (!card) return;
-  const id = card.dataset.id;
-  const action = btn.dataset.action;
-
-  if (action === "edit") {
-    card.classList.add("editing");
-    const ta = card.querySelector(".edit-textarea");
-    if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
-    return;
-  }
-
-  if (action === "cancel-edit") {
-    card.classList.remove("editing");
-    const orig = cards.find(c => c.id === id);
-    if (orig) { const ta = card.querySelector(".edit-textarea"); if (ta) ta.value = orig.text; }
-    return;
-  }
-
-  if (action === "save-edit") {
-    const ta = card.querySelector(".edit-textarea");
-    if (!ta) return;
-    const newText = ta.value.trim();
-    if (!newText) { showToast("Card text cannot be empty", "warning"); return; }
-    const current = getCurrentCards();
-    const next = current.map(c => {
-      if (c.id !== id) return c;
-      const originalText = c.originalText || (c.source === 'pdf' ? c.text : undefined);
-      return { ...c, text: newText, originalText };
+    // ---- Sortable with improved feel ----
+    Sortable.create($boardActive, {
+      animation: 200,
+      handle: ".drag-handle",
+      ghostClass: "ghost",
+      chosenClass: "sortable-chosen",
+      dragClass: "sortable-drag",
+      direction: "vertical",
+      forceFallback: true,         // bypass native HTML5 DnD for smoother feel
+      fallbackTolerance: 3,        // dead-zone before drag starts (prevents accidental drags)
+      swapThreshold: 0.55,         // tighter swap zone
+      delay: 80,                   // slight delay prevents accidental drags on mobile
+      delayOnTouchOnly: true,      // delay only applies on touch devices
+      onEnd() { cards = getCurrentCards(); autoSave(); }
     });
-    await renderCards(next);
-    autoSave();
-    showToast("Saved", "success");
-    return;
-  }
 
-  let newStatus, toastMsg;
-  if (action === "complete") { newStatus = "done"; toastMsg = "Completed"; }
-  else if (action === "trash") { newStatus = "deleted"; toastMsg = "Deleted"; }
-  else if (action === "undo") { newStatus = "active"; toastMsg = "Restored"; }
-  else return;
+    const debounce = (fn, ms = 400) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 
-  const next = getCurrentCards().map(c => (c.id === id ? { ...c, status: newStatus } : c));
-  await renderCards(next);
-  autoSave();
-  showToast(toastMsg, action === "trash" ? "warning" : "success");
-});
+    const autoSave = debounce(() => {
+      saveLive(getCurrentCards());
+    }, 400);
 
-// ---- Add card ----
-$("addBtn").addEventListener("click", async () => {
-  const type = $newType.value;
-  const title = ($newTitle.value || "").trim();
-  const text = ($newText.value || "").trim();
-  if (!text) return;
-  const item = { id: genId(), type, text, status: "active", source: "custom" };
-  if (type === "section" && title) item.title = title;
-  await renderCards([item, ...cards]);
-  $newText.value = "";
-  $newText.style.height = 'auto';
-  $newTitle.value = "";
-  autoSave();
-  showToast("Added", "success");
-});
+    // ---- Card actions ----
+    document.querySelector(".boards").addEventListener("click", async (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+      const card = btn.closest(".card");
+      if (!card) return;
+      const id = card.dataset.id;
+      const action = btn.dataset.action;
 
-// ---- Search ----
-$searchInput.addEventListener("input", e => { searchQuery = e.target.value; applySearch(); });
-$clearSearch.addEventListener("click", () => { searchQuery = ""; $searchInput.value = ""; applySearch(); });
+      if (action === "edit") {
+        card.classList.add("editing");
+        const ta = card.querySelector(".edit-textarea");
+        if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+        return;
+      }
 
-// ---- Keyboard shortcuts ----
-document.addEventListener("keydown", e => {
-  if (e.target.matches("input, textarea")) {
-    if (e.key === "Escape" && e.target === $searchInput) { $clearSearch.click(); $searchInput.blur(); }
-    return;
-  }
-  if (e.key === "?") { e.preventDefault(); $shortcutsHelp.classList.toggle("visible"); }
-  if (e.key === "/") { e.preventDefault(); $searchInput.focus(); }
-  if (e.key === "Escape") { e.preventDefault(); $shortcutsHelp.classList.remove("visible"); $clearSearch.click(); }
-  if (e.key === "n" || e.key === "N") { e.preventDefault(); $newText.focus(); }
-});
+      if (action === "cancel-edit") {
+        card.classList.remove("editing");
+        const orig = cards.find(c => c.id === id);
+        if (orig) { const ta = card.querySelector(".edit-textarea"); if (ta) ta.value = orig.text; }
+        return;
+      }
 
-$helpBtn.addEventListener("click", () => $shortcutsHelp.classList.toggle("visible"));
-$closeHelp.addEventListener("click", () => $shortcutsHelp.classList.remove("visible"));
-
-// ---- Room management ----
-async function refreshRoomsList(selected) {
-  const rooms = await listRooms();
-  $roomSel.innerHTML = "";
-  for (const r of rooms) {
-    const opt = document.createElement("option");
-    opt.value = r;
-    opt.textContent = r;
-    $roomSel.appendChild(opt);
-  }
-  if (selected && rooms.includes(selected)) $roomSel.value = selected;
-}
-
-async function joinAndLoad(room) {
-  await joinRoom(room, () => {
-    const state = loadLive();
-    renderCards(state);
-    $status.textContent = currentRoomCode() ? `Room: ${currentRoomCode()}` : `Local`;
-  });
-  await refreshRoomsList(currentRoomCode());
-  const state = loadLive();
-  renderCards(state);
-}
-
-const urlRoom = new URLSearchParams(location.search).get("room");
-await joinAndLoad(urlRoom || null);
-await refreshRoomsList(currentRoomCode());
-
-// ---- Backup recovery ----
-{
-  const currentCards = loadLive();
-  if (!currentCards || currentCards.length === 0) {
-    const backup = loadBackup();
-    if (backup && backup.cards && backup.cards.length > 0) {
-      const age = Date.now() - (backup.savedAt || 0);
-      const ageMin = Math.round(age / 60_000);
-      const ageLabel = ageMin < 60 ? `${ageMin}m ago` : `${Math.round(ageMin / 60)}h ago`;
-      if (confirm(`Board is empty but a backup with ${backup.cards.length} cards exists (${ageLabel}). Restore?`)) {
-        await renderCards(backup.cards);
+      if (action === "save-edit") {
+        const ta = card.querySelector(".edit-textarea");
+        if (!ta) return;
+        const newText = ta.value.trim();
+        if (!newText) { showToast("Card text cannot be empty", "warning"); return; }
+        const current = getCurrentCards();
+        const next = current.map(c => {
+          if (c.id !== id) return c;
+          const originalText = c.originalText || (c.source === 'pdf' ? c.text : undefined);
+          return { ...c, text: newText, originalText };
+        });
+        await renderCards(next);
         autoSave();
-        showToast(`Restored ${backup.cards.length} cards`, "success");
+        showToast("Saved", "success");
+        return;
+      }
+
+      let newStatus, toastMsg;
+      if (action === "complete") { newStatus = "done"; toastMsg = "Completed"; }
+      else if (action === "trash") { newStatus = "deleted"; toastMsg = "Deleted"; }
+      else if (action === "undo") { newStatus = "active"; toastMsg = "Restored"; }
+      else return;
+
+      const next = getCurrentCards().map(c => (c.id === id ? { ...c, status: newStatus } : c));
+      await renderCards(next);
+      autoSave();
+      showToast(toastMsg, action === "trash" ? "warning" : "success");
+    });
+
+    // ---- Add card ----
+    $("addBtn").addEventListener("click", async () => {
+      const type = $newType.value;
+      const title = ($newTitle.value || "").trim();
+      const text = ($newText.value || "").trim();
+      if (!text) return;
+      const item = { id: genId(), type, text, status: "active", source: "custom" };
+      if (type === "section" && title) item.title = title;
+      await renderCards([item, ...cards]);
+      $newText.value = "";
+      $newText.style.height = 'auto';
+      $newTitle.value = "";
+      autoSave();
+      showToast("Added", "success");
+    });
+
+    // ---- Search ----
+    $searchInput.addEventListener("input", e => { searchQuery = e.target.value; applySearch(); });
+    $clearSearch.addEventListener("click", () => { searchQuery = ""; $searchInput.value = ""; applySearch(); });
+
+    // ---- Keyboard shortcuts ----
+    document.addEventListener("keydown", e => {
+      if (e.target.matches("input, textarea")) {
+        if (e.key === "Escape" && e.target === $searchInput) { $clearSearch.click(); $searchInput.blur(); }
+        return;
+      }
+      if (e.key === "?") { e.preventDefault(); $shortcutsHelp.classList.toggle("visible"); }
+      if (e.key === "/") { e.preventDefault(); $searchInput.focus(); }
+      if (e.key === "Escape") { e.preventDefault(); $shortcutsHelp.classList.remove("visible"); $clearSearch.click(); }
+      if (e.key === "n" || e.key === "N") { e.preventDefault(); $newText.focus(); }
+    });
+
+    $helpBtn.addEventListener("click", () => $shortcutsHelp.classList.toggle("visible"));
+    $closeHelp.addEventListener("click", () => $shortcutsHelp.classList.remove("visible"));
+
+    // ---- Room management ----
+    async function refreshRoomsList(selected) {
+      const rooms = await listRooms();
+      $roomSel.innerHTML = "";
+      for (const r of rooms) {
+        const opt = document.createElement("option");
+        opt.value = r;
+        opt.textContent = r;
+        $roomSel.appendChild(opt);
+      }
+      if (selected && rooms.includes(selected)) $roomSel.value = selected;
+    }
+
+    async function joinAndLoad(room) {
+      await joinRoom(room, () => {
+        const state = loadLive();
+        renderCards(state);
+        $status.textContent = currentRoomCode() ? `Room: ${currentRoomCode()}` : `Local`;
+      });
+      await refreshRoomsList(currentRoomCode());
+      const state = loadLive();
+      renderCards(state);
+    }
+
+    const urlRoom = new URLSearchParams(location.search).get("room");
+    await joinAndLoad(urlRoom || null);
+    await refreshRoomsList(currentRoomCode());
+
+    // ---- Backup recovery ----
+    {
+      const currentCards = loadLive();
+      if (!currentCards || currentCards.length === 0) {
+        const backup = loadBackup();
+        if (backup && backup.cards && backup.cards.length > 0) {
+          const age = Date.now() - (backup.savedAt || 0);
+          const ageMin = Math.round(age / 60_000);
+          const ageLabel = ageMin < 60 ? `${ageMin}m ago` : `${Math.round(ageMin / 60)}h ago`;
+          if (confirm(`Board is empty but a backup with ${backup.cards.length} cards exists (${ageLabel}). Restore?`)) {
+            await renderCards(backup.cards);
+            autoSave();
+            showToast(`Restored ${backup.cards.length} cards`, "success");
+          }
+        }
       }
     }
-  }
-}
 
-// ---- PDF link restore ----
-const savedPdf = loadSavedPdfLink();
-if (savedPdf && savedPdf.url) {
-  const isPdf = savedPdf.url.toLowerCase().endsWith(".pdf");
-  $pdfLink.textContent = isPdf ? "Open PDF" : "Source";
-  $pdfLink.href = savedPdf.url;
-  $pdfLink.style.display = "inline-block";
-  if (savedPdf.date) updateSermonDate(savedPdf.date);
-}
+    // ---- PDF link restore ----
+    const savedPdf = loadSavedPdfLink();
+    if (savedPdf && savedPdf.url) {
+      const isPdf = savedPdf.url.toLowerCase().endsWith(".pdf");
+      $pdfLink.textContent = isPdf ? "Open PDF" : "Source";
+      $pdfLink.href = savedPdf.url;
+      $pdfLink.style.display = "inline-block";
+      if (savedPdf.date) updateSermonDate(savedPdf.date);
+    }
 
-// ---- Hero image ----
-function loadHeroImage() {
-  try {
-    const url = new URL("data/hero.webp", location.href);
-    const img = new Image();
-    img.onload = () => { $heroImage.src = url.toString(); $heroImage.style.display = "block"; };
-    img.onerror = () => {}; // no hero image, that's fine
-    img.src = url.toString();
-  } catch {}
-}
-loadHeroImage();
+    // ---- Hero image ----
+    function loadHeroImage() {
+      try {
+        const url = new URL("data/hero.webp", location.href);
+        const img = new Image();
+        img.onload = () => { $heroImage.src = url.toString(); $heroImage.style.display = "block"; };
+        img.onerror = () => {}; // no hero image, that's fine
+        img.src = url.toString();
+      } catch {}
+    }
+    loadHeroImage();
 
-$createJoin.addEventListener("click", async () => {
-  const name = ($roomInp.value || "").trim();
-  if (!name) return;
-  await joinAndLoad(name);
-  const url = new URL(location.href);
-  url.searchParams.set("room", name);
-  history.replaceState(null, "", url.toString());
-  showToast(`Joined: ${name}`, "success");
-});
+    $createJoin.addEventListener("click", async () => {
+      const name = ($roomInp.value || "").trim();
+      if (!name) return;
+      await joinAndLoad(name);
+      const url = new URL(location.href);
+      url.searchParams.set("room", name);
+      history.replaceState(null, "", url.toString());
+      showToast(`Joined: ${name}`, "success");
+    });
 
-$roomSel.addEventListener("change", async () => {
-  await joinAndLoad($roomSel.value);
-  const url = new URL(location.href);
-  url.searchParams.set("room", $roomSel.value);
-  history.replaceState(null, "", url.toString());
-});
+    $roomSel.addEventListener("change", async () => {
+      await joinAndLoad($roomSel.value);
+      const url = new URL(location.href);
+      url.searchParams.set("room", $roomSel.value);
+      history.replaceState(null, "", url.toString());
+    });
 
-$share.addEventListener("click", async () => {
-  const code = currentRoomCode();
-  if (!code) { showToast("Join a room first", "warning"); return; }
-  const url = new URL(location.href);
-  url.searchParams.set("room", code);
-  await navigator.clipboard.writeText(url.toString());
-  showToast("Link copied!", "success");
-});
+    $share.addEventListener("click", async () => {
+      const code = currentRoomCode();
+      if (!code) { showToast("Join a room first", "warning"); return; }
+      const url = new URL(location.href);
+      url.searchParams.set("room", code);
+      await navigator.clipboard.writeText(url.toString());
+      showToast("Link copied!", "success");
+    });
 
-$deleteRoom.addEventListener("click", async () => {
-  const code = currentRoomCode();
-  if (!code) {
-    if (!confirm("Clear all local data?")) return;
-    localStorage.removeItem("bhq-rooms-v1");
-    location.reload();
-    return;
-  }
-  if (!confirm(`Delete room "${code}" for everyone?`)) return;
-  try { await deleteRoom(code); showToast(`Room "${code}" deleted`, "success"); }
-  catch (e) { console.error(e); showToast("Failed to delete", "warning"); }
-  const url = new URL(location.href);
-  url.searchParams.delete("room");
-  location.href = url.toString();
-});
+    $deleteRoom.addEventListener("click", async () => {
+      const code = currentRoomCode();
+      if (!code) {
+        if (!confirm("Clear all local data?")) return;
+        localStorage.removeItem("bhq-rooms-v1");
+        location.reload();
+        return;
+      }
+      if (!confirm(`Delete room "${code}" for everyone?`)) return;
+      try { await deleteRoom(code); showToast(`Room "${code}" deleted`, "success"); }
+      catch (e) { console.error(e); showToast("Failed to delete", "warning"); }
+      const url = new URL(location.href);
+      url.searchParams.delete("room");
+      location.href = url.toString();
+    });
 
-// ---- Load guide ----
-const guideJsonUrl = (noCache = false) => {
-  const u = new URL("data/guide.json", location.href);
-  if (noCache) u.searchParams.set("ts", Date.now());
-  return u.toString();
-};
+    // ---- Load guide ----
+    const guideJsonUrl = (noCache = false) => {
+      const u = new URL("data/guide.json", location.href);
+      if (noCache) u.searchParams.set("ts", Date.now());
+      return u.toString();
+    };
 
-function extractDateFromUrl(url) {
-  const match = url.match(/(\d{1,2})\.(\d{1,2})\.(\d{2})/);
-  if (!match) return null;
-  const date = new Date(2000 + parseInt(match[3]), parseInt(match[1]) - 1, parseInt(match[2]));
-  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-}
+    function extractDateFromUrl(url) {
+      const match = url.match(/(\d{1,2})\.(\d{1,2})\.(\d{2})/);
+      if (!match) return null;
+      const date = new Date(2000 + parseInt(match[3]), parseInt(match[1]) - 1, parseInt(match[2]));
+      return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
 
-function updateGuideLink(meta) {
-  const u = (meta && meta.url) ? String(meta.url) : "";
-  if (!u) { $pdfLink.style.display = "none"; updateSermonDate(null); return; }
-  const isPdf = u.toLowerCase().endsWith(".pdf");
-  $pdfLink.textContent = isPdf ? "Open PDF" : "Source";
-  $pdfLink.href = u;
-  $pdfLink.style.display = "inline-block";
-  const dateStr = extractDateFromUrl(u);
-  updateSermonDate(dateStr);
-  savePdfLink(u, dateStr);
-}
+    function updateGuideLink(meta) {
+      const u = (meta && meta.url) ? String(meta.url) : "";
+      if (!u) { $pdfLink.style.display = "none"; updateSermonDate(null); return; }
+      const isPdf = u.toLowerCase().endsWith(".pdf");
+      $pdfLink.textContent = isPdf ? "Open PDF" : "Source";
+      $pdfLink.href = u;
+      $pdfLink.style.display = "inline-block";
+      const dateStr = extractDateFromUrl(u);
+      updateSermonDate(dateStr);
+      savePdfLink(u, dateStr);
+    }
 
-async function loadGuideJson(noCache = false) {
-  $status.textContent = "Loading…";
-  try {
-    const res = await fetch(guideJsonUrl(noCache), { cache: noCache ? "no-store" : "default" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    updateGuideLink(data);
-    const next = [
-      ...(data.questions || []).map((q, i) => ({
-        id: stableId(q, i),
-        type: "question",
-        text: q,
-        status: "active",
-        source: "pdf"
-      })),
-      ...(data.sections || []).map((s, i) => ({
-        id: stableId(s.body, 1000 + i),
-        type: "section",
-        title: s.title,
-        text: s.body,
-        status: "active",
-        source: "pdf"
-      }))
-    ];
-    await renderCards(next);
-    autoSave();
-    $status.textContent = `${next.length} cards`;
-    showToast(`Loaded ${next.length} cards`, "success");
-  } catch (e) {
-    console.error(e);
-    $status.textContent = "Failed";
-    showToast("Failed to load guide", "warning");
-  }
-}
+    async function loadGuideJson(noCache = false) {
+      $status.textContent = "Loading…";
+      try {
+        const res = await fetch(guideJsonUrl(noCache), { cache: noCache ? "no-store" : "default" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        updateGuideLink(data);
+        const next = [
+          ...(data.questions || []).map((q, i) => ({
+            id: stableId(q, i),
+            type: "question",
+            text: q,
+            status: "active",
+            source: "pdf"
+          })),
+          ...(data.sections || []).map((s, i) => ({
+            id: stableId(s.body, 1000 + i),
+            type: "section",
+            title: s.title,
+            text: s.body,
+            status: "active",
+            source: "pdf"
+          }))
+        ];
+        await renderCards(next);
+        autoSave();
+        $status.textContent = `${next.length} cards`;
+        showToast(`Loaded ${next.length} cards`, "success");
+      } catch (e) {
+        console.error(e);
+        $status.textContent = "Failed";
+        showToast("Failed to load guide", "warning");
+      }
+    }
 
-$loadLatest.addEventListener("click", () => {
-  if (!confirm("This will replace the current board. Continue?")) return;
-  loadGuideJson(false);
-});
+    $loadLatest.addEventListener("click", () => {
+      if (!confirm("This will replace the current board. Continue?")) return;
+      loadGuideJson(false);
+    });
 
-$emptyLoadBtn.addEventListener("click", () => loadGuideJson(false));
+    $emptyLoadBtn.addEventListener("click", () => loadGuideJson(false));
 
-$refresh.addEventListener("click", () => {
-  if (!confirm("Refresh will overwrite current changes. Continue?")) return;
-  loadGuideJson(true);
-});
+    $refresh.addEventListener("click", () => {
+      if (!confirm("Refresh will overwrite current changes. Continue?")) return;
+      loadGuideJson(true);
+    });
 
-function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[m]));
-}
-```
-
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[m]));
+    }
   </script>
 </body>
 </html>
