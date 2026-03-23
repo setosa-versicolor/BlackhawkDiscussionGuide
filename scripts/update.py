@@ -542,10 +542,13 @@ def parse_pdf_guide(pdf_url: str):
 
 
 # --------- Outputs ---------
-def write_json(source_url: str, data: dict, out_path: str = "site/data/guide.json"):
+def write_json(source_url: str, data: dict, out_path: str = "site/data/guide.json",
+               series_title: str = "", sermon_title: str = ""):
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "url": source_url,
+        "title": sermon_title or data.get("title", ""),
+        "series": series_title,
         "questions": data.get("questions", []),
         "sections": data.get("sections", []),
     }
@@ -640,7 +643,9 @@ def main():
                 data = parse_pdf_guide(pdf)
 
     # Write JSON for the interactive front-end (into site/)
-    write_json(source_url, data, out_path=args.out_json)
+    write_json(source_url, data, out_path=args.out_json,
+               series_title=meta.get("series_title", ""),
+               sermon_title=data.get("title", ""))
 
     # Build the Jinja static page and stage assets
     title_line = "Reflect + Discuss" if data.get("questions") else "Discussion Guide"
