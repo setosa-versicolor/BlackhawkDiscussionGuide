@@ -4,7 +4,7 @@
 
 const LS_KEY = "bhq-rooms-v1";
 const BACKUP_KEY = "bhq-backup-v1";
-const BACKUP_INTERVAL_MS = 30_000; // auto-backup every 30 seconds
+const BACKUP_INTERVAL_MS = 30000; // auto-backup every 30 seconds
 
 let memory = { rooms: {} }; // { CODE: { live: { cards, ts } } }
 let currentRoom = null;
