@@ -6,3 +6,4 @@ python-dateutil
 jinja2
 flask
 flask-cors
+openai
