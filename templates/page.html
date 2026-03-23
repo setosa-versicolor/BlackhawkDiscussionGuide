@@ -647,6 +647,57 @@
       font-size: 16px;
     }
 
+    /* ===== CONFIRM MODAL ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 3000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      max-width: 340px;
+      width: calc(100% - 40px);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+      animation: modalIn 0.2s ease;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-body {
+      font-size: 14.5px;
+      line-height: 1.55;
+      color: var(--text);
+      margin-bottom: 18px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .modal-actions button {
+      min-width: 80px;
+      justify-content: center;
+    }
+
     /* ===== TOAST ===== */
     .toast-container {
       position: fixed;
@@ -877,6 +928,17 @@
     <div class="footer">blackhawk.church/learn</div>
   </div>
 
+  <!-- Confirm Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="modalCancel">Cancel</button>
+        <button class="btn-primary" id="modalConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div class="toast-container" id="toastContainer"></div>
 
@@ -915,6 +977,47 @@
         toast.classList.add('hiding');
         setTimeout(() => toast.remove(), 200);
       }, duration);
+    }
+
+    // ---- Custom confirm modal (replaces browser confirm()) ----
+    function appConfirm(message, opts) {
+      const o = opts || {};
+      const overlay = document.getElementById("modalOverlay");
+      const body = document.getElementById("modalBody");
+      const btnConfirm = document.getElementById("modalConfirm");
+      const btnCancel = document.getElementById("modalCancel");
+
+      body.textContent = message;
+      btnConfirm.textContent = o.confirmText || "Confirm";
+      btnCancel.textContent = o.cancelText || "Cancel";
+
+      // Danger styling
+      if (o.danger) {
+        btnConfirm.className = "btn-primary";
+        btnConfirm.style.background = "var(--danger)";
+      } else {
+        btnConfirm.className = "btn-primary";
+        btnConfirm.style.background = "";
+      }
+
+      overlay.classList.add("visible");
+
+      return new Promise(function(resolve) {
+        function cleanup() {
+          overlay.classList.remove("visible");
+          btnConfirm.removeEventListener("click", onConfirm);
+          btnCancel.removeEventListener("click", onCancel);
+          overlay.removeEventListener("click", onOverlay);
+        }
+        function onConfirm() { cleanup(); resolve(true); }
+        function onCancel() { cleanup(); resolve(false); }
+        function onOverlay(e) {
+          if (e.target === overlay) { cleanup(); resolve(false); }
+        }
+        btnConfirm.addEventListener("click", onConfirm);
+        btnCancel.addEventListener("click", onCancel);
+        overlay.addEventListener("click", onOverlay);
+      });
     }
 
     // ---- PDF Link Persistence ----
@@ -1355,10 +1458,12 @@
     // ---- Search (expand/collapse) ----
     let _searchExpanded = false;
     let _scrollYOnExpand = 0;
+    let _expandedAt = 0;
 
     function expandSearch() {
       if (_searchExpanded) return;
       _searchExpanded = true;
+      _expandedAt = Date.now();
       _scrollYOnExpand = window.scrollY;
       $searchWrap.classList.add("expanded");
       $actionButtons.classList.add("hidden");
@@ -1387,11 +1492,11 @@
       collapseSearch();
     });
 
-    // Collapse on click outside
+    // Collapse on click outside (with grace period to avoid race with focus)
     document.addEventListener("mousedown", e => {
       if (!_searchExpanded) return;
+      if (Date.now() - _expandedAt < 300) return;
       if (e.target.closest("#searchWrap") || e.target.closest("#filterCount")) return;
-      // Only collapse if search is empty
       if (!$searchInput.value) collapseSearch();
     });
 
@@ -1457,7 +1562,7 @@
           const age = Date.now() - (backup.savedAt || 0);
           const ageMin = Math.round(age / 60000);
           const ageLabel = ageMin < 60 ? `${ageMin}m ago` : `${Math.round(ageMin / 60)}h ago`;
-          if (confirm(`Board is empty but a backup with ${backup.cards.length} cards exists (${ageLabel}). Restore?`)) {
+          if (await appConfirm(`Board is empty but a backup with ${backup.cards.length} cards exists (${ageLabel}). Restore?`, { confirmText: "Restore" })) {
             await renderCards(backup.cards);
             autoSave();
             showToast(`Restored ${backup.cards.length} cards`, "success");
@@ -1533,12 +1638,12 @@
     $deleteRoom.addEventListener("click", async () => {
       const code = currentRoomCode();
       if (!code) {
-        if (!confirm("Clear all local data?")) return;
+        if (!await appConfirm("Clear all local data?", { confirmText: "Clear", danger: true })) return;
         localStorage.removeItem("bhq-rooms-v1");
         location.reload();
         return;
       }
-      if (!confirm(`Delete room "${code}" for everyone?`)) return;
+      if (!await appConfirm(`Delete room "${code}" for everyone?`, { confirmText: "Delete", danger: true })) return;
       try { await deleteRoom(code); showToast(`Room "${code}" deleted`, "success"); }
       catch (e) { console.error(e); showToast("Failed to delete", "warning"); }
       const url = new URL(location.href);
@@ -1605,15 +1710,15 @@
       }
     }
 
-    $loadLatest.addEventListener("click", () => {
-      if (!confirm("This will replace the current board. Continue?")) return;
+    $loadLatest.addEventListener("click", async () => {
+      if (!await appConfirm("This will replace the current board. Continue?", { confirmText: "Load" })) return;
       loadGuideJson(false);
     });
 
     $emptyLoadBtn.addEventListener("click", () => loadGuideJson(false));
 
-    $refresh.addEventListener("click", () => {
-      if (!confirm("Refresh will overwrite current changes. Continue?")) return;
+    $refresh.addEventListener("click", async () => {
+      if (!await appConfirm("Refresh will overwrite current changes. Continue?", { confirmText: "Refresh" })) return;
       loadGuideJson(true);
     });
 
