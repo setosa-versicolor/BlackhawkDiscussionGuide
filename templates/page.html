@@ -94,6 +94,16 @@
       line-height: 1.25;
     }
 
+    .sermon-title {
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 16px;
+      font-weight: 300;
+      font-style: italic;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 4px;
+      letter-spacing: 0.2px;
+    }
+
     .hero-meta {
       display: flex;
       align-items: center;
@@ -695,6 +705,7 @@
       <div class="hero-overlay"></div>
       <div class="hero-content">
         <h1>Discussion Guide</h1>
+        <div id="sermonTitle" class="sermon-title" style="display:none"></div>
         <div class="hero-meta">
           <span>Blackhawk Church</span>
           <span id="sermonDate"></span>
@@ -839,8 +850,8 @@
     // ---- PDF Link Persistence ----
     const PDF_STORAGE_KEY = 'bhq-pdf-link';
 
-    function savePdfLink(url, dateStr) {
-      if (url) localStorage.setItem(PDF_STORAGE_KEY, JSON.stringify({ url, date: dateStr }));
+    function savePdfLink(url, dateStr, title) {
+      if (url) localStorage.setItem(PDF_STORAGE_KEY, JSON.stringify({ url, date: dateStr, title: title || "" }));
     }
 
     function loadSavedPdfLink() {
@@ -972,7 +983,7 @@
     const $ = id => document.getElementById(id);
     const $roomSel = $("roomSelect"), $roomInp = $("roomInput"), $createJoin = $("createJoinBtn");
     const $share = $("shareBtn"), $status = $("status"), $pdfLink = $("pdfLink");
-    const $sermonDate = $("sermonDate"), $heroImage = $("heroImage");
+    const $sermonDate = $("sermonDate"), $heroImage = $("heroImage"), $sermonTitle = $("sermonTitle");
     const $boardActive = $("boardActive"), $boardDone = $("boardDone"), $boardDeleted = $("boardDeleted");
     const $newType = $("newType"), $newTitle = $("newTitle"), $newText = $("newText");
     const $deleteRoom = $("deleteRoomBtn"), $loadLatest = $("loadLatestBtn"), $refresh = $("refreshBtn");
@@ -1027,6 +1038,16 @@
       currentSermonDate = dateStr || null;
       $sermonDate.textContent = dateStr || "";
       $sermonDate.style.display = dateStr ? "inline" : "none";
+    }
+
+    function updateSermonTitle(title) {
+      if (title) {
+        $sermonTitle.textContent = title;
+        $sermonTitle.style.display = "block";
+      } else {
+        $sermonTitle.textContent = "";
+        $sermonTitle.style.display = "none";
+      }
     }
 
     function updateCardCounts() {
@@ -1331,6 +1352,7 @@
       $pdfLink.href = savedPdf.url;
       $pdfLink.style.display = "inline-block";
       if (savedPdf.date) updateSermonDate(savedPdf.date);
+      if (savedPdf.title) updateSermonTitle(savedPdf.title);
     }
 
     // ---- Hero image ----
@@ -1403,14 +1425,15 @@
 
     function updateGuideLink(meta) {
       const u = (meta && meta.url) ? String(meta.url) : "";
-      if (!u) { $pdfLink.style.display = "none"; updateSermonDate(null); return; }
+      if (!u) { $pdfLink.style.display = "none"; updateSermonDate(null); updateSermonTitle(null); return; }
       const isPdf = u.toLowerCase().endsWith(".pdf");
       $pdfLink.textContent = isPdf ? "Open PDF" : "Source";
       $pdfLink.href = u;
       $pdfLink.style.display = "inline-block";
       const dateStr = extractDateFromUrl(u);
       updateSermonDate(dateStr);
-      savePdfLink(u, dateStr);
+      updateSermonTitle(meta.title || null);
+      savePdfLink(u, dateStr, meta.title || "");
     }
 
     async function loadGuideJson(noCache = false) {
