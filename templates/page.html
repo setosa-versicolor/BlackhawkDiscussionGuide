@@ -123,12 +123,83 @@
     .hero-meta a:hover { text-decoration: underline; }
 
     /* ===== TOOLBAR ===== */
-    .toolbar {
+    /* ===== ACTION BAR (search + load + menu) ===== */
+    .action-bar {
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
+      margin-bottom: 16px;
+      position: relative;
+      height: 38px;
+    }
+
+    .search-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex: 0 0 auto;
+      width: 50%;
+      min-width: 160px;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .search-wrap.expanded {
+      width: 100%;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      padding-right: 36px;
+    }
+
+    .search-clear {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 4px 6px;
+      font-size: 12px;
+      border-radius: 4px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+    }
+
+    .search-wrap.expanded .search-clear {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .search-clear:hover {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .action-buttons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+      flex-shrink: 0;
+      transition: opacity 0.2s, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-origin: right center;
+    }
+
+    .action-buttons.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(20px);
+      position: absolute;
+      right: 0;
+    }
+
+    .filter-count {
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
     }
 
     .toolbar-group {
@@ -226,23 +297,7 @@
       margin-bottom: 12px;
     }
 
-    /* ===== SEARCH ===== */
-    .search-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .search-bar input {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .filter-count {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
+    /* ===== SEARCH (integrated into action bar) ===== */
 
     /* ===== ADD FORM ===== */
     .add-form {
@@ -682,7 +737,6 @@
 
     .room-bar select { min-width: 130px; }
     .room-bar input { min-width: 140px; }
-    .status-text { font-size: 12px; color: var(--text-secondary); }
 
     /* ===== MOBILE ===== */
     @media (max-width: 768px) {
@@ -714,34 +768,34 @@
       </div>
     </div>
 
-    <!-- ===== ROOM & TOOLBAR ===== -->
-    <div class="toolbar">
-      <div class="toolbar-group room-bar">
-        <select id="roomSelect" title="Rooms"></select>
-        <input id="roomInput" type="text" placeholder="New room…" />
-        <button class="btn-primary" id="createJoinBtn">Join</button>
-      </div>
-      <div class="spacer"></div>
-      <span class="status-text" id="status"></span>
-      <button class="btn-ghost" id="loadLatestBtn">Load Sermon</button>
-      <div class="menu-toggle">
-        <button class="btn-icon" id="menuToggle" title="More">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-        </button>
-        <div class="menu-dropdown" id="menuDropdown">
-          <button id="shareBtn">Copy share link</button>
-          <button id="refreshBtn">Refresh guide</button>
-          <button id="helpBtn">Keyboard shortcuts</button>
-          <button id="deleteRoomBtn" class="btn-danger">Delete room</button>
-        </div>
-      </div>
+    <!-- ===== ROOM (hidden, managed via menu/URL) ===== -->
+    <div class="toolbar-group room-bar" style="display:none">
+      <select id="roomSelect" title="Rooms"></select>
+      <input id="roomInput" type="text" placeholder="New room…" />
+      <button class="btn-primary" id="createJoinBtn">Join</button>
     </div>
 
-    <!-- ===== SEARCH ===== -->
-    <div class="search-bar">
-      <input id="searchInput" type="text" placeholder="Search questions…" style="flex:1" />
-      <button class="btn-ghost" id="clearSearchBtn">Clear</button>
+    <!-- ===== ACTION BAR ===== -->
+    <div class="action-bar" id="actionBar">
+      <div class="search-wrap" id="searchWrap">
+        <input id="searchInput" type="text" placeholder="Search questions…" />
+        <button class="search-clear" id="clearSearchBtn">&times;</button>
+      </div>
       <span class="filter-count" id="filterCount"></span>
+      <div class="action-buttons" id="actionButtons">
+        <button class="btn-ghost" id="loadLatestBtn">Load Sermon</button>
+        <div class="menu-toggle">
+          <button class="btn-icon" id="menuToggle" title="More">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+          <div class="menu-dropdown" id="menuDropdown">
+            <button id="shareBtn">Copy share link</button>
+            <button id="refreshBtn">Refresh guide</button>
+            <button id="helpBtn">Keyboard shortcuts</button>
+            <button id="deleteRoomBtn" class="btn-danger">Delete room</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ===== ADD ===== -->
@@ -982,12 +1036,13 @@
     // ---- DOM ----
     const $ = id => document.getElementById(id);
     const $roomSel = $("roomSelect"), $roomInp = $("roomInput"), $createJoin = $("createJoinBtn");
-    const $share = $("shareBtn"), $status = $("status"), $pdfLink = $("pdfLink");
+    const $share = $("shareBtn"), $pdfLink = $("pdfLink");
     const $sermonDate = $("sermonDate"), $heroImage = $("heroImage"), $sermonTitle = $("sermonTitle");
     const $boardActive = $("boardActive"), $boardDone = $("boardDone"), $boardDeleted = $("boardDeleted");
     const $newType = $("newType"), $newTitle = $("newTitle"), $newText = $("newText");
     const $deleteRoom = $("deleteRoomBtn"), $loadLatest = $("loadLatestBtn"), $refresh = $("refreshBtn");
     const $searchInput = $("searchInput"), $clearSearch = $("clearSearchBtn"), $filterCount = $("filterCount");
+    const $searchWrap = $("searchWrap"), $actionButtons = $("actionButtons");
     const $helpBtn = $("helpBtn"), $shortcutsHelp = $("shortcutsHelp"), $closeHelp = $("closeHelp");
     const $menuToggle = $("menuToggle"), $menuDropdown = $("menuDropdown");
     const $activeCount = $("activeCount"), $doneCount = $("doneCount"), $deletedCount = $("deletedCount");
@@ -1279,19 +1334,69 @@
       showToast("Added", "success");
     });
 
-    // ---- Search ----
-    $searchInput.addEventListener("input", e => { searchQuery = e.target.value; applySearch(); });
-    $clearSearch.addEventListener("click", () => { searchQuery = ""; $searchInput.value = ""; applySearch(); });
+    // ---- Search (expand/collapse) ----
+    let _searchExpanded = false;
+    let _scrollYOnExpand = 0;
+
+    function expandSearch() {
+      if (_searchExpanded) return;
+      _searchExpanded = true;
+      _scrollYOnExpand = window.scrollY;
+      $searchWrap.classList.add("expanded");
+      $actionButtons.classList.add("hidden");
+      $searchInput.focus();
+    }
+
+    function collapseSearch() {
+      if (!_searchExpanded) return;
+      _searchExpanded = false;
+      $searchWrap.classList.remove("expanded");
+      $actionButtons.classList.remove("hidden");
+      $searchInput.blur();
+    }
+
+    $searchInput.addEventListener("focus", () => expandSearch());
+
+    $searchInput.addEventListener("input", e => {
+      searchQuery = e.target.value;
+      applySearch();
+    });
+
+    $clearSearch.addEventListener("click", () => {
+      searchQuery = "";
+      $searchInput.value = "";
+      applySearch();
+      collapseSearch();
+    });
+
+    // Collapse on click outside
+    document.addEventListener("mousedown", e => {
+      if (!_searchExpanded) return;
+      if (e.target.closest("#searchWrap") || e.target.closest("#filterCount")) return;
+      // Only collapse if search is empty
+      if (!$searchInput.value) collapseSearch();
+    });
+
+    // Collapse on scroll (with 40px tolerance for incidental thumb movement)
+    window.addEventListener("scroll", () => {
+      if (!_searchExpanded) return;
+      if (Math.abs(window.scrollY - _scrollYOnExpand) > 40) {
+        if (!$searchInput.value) collapseSearch();
+      }
+    }, { passive: true });
 
     // ---- Keyboard shortcuts ----
     document.addEventListener("keydown", e => {
       if (e.target.matches("input, textarea")) {
-        if (e.key === "Escape" && e.target === $searchInput) { $clearSearch.click(); $searchInput.blur(); }
+        if (e.key === "Escape" && e.target === $searchInput) {
+          searchQuery = ""; $searchInput.value = ""; applySearch();
+          collapseSearch();
+        }
         return;
       }
       if (e.key === "?") { e.preventDefault(); $shortcutsHelp.classList.toggle("visible"); }
-      if (e.key === "/") { e.preventDefault(); $searchInput.focus(); }
-      if (e.key === "Escape") { e.preventDefault(); $shortcutsHelp.classList.remove("visible"); $clearSearch.click(); }
+      if (e.key === "/") { e.preventDefault(); expandSearch(); }
+      if (e.key === "Escape") { e.preventDefault(); $shortcutsHelp.classList.remove("visible"); }
       if (e.key === "n" || e.key === "N") { e.preventDefault(); $newText.focus(); }
     });
 
@@ -1315,7 +1420,6 @@
       await joinRoom(room, () => {
         const state = loadLive();
         renderCards(state);
-        $status.textContent = currentRoomCode() ? `Room: ${currentRoomCode()}` : `Local`;
       });
       await refreshRoomsList(currentRoomCode());
       const state = loadLive();
@@ -1437,7 +1541,6 @@
     }
 
     async function loadGuideJson(noCache = false) {
-      $status.textContent = "Loading…";
       try {
         const res = await fetch(guideJsonUrl(noCache), { cache: noCache ? "no-store" : "default" });
         if (!res.ok) throw new Error("HTTP " + res.status);
@@ -1462,11 +1565,9 @@
         ];
         await renderCards(next);
         autoSave();
-        $status.textContent = `${next.length} cards`;
         showToast(`Loaded ${next.length} cards`, "success");
       } catch (e) {
         console.error(e);
-        $status.textContent = "Failed";
         showToast("Failed to load guide", "warning");
       }
     }
