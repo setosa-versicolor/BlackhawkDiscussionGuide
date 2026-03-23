@@ -727,16 +727,26 @@
       opacity: 0.5;
     }
 
-    /* ===== ROOM BAR ===== */
-    .room-bar {
+    /* ===== ROOM PICKER ===== */
+    .room-picker {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .room-display, .room-create {
       display: flex;
       align-items: center;
       gap: 8px;
-      flex-wrap: wrap;
     }
 
-    .room-bar select { min-width: 130px; }
-    .room-bar input { min-width: 140px; }
+    .room-picker select {
+      min-width: 140px;
+    }
+
+    .room-create input {
+      min-width: 160px;
+    }
 
     /* ===== MOBILE ===== */
     @media (max-width: 768px) {
@@ -768,11 +778,17 @@
       </div>
     </div>
 
-    <!-- ===== ROOM (hidden, managed via menu/URL) ===== -->
-    <div class="toolbar-group room-bar" style="display:none">
-      <select id="roomSelect" title="Rooms"></select>
-      <input id="roomInput" type="text" placeholder="New room…" />
-      <button class="btn-primary" id="createJoinBtn">Join</button>
+    <!-- ===== ROOM PICKER ===== -->
+    <div class="room-picker" id="roomPicker">
+      <div class="room-display" id="roomDisplay">
+        <select id="roomSelect" title="Rooms"></select>
+        <button class="btn-ghost" id="roomCreateBtn">Create New</button>
+      </div>
+      <div class="room-create" id="roomCreate" style="display:none">
+        <input id="roomInput" type="text" placeholder="Room name…" />
+        <button class="btn-primary" id="createJoinBtn">Join</button>
+        <button class="btn-ghost" id="roomCancelBtn">Cancel</button>
+      </div>
     </div>
 
     <!-- ===== ACTION BAR ===== -->
@@ -1036,6 +1052,8 @@
     // ---- DOM ----
     const $ = id => document.getElementById(id);
     const $roomSel = $("roomSelect"), $roomInp = $("roomInput"), $createJoin = $("createJoinBtn");
+    const $roomDisplay = $("roomDisplay"), $roomCreate = $("roomCreate");
+    const $roomCreateBtn = $("roomCreateBtn"), $roomCancelBtn = $("roomCancelBtn");
     const $share = $("shareBtn"), $pdfLink = $("pdfLink");
     const $sermonDate = $("sermonDate"), $heroImage = $("heroImage"), $sermonTitle = $("sermonTitle");
     const $boardActive = $("boardActive"), $boardDone = $("boardDone"), $boardDeleted = $("boardDeleted");
@@ -1437,7 +1455,7 @@
         const backup = loadBackup();
         if (backup && backup.cards && backup.cards.length > 0) {
           const age = Date.now() - (backup.savedAt || 0);
-          const ageMin = Math.round(age / 60_000);
+          const ageMin = Math.round(age / 60000);
           const ageLabel = ageMin < 60 ? `${ageMin}m ago` : `${Math.round(ageMin / 60)}h ago`;
           if (confirm(`Board is empty but a backup with ${backup.cards.length} cards exists (${ageLabel}). Restore?`)) {
             await renderCards(backup.cards);
@@ -1471,6 +1489,19 @@
     }
     loadHeroImage();
 
+    // ---- Room picker toggle ----
+    $roomCreateBtn.addEventListener("click", () => {
+      $roomDisplay.style.display = "none";
+      $roomCreate.style.display = "flex";
+      $roomInp.value = "";
+      $roomInp.focus();
+    });
+
+    $roomCancelBtn.addEventListener("click", () => {
+      $roomCreate.style.display = "none";
+      $roomDisplay.style.display = "flex";
+    });
+
     $createJoin.addEventListener("click", async () => {
       const name = ($roomInp.value || "").trim();
       if (!name) return;
@@ -1478,6 +1509,8 @@
       const url = new URL(location.href);
       url.searchParams.set("room", name);
       history.replaceState(null, "", url.toString());
+      $roomCreate.style.display = "none";
+      $roomDisplay.style.display = "flex";
       showToast(`Joined: ${name}`, "success");
     });
 
