@@ -3,782 +3,569 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Discussion Guide — Rooms</title>
+  <title>Discussion Guide — Blackhawk Church</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,600;8..60,700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0a0b0e;
-      --panel: #12141a;
-      --card: #181b24;
-      --card-hover: #1e222d;
-      --text: #e8ecf3;
-      --muted: #7a8494;
-      --accent: #6b9fff;
-      --accent-glow: rgba(107, 159, 255, 0.15);
-      --border: #252a38;
-      --danger: #ff6b6b;
-      --danger-glow: rgba(255, 107, 107, 0.15);
-      --custom: #a78bfa;
-      --custom-glow: rgba(167, 139, 250, 0.15);
-      --edited: #f59e0b;
-      --edited-glow: rgba(245, 158, 11, 0.15);
-      --section: #10b981;
-      --section-glow: rgba(16, 185, 129, 0.15);
-      --success: #34d399;
-      --success-glow: rgba(52, 211, 153, 0.2);
+      --bg: #0d0f13;
+      --surface: #15171d;
+      --card: #1a1d25;
+      --card-hover: #1f222c;
+      --text: #dfe3ec;
+      --text-secondary: #8b92a5;
+      --accent: #5b8def;
+      --accent-dim: rgba(91, 141, 239, 0.12);
+      --border: #22262f;
+      --border-light: #2a2e3a;
+      --danger: #e5574f;
+      --danger-dim: rgba(229, 87, 79, 0.12);
+      --custom: #9b7aed;
+      --custom-dim: rgba(155, 122, 237, 0.12);
+      --edited: #d4943a;
+      --edited-dim: rgba(212, 148, 58, 0.12);
+      --section: #3dae8e;
+      --section-dim: rgba(61, 174, 142, 0.12);
+      --success: #3dae8e;
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
 
 ```
-  /* Card border colors */
-  --border-question: var(--accent);
-  --border-custom: var(--custom);
-  --border-section: var(--section);
-  --border-edited: var(--edited);
-}
-
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  margin: 0;
-  padding: 0;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.55 'DM Sans', system-ui, -apple-system, sans-serif;
+  font: 15px/1.6 'Outfit', sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Subtle grid background */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    linear-gradient(rgba(107, 159, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(107, 159, 255, 0.02) 1px, transparent 1px);
-  background-size: 48px 48px;
-  pointer-events: none;
+/* ===== LAYOUT ===== */
+.wrap {
+  max-width: 740px;
+  margin: 0 auto;
+  padding: 0 20px 100px;
+}
+
+/* ===== HERO HEADER ===== */
+.hero {
+  position: relative;
+  margin: 0 -20px 32px;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  overflow: hidden;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 28px 24px 22px;
+  background: var(--surface);
+}
+
+.hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.35;
   z-index: 0;
 }
 
-.wrap {
-  position: relative;
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, var(--bg) 0%, transparent 100%);
   z-index: 1;
-  max-width: 1100px;
-  margin: 28px auto 100px;
-  padding: 0 20px;
 }
 
-/* Header */
-header {
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.hero h1 {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: #fff;
+  line-height: 1.25;
+}
+
+.hero-meta {
   display: flex;
-  gap: 12px;
   align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.hero-meta a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.hero-meta a:hover { text-decoration: underline; }
+
+/* ===== TOOLBAR ===== */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
-header h1 {
-  font-size: 24px;
-  margin: 0 12px 0 0;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.church-name {
-  color: var(--muted);
+.spacer { flex: 1; }
+
+input[type="text"], select, textarea {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  outline: none;
+  font: inherit;
+  font-size: 14px;
+  transition: border-color 0.15s;
+}
+
+input[type="text"]:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+}
+
+select { cursor: pointer; }
+
+button {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { opacity: 0.88; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.btn-icon {
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  padding: 6px;
+  border-radius: var(--radius);
+  line-height: 1;
+}
+.btn-icon:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+.btn-icon svg { width: 18px; height: 18px; display: block; }
+
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { background: var(--danger-dim); color: var(--danger); }
+
+/* ===== COLLAPSIBLE SECTIONS ===== */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-secondary);
+  margin: 24px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+/* ===== SEARCH ===== */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.search-bar input {
+  flex: 1;
+  min-width: 0;
+}
+
+.filter-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ===== ADD FORM ===== */
+.add-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.add-form textarea {
+  flex: 1;
+  min-width: 200px;
+  resize: none;
+  overflow: hidden;
+  min-height: 38px;
+  line-height: 1.5;
+}
+
+#newTitle { display: none; }
+#newTitle.visible { display: block; min-width: 160px; }
+
+/* ===== BOARD HEADERS ===== */
+.board-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.board-header:hover { opacity: 0.8; }
+
+.board-toggle {
+  font-size: 10px;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+}
+
+.board-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.board-count {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--surface);
+  padding: 1px 8px;
+  border-radius: 10px;
   font-weight: 500;
 }
 
-/* Control bars */
-.bar {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 12px 14px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-  position: relative;
-  transition: border-color 0.2s ease;
-}
+.board-wrap.collapsed .board-toggle { transform: rotate(-90deg); }
+.board-wrap.collapsed .board { display: none; }
 
-.bar:focus-within {
-  border-color: rgba(107, 159, 255, 0.3);
-}
+.board { min-height: 8px; }
+.board-muted .card { opacity: 0.6; }
+.board-muted .card:hover { opacity: 0.85; }
 
-.section-title {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted);
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-}
-
-/* Form elements */
-input[type="text"], select {
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 14px;
-  outline: none;
-  min-width: 180px;
-  font-size: 15px;
-  font-family: inherit;
-  transition: all 0.2s ease;
-}
-
-input[type="text"]:focus, select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-
-select {
-  cursor: pointer;
-}
-
-button {
-  background: var(--accent);
-  color: var(--bg);
-  border: none;
-  border-radius: 10px;
-  padding: 10px 16px;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 14px;
-  font-family: inherit;
-  transition: all 0.2s ease;
-}
-
-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--accent-glow);
-}
-
-button:active {
-  transform: translateY(0);
-}
-
-button.secondary {
-  background: var(--card);
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-
-button.secondary:hover {
-  background: var(--card-hover);
-  box-shadow: none;
-}
-
-button.danger {
-  background: var(--danger);
-  color: #fff;
-}
-
-button.danger:hover {
-  box-shadow: 0 4px 12px var(--danger-glow);
-}
-
-.muted { color: var(--muted); }
-.spacer { flex: 1; }
-
-/* Cards */
-.board {
-  display: block;
-  margin-top: 8px;
-  min-height: 20px;
-}
-
+/* ===== CARDS ===== */
 .card {
-  width: 100%;
-  margin: 10px 0;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
+  margin: 6px 0;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
   position: relative;
-  overflow: hidden;
-  transition: all 0.25s ease;
-  border-left: 3px solid var(--border-question);
 }
 
 .card:hover {
   background: var(--card-hover);
-  transform: translateX(2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-.card.custom-card {
-  border-left-color: var(--border-custom);
+/* Left accent strip */
+.card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+  opacity: 0.7;
 }
 
-.card.section-card {
-  border-left-color: var(--border-section);
-  background: linear-gradient(135deg, var(--card) 0%, rgba(16, 185, 129, 0.05) 100%);
-}
-
-.card.edited-card {
-  border-left-color: var(--border-edited);
-}
+.card.custom-card::before { background: var(--custom); }
+.card.section-card::before { background: var(--section); }
+.card.edited-card::before { background: var(--edited); }
 
 .card-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
+  gap: 8px;
+  padding: 10px 12px 0 16px;
 }
 
 .drag-handle {
   cursor: grab;
   user-select: none;
-  font-weight: 900;
-  letter-spacing: 2px;
-  opacity: 0.3;
-  transition: opacity 0.2s ease;
-  padding: 4px;
+  color: var(--text-secondary);
+  opacity: 0.35;
+  transition: opacity 0.15s;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px;
 }
 
-.card:hover .drag-handle {
-  opacity: 0.7;
-}
-
-.drag-handle:hover {
-  opacity: 1 !important;
-}
+.card:hover .drag-handle { opacity: 0.6; }
+.drag-handle:active { cursor: grabbing; }
 
 .tag {
-  font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: var(--accent-glow);
-  color: var(--accent);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
+  background: var(--accent-dim);
+  color: var(--accent);
 }
 
-.tag.custom {
-  background: var(--custom-glow);
-  color: var(--custom);
-}
+.tag.custom { background: var(--custom-dim); color: var(--custom); }
+.tag.edited { background: var(--edited-dim); color: var(--edited); }
+.tag.section { background: var(--section-dim); color: var(--section); }
 
-.tag.edited {
-  background: var(--edited-glow);
-  color: var(--edited);
-}
-
-.tag.section {
-  background: var(--section-glow);
-  color: var(--section);
+.edited-badge {
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: var(--edited);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
 
 .card-body {
-  padding: 14px 16px;
-  white-space: pre-wrap;
-  font-size: 15px;
+  padding: 8px 14px 12px 16px;
+  font-size: 14.5px;
   line-height: 1.65;
+  white-space: pre-wrap;
+  color: var(--text);
 }
 
 .section-card .card-body {
-  font-size: 16px;
-  font-weight: 500;
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 15px;
+  font-weight: 400;
 }
 
-.ghost {
-  opacity: 0.4;
-  transform: rotate(1deg);
-}
-
-.row {
+/* Card action buttons */
+.card-actions {
   display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
+  gap: 2px;
+  margin-left: auto;
 }
 
-.row > * { flex: 0 0 auto; }
-.row .grow { flex: 1 1 240px; min-width: 240px; }
-
-.hint {
-  margin-top: 10px;
-  font-size: 13px;
+/* Drag states */
+.ghost { opacity: 0.3; }
+.sortable-chosen {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  transform: scale(1.01);
+  z-index: 100;
 }
+.sortable-drag { opacity: 0.9; }
 
-.footer {
-  margin-top: 24px;
-  color: var(--muted);
-  font-size: 13px;
-  opacity: 0.7;
-}
+.card.filtered { display: none; }
 
-/* Collapsible board sections */
-.boards {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.board-wrap {
-  background: transparent;
-}
-
-.board-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  padding: 8px 0;
-  user-select: none;
-  transition: opacity 0.2s ease;
-}
-
-.board-header:hover {
-  opacity: 0.8;
-}
-
-.board-title {
-  font-weight: 600;
-  color: var(--text);
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.board-title .count {
-  font-size: 12px;
-  color: var(--muted);
-  font-weight: 500;
-  background: var(--card);
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-
-.board-toggle {
-  font-size: 12px;
-  color: var(--muted);
-  transition: transform 0.3s ease;
-}
-
-.board-wrap.collapsed .board-toggle {
-  transform: rotate(-90deg);
-}
-
-.board-wrap.collapsed .board {
-  display: none;
-}
-
-.board-muted .card {
-  opacity: 0.7;
-}
-
-.board-muted .card:hover {
-  opacity: 1;
-}
-
-.board-muted .drag-handle {
-  opacity: 0.2;
-  cursor: default;
-}
-
-/* Icon buttons */
-.icon-btn {
-  background: transparent;
-  color: var(--muted);
-  border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 6px 8px;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  transition: all 0.2s ease;
-}
-
-.icon-btn:hover {
-  background: var(--card);
-  border-color: var(--border);
-  color: var(--text);
-  transform: none;
-  box-shadow: none;
-}
-
-.icon-btn.danger:hover {
-  background: var(--danger-glow);
-  border-color: rgba(255, 107, 107, 0.3);
-  color: var(--danger);
-}
-
-.icon-btn.success:hover {
-  background: var(--success-glow);
-  border-color: rgba(52, 211, 153, 0.3);
-  color: var(--success);
-}
-
-.icon-btn svg {
-  width: 16px;
-  height: 16px;
-  display: block;
-}
-
-/* PDF link button */
-#pdfLink, #pdfLink:link, #pdfLink:visited {
-  color: var(--text);
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 14px;
-  display: inline-block;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-#pdfLink:hover {
-  background: var(--card-hover);
-  border-color: var(--accent);
-}
-
-/* Edit mode */
+/* ===== EDIT MODE ===== */
 .card.editing .card-body { display: none; }
 .card:not(.editing) .edit-area { display: none; }
 
 .edit-area {
-  padding: 14px;
+  padding: 8px 14px 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .edit-area textarea {
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px;
-  font-family: inherit;
-  font-size: 15px;
-  line-height: 1.55;
-  min-height: 100px;
+  min-height: 80px;
   resize: vertical;
-  outline: none;
-  transition: all 0.2s ease;
+  font-size: 14px;
 }
 
-.edit-area textarea:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-
-.edit-area .edit-controls {
+.edit-controls {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: flex-end;
 }
 
-.edit-area .edit-controls button {
-  padding: 8px 14px;
-  font-size: 14px;
-}
-
-/* Bible verses section */
+/* ===== BIBLE VERSES ===== */
 .card-verses {
   border-top: 1px solid var(--border);
-  background: rgba(107, 159, 255, 0.02);
 }
 
 .verses-header {
-  padding: 12px 14px;
+  padding: 8px 14px 8px 16px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   cursor: pointer;
   user-select: none;
-  transition: background 0.2s ease;
-}
-
-.verses-header:hover {
-  background: rgba(107, 159, 255, 0.04);
-}
-
-.verses-icon {
-  font-size: 16px;
-}
-
-.verses-title {
   font-size: 12px;
+}
+
+.verses-header:hover { background: rgba(91, 141, 239, 0.04); }
+
+.verses-icon { font-size: 14px; }
+.verses-title {
+  font-size: 11px;
   font-weight: 600;
   color: var(--accent);
-  flex: 1;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  flex: 1;
 }
 
 .verses-toggle {
-  font-size: 12px;
-  color: var(--muted);
-  transition: transform 0.3s ease;
+  font-size: 10px;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
 }
 
 .verses-content {
-  padding: 0 14px 14px 14px;
+  padding: 0 14px 0 16px;
   max-height: 0;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
-.verses-content.visible {
-  max-height: 2000px;
-}
+.verses-content.visible { max-height: 2000px; padding-bottom: 12px; }
 
-.verse-block {
-  margin-bottom: 16px;
-}
-
-.verse-block:last-child {
-  margin-bottom: 0;
-}
+.verse-block { margin-bottom: 12px; }
+.verse-block:last-child { margin-bottom: 0; }
 
 .verse-reference {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--accent);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .verse-text {
-  font-size: 14px;
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 13.5px;
   line-height: 1.7;
   color: var(--text);
   font-style: italic;
-  padding-left: 14px;
-  border-left: 2px solid var(--accent);
-  opacity: 0.9;
+  padding-left: 12px;
+  border-left: 2px solid var(--border-light);
+  opacity: 0.85;
 }
 
-.verse-loading {
-  font-size: 13px;
-  color: var(--muted);
-  font-style: italic;
-}
+.verse-loading { font-size: 12px; color: var(--text-secondary); font-style: italic; }
+.verse-error { font-size: 12px; color: var(--danger); font-style: italic; }
 
-.verse-error {
-  font-size: 13px;
-  color: var(--danger);
-  font-style: italic;
-}
-
-/* Title input */
-#newTitle {
-  display: none;
-}
-
-#newTitle.visible {
-  display: block;
-}
-
-/* Auto-expanding textarea for new questions */
-#newText {
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 14px;
-  outline: none;
-  font-size: 15px;
-  font-family: inherit;
-  line-height: 1.5;
-  resize: none;
-  overflow: hidden;
-  min-height: 42px;
-  max-height: 200px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-#newText:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-
-/* Search filter bar */
-.filter-bar {
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.filter-bar input {
-  flex: 1;
-  min-width: 200px;
-}
-
-.filter-bar .filter-count {
-  color: var(--muted);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-/* Hidden filtered cards */
-.card.filtered {
-  display: none;
-}
-
-/* Edited badge */
-.edited-badge {
-  font-size: 9px;
-  padding: 3px 6px;
-  border-radius: 4px;
-  background: var(--edited);
-  color: #fff;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-/* Hamburger menu */
-.menu-toggle {
-  position: relative;
-}
-
-.menu-toggle > button {
-  background: var(--card);
-  color: var(--text);
-  border: 1px solid var(--border);
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
-}
+/* ===== MENU ===== */
+.menu-toggle { position: relative; }
 
 .menu-dropdown {
   position: absolute;
   top: 100%;
   right: 0;
-  margin-top: 6px;
-  background: var(--panel);
+  margin-top: 4px;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 6px;
+  border-radius: var(--radius-lg);
+  padding: 4px;
   display: none;
   flex-direction: column;
-  gap: 2px;
-  min-width: 200px;
+  min-width: 190px;
   z-index: 1000;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  animation: menuSlide 0.2s ease;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
 }
 
-@keyframes menuSlide {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.menu-dropdown.visible {
-  display: flex;
-}
+.menu-dropdown.visible { display: flex; }
 
 .menu-dropdown button {
   background: transparent;
   color: var(--text);
   border: none;
-  padding: 12px 14px;
+  padding: 10px 12px;
   text-align: left;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 14px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 400;
+  justify-content: flex-start;
 }
 
-.menu-dropdown button:hover {
-  background: var(--card);
-  transform: none;
-  box-shadow: none;
-}
+.menu-dropdown button:hover { background: var(--card); }
+.menu-dropdown button.btn-danger { color: var(--danger); }
+.menu-dropdown button.btn-danger:hover { background: var(--danger-dim); }
 
-.menu-dropdown button.danger {
-  color: var(--danger);
-  background: transparent;
-}
-
-.menu-dropdown button.danger:hover {
-  background: var(--danger-glow);
-}
-
-/* Sermon date */
-.sermon-date {
-  font-size: 12px;
-  color: var(--muted);
-  font-style: italic;
-  white-space: nowrap;
-}
-
-/* Keyboard shortcuts help */
+/* ===== KEYBOARD SHORTCUTS ===== */
 .shortcuts-help {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: var(--panel);
+  bottom: 20px;
+  right: 20px;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 18px;
+  border-radius: var(--radius-lg);
+  padding: 16px;
   display: none;
-  max-width: 320px;
+  max-width: 280px;
   z-index: 1000;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  animation: helpSlide 0.25s ease;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
 }
 
-@keyframes helpSlide {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.shortcuts-help.visible {
-  display: block;
-}
+.shortcuts-help.visible { display: block; }
 
 .shortcuts-help h3 {
-  margin: 0 0 14px 0;
-  font-size: 14px;
-  color: var(--text);
+  font-size: 13px;
   font-weight: 600;
+  margin-bottom: 10px;
 }
 
-.shortcuts-help .shortcut {
+.shortcut {
   display: flex;
   justify-content: space-between;
-  margin: 8px 0;
-  font-size: 13px;
-  color: var(--muted);
+  margin: 6px 0;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
-.shortcuts-help .key {
+.key {
   background: var(--card);
-  padding: 4px 10px;
-  border-radius: 6px;
+  padding: 2px 8px;
+  border-radius: 4px;
   font-family: 'SF Mono', Monaco, monospace;
   font-size: 11px;
   color: var(--text);
@@ -787,200 +574,118 @@ button.danger:hover {
 
 .shortcuts-help .close-btn {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 10px;
+  right: 10px;
   background: transparent;
   border: none;
-  color: var(--muted);
+  color: var(--text-secondary);
   cursor: pointer;
-  padding: 4px;
-  font-size: 18px;
-  line-height: 1;
+  padding: 2px;
+  font-size: 16px;
 }
 
-.shortcuts-help .close-btn:hover {
-  color: var(--text);
-  transform: none;
-  box-shadow: none;
-}
-
-/* Toast notifications */
+/* ===== TOAST ===== */
 .toast-container {
   position: fixed;
-  bottom: 24px;
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2000;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   pointer-events: none;
 }
 
 .toast {
-  background: var(--panel);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  animation: toastIn 0.3s ease;
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  animation: toastIn 0.25s ease;
+  font-size: 13px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   pointer-events: auto;
 }
 
-.toast.success {
-  border-color: rgba(52, 211, 153, 0.3);
-}
+.toast.success { border-color: rgba(61,174,142,0.3); }
+.toast.success::before { content: '✓'; color: var(--success); font-weight: bold; font-size: 14px; }
+.toast.warning { border-color: rgba(212,148,58,0.3); }
+.toast.warning::before { content: '!'; color: var(--edited); font-weight: bold; font-size: 14px; }
+.toast.hiding { animation: toastOut 0.2s ease forwards; }
 
-.toast.success::before {
-  content: '✓';
-  color: var(--success);
-  font-weight: bold;
-}
+@keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-8px); } }
 
-.toast.warning {
-  border-color: rgba(245, 158, 11, 0.3);
-}
-
-.toast.warning::before {
-  content: '⚠';
-  color: var(--edited);
-}
-
-.toast.hiding {
-  animation: toastOut 0.3s ease forwards;
-}
-
-@keyframes toastIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes toastOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-}
-
-/* Empty state */
+/* ===== EMPTY STATE ===== */
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
-  color: var(--muted);
+  padding: 48px 20px;
+  color: var(--text-secondary);
 }
 
 .empty-state svg {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 20px;
-  opacity: 0.4;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 16px;
+  opacity: 0.3;
 }
 
 .empty-state h3 {
+  font-family: 'Source Serif 4', Georgia, serif;
   font-size: 18px;
   color: var(--text);
-  margin: 0 0 8px 0;
+  margin-bottom: 6px;
   font-weight: 600;
 }
 
 .empty-state p {
-  font-size: 14px;
-  margin: 0 0 20px 0;
-  max-width: 320px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  max-width: 300px;
   margin-left: auto;
   margin-right: auto;
 }
 
-/* Swipe hint on mobile - removed */
-.swipe-hint {
-  display: none;
+.hint {
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  opacity: 0.6;
 }
 
-/* Mobile optimizations */
+.footer {
+  margin-top: 20px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+/* ===== ROOM BAR ===== */
+.room-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.room-bar select { min-width: 130px; }
+.room-bar input { min-width: 140px; }
+.status-text { font-size: 12px; color: var(--text-secondary); }
+
+/* ===== MOBILE ===== */
 @media (max-width: 768px) {
-  html, body {
-    font-size: 16px;
-  }
-  
-  .wrap {
-    padding: 0 14px;
-    margin: 16px auto 80px;
-  }
-  
-  header h1 {
-    font-size: 20px;
-  }
-  
-  .bar {
-    padding: 10px 12px;
-    gap: 8px;
-    border-radius: 12px;
-  }
-  
-  button {
-    padding: 10px 14px;
-    font-size: 14px;
-  }
-  
-  input[type="text"], select {
-    min-width: 120px;
-    font-size: 16px;
-    padding: 10px 12px;
-  }
-  
-  .card {
-    border-radius: 12px;
-    margin: 8px 0;
-  }
-  
-  .card-body {
-    padding: 14px;
-    font-size: 15px;
-    line-height: 1.6;
-  }
-  
-  .edit-area textarea {
-    font-size: 16px;
-    padding: 12px;
-  }
-  
-  .shortcuts-help {
-    right: 12px;
-    bottom: 12px;
-    max-width: calc(100vw - 48px);
-  }
-  
-  .menu-dropdown {
-    right: 0;
-    min-width: 180px;
-  }
-  
-  .swipe-hint {
-    display: block;
-  }
-  
-  .toast-container {
-    left: 14px;
-    right: 14px;
-    transform: none;
-  }
-  
-  .toast {
-    width: 100%;
-  }
+  .wrap { padding: 0 14px 80px; }
+  .hero { margin: 0 -14px 24px; padding: 24px 18px 18px; }
+  .hero h1 { font-size: 22px; }
+  .card-body { font-size: 14px; }
+  input[type="text"], select { font-size: 16px; }
+  .shortcuts-help { right: 10px; bottom: 10px; max-width: calc(100vw - 40px); }
+  .toast-container { left: 14px; right: 14px; transform: none; }
+  .toast { width: 100%; }
 }
 ```
 
@@ -988,140 +693,129 @@ button.danger:hover {
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <h1>Discussion Guide</h1>
-      <span class="church-name">Blackhawk Church</span>
-    </header>
+    <!-- ===== HERO ===== -->
+    <div class="hero" id="hero">
+      <img class="hero-image" id="heroImage" src="" alt="" style="display:none" />
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <h1>Discussion Guide</h1>
+        <div class="hero-meta">
+          <span>Blackhawk Church</span>
+          <span id="sermonDate"></span>
+          <a id="pdfLink" href="#" target="_blank" rel="noopener" style="display:none">Open PDF</a>
+        </div>
+      </div>
+    </div>
 
 ```
-<!-- Room Details -->
-<div class="section-title">Room Details</div>
-<div class="bar">
-  <select id="roomSelect" title="Rooms"></select>
-  <input id="roomInput" type="text" placeholder="New room name…" />
-  <button id="createJoinBtn">Create / Join</button>
-
-  <a id="pdfLink" href="#" target="_blank" rel="noopener" style="display:none">Open PDF</a>
-
+<!-- ===== ROOM & TOOLBAR ===== -->
+<div class="toolbar">
+  <div class="toolbar-group room-bar">
+    <select id="roomSelect" title="Rooms"></select>
+    <input id="roomInput" type="text" placeholder="New room…" />
+    <button class="btn-primary" id="createJoinBtn">Join</button>
+  </div>
   <div class="spacer"></div>
-  
-  <span class="sermon-date" id="sermonDate"></span>
-  <button id="loadLatestBtn" class="secondary" title="Load from data/guide.json">Load Latest Sermon</button>
-  
-  <!-- Hamburger Menu -->
+  <span class="status-text" id="status"></span>
+  <button class="btn-ghost" id="loadLatestBtn">Load Sermon</button>
   <div class="menu-toggle">
-    <button id="menuToggle" title="More options">☰</button>
+    <button class="btn-icon" id="menuToggle" title="More">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+    </button>
     <div class="menu-dropdown" id="menuDropdown">
-      <button id="shareBtn" class="secondary">📋 Copy Share Link</button>
-      <button id="refreshBtn" class="secondary">🔄 Refresh</button>
-      <button id="helpBtn" class="secondary">⌨️ Keyboard Shortcuts</button>
-      <button id="deleteRoomBtn" class="danger">🗑️ Delete Room</button>
+      <button id="shareBtn">Copy share link</button>
+      <button id="refreshBtn">Refresh guide</button>
+      <button id="helpBtn">Keyboard shortcuts</button>
+      <button id="deleteRoomBtn" class="btn-danger">Delete room</button>
     </div>
   </div>
-  
-  <span class="muted" id="status"></span>
 </div>
 
-<!-- Search -->
-<div class="section-title" style="margin-top:18px">Search</div>
-<div class="bar filter-bar">
-  <input id="searchInput" type="text" placeholder="Search questions..." />
-  <button id="clearSearchBtn" class="secondary">Clear</button>
+<!-- ===== SEARCH ===== -->
+<div class="search-bar">
+  <input id="searchInput" type="text" placeholder="Search questions…" style="flex:1" />
+  <button class="btn-ghost" id="clearSearchBtn">Clear</button>
   <span class="filter-count" id="filterCount"></span>
 </div>
 
-<!-- Add Custom Questions -->
-<div class="section-title" style="margin-top:18px">Add Custom Questions</div>
-<div class="bar">
-  <select id="newType">
-    <option value="question">Question</option>
-    <option value="section">Section</option>
-  </select>
-  <input id="newTitle" type="text" placeholder="Section title" />
-  <textarea id="newText" class="grow" placeholder="Type here…" rows="1"></textarea>
-  <button id="addBtn">Add</button>
-</div>
+<!-- ===== ADD ===== -->
+<details class="add-section" style="margin-bottom:16px">
+  <summary style="cursor:pointer;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);padding:6px 0;list-style:none;display:flex;align-items:center;gap:6px">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add Custom
+  </summary>
+  <div class="panel" style="margin-top:6px">
+    <div class="add-form">
+      <select id="newType">
+        <option value="question">Question</option>
+        <option value="section">Section</option>
+      </select>
+      <input id="newTitle" type="text" placeholder="Section title" />
+      <textarea id="newText" placeholder="Type here…" rows="1"></textarea>
+      <button class="btn-primary" id="addBtn">Add</button>
+    </div>
+  </div>
+</details>
 
-<!-- Boards -->
+<!-- ===== BOARDS ===== -->
 <div class="boards">
-  <!-- Active Board -->
   <div class="board-wrap" id="activeWrap">
     <div class="board-header" data-board="active">
-      <span class="board-toggle">▼</span>
-      <div class="board-title">
-        Active
-        <span class="count" id="activeCount">0</span>
-      </div>
+      <span class="board-toggle">▾</span>
+      <span class="board-title">Active</span>
+      <span class="board-count" id="activeCount">0</span>
     </div>
     <div id="boardActive" class="board"></div>
   </div>
-  
-  <!-- Completed Board -->
+
   <div class="board-wrap collapsed" id="doneWrap">
     <div class="board-header" data-board="done">
-      <span class="board-toggle">▼</span>
-      <div class="board-title">
-        Completed
-        <span class="count" id="doneCount">0</span>
-      </div>
+      <span class="board-toggle">▾</span>
+      <span class="board-title">Completed</span>
+      <span class="board-count" id="doneCount">0</span>
     </div>
     <div id="boardDone" class="board board-muted"></div>
   </div>
-  
-  <!-- Deleted Board -->
+
   <div class="board-wrap collapsed" id="deletedWrap">
     <div class="board-header" data-board="deleted">
-      <span class="board-toggle">▼</span>
-      <div class="board-title">
-        Deleted
-        <span class="count" id="deletedCount">0</span>
-      </div>
+      <span class="board-toggle">▾</span>
+      <span class="board-title">Deleted</span>
+      <span class="board-count" id="deletedCount">0</span>
     </div>
     <div id="boardDeleted" class="board board-muted"></div>
   </div>
 </div>
 
-<!-- Empty State -->
-<div class="empty-state" id="emptyState" style="display: none;">
+<!-- ===== EMPTY STATE ===== -->
+<div class="empty-state" id="emptyState" style="display:none">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
   </svg>
   <h3>No discussion questions yet</h3>
-  <p>Click "Load Latest Sermon" to get started with this week's discussion guide.</p>
-  <button id="emptyLoadBtn">Load Latest Sermon</button>
+  <p>Load this week's discussion guide to get started.</p>
+  <button class="btn-primary" id="emptyLoadBtn">Load Latest Sermon</button>
 </div>
 
-<div class="hint muted" id="hintText">Press <strong>?</strong> for keyboard shortcuts</div>
+<div class="hint" id="hintText">Press <strong>?</strong> for shortcuts</div>
 <div class="footer">blackhawk.church/learn</div>
 ```
 
   </div>
 
-  <!-- Toast Container -->
+  <!-- Toast -->
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <!-- Keyboard shortcuts help panel -->
+  <!-- Shortcuts -->
 
   <div class="shortcuts-help" id="shortcutsHelp">
     <button class="close-btn" id="closeHelp">&times;</button>
     <h3>Keyboard Shortcuts</h3>
-    <div class="shortcut">
-      <span>Show/hide help</span>
-      <span class="key">?</span>
-    </div>
-    <div class="shortcut">
-      <span>Search</span>
-      <span class="key">/</span>
-    </div>
-    <div class="shortcut">
-      <span>Clear search</span>
-      <span class="key">Esc</span>
-    </div>
-    <div class="shortcut">
-      <span>Add new card</span>
-      <span class="key">n</span>
-    </div>
+    <div class="shortcut"><span>Help</span><span class="key">?</span></div>
+    <div class="shortcut"><span>Search</span><span class="key">/</span></div>
+    <div class="shortcut"><span>Clear search</span><span class="key">Esc</span></div>
+    <div class="shortcut"><span>New card</span><span class="key">n</span></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" crossorigin="anonymous"></script>
@@ -1129,7 +823,7 @@ button.danger:hover {
   <script type="module">
     import { connectFirebase, joinRoom, saveLive, loadLive, listRooms, currentRoomCode, deleteRoom, loadBackup } from "./static/js/viewStore.js";
 
-    // ---- Firebase (paste your config) ----
+    // ---- Firebase ----
     const FIREBASE_ENABLED = true;
     const firebaseConfig = {
       apiKey: "AIzaSyBMtVbKp6i5cnb_Zapc_sEW8rMebVjuIKs",
@@ -1138,45 +832,38 @@ button.danger:hover {
     };
     if (FIREBASE_ENABLED) { await connectFirebase(firebaseConfig); }
 
-    // ---- Toast Notifications ----
+    // ---- Toast ----
     function showToast(message, type = 'success', duration = 3000) {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
       toast.className = `toast ${type}`;
       toast.textContent = message;
       container.appendChild(toast);
-      
       setTimeout(() => {
         toast.classList.add('hiding');
-        setTimeout(() => toast.remove(), 300);
+        setTimeout(() => toast.remove(), 200);
       }, duration);
     }
 
     // ---- PDF Link Persistence ----
     const PDF_STORAGE_KEY = 'bhq-pdf-link';
-    
+
     function savePdfLink(url, dateStr) {
-      if (url) {
-        localStorage.setItem(PDF_STORAGE_KEY, JSON.stringify({ url: url, date: dateStr }));
-      }
+      if (url) localStorage.setItem(PDF_STORAGE_KEY, JSON.stringify({ url, date: dateStr }));
     }
-    
+
     function loadSavedPdfLink() {
       try {
         const saved = localStorage.getItem(PDF_STORAGE_KEY);
-        if (saved) {
-          return JSON.parse(saved);
-        }
-      } catch (e) {}
-      return null;
+        return saved ? JSON.parse(saved) : null;
+      } catch { return null; }
     }
 
-    // ---- Bible Verse Detection & Fetching ----
+    // ---- Bible Verse Detection ----
     const verseCache = {};
     const ESV_WORKER_URL = 'https://esv-bible-proxy.johnston-thayer.workers.dev';
 
     const bookMappings = {
-      // Old Testament
       'gen': 'Genesis', 'genesis': 'Genesis',
       'ex': 'Exodus', 'exo': 'Exodus', 'exod': 'Exodus', 'exodus': 'Exodus',
       'lev': 'Leviticus', 'leviticus': 'Leviticus',
@@ -1216,7 +903,6 @@ button.danger:hover {
       'hag': 'Haggai', 'haggai': 'Haggai',
       'zech': 'Zechariah', 'zechariah': 'Zechariah',
       'mal': 'Malachi', 'malachi': 'Malachi',
-      // New Testament
       'matt': 'Matthew', 'mt': 'Matthew', 'matthew': 'Matthew',
       'mark': 'Mark', 'mk': 'Mark',
       'luke': 'Luke', 'lk': 'Luke',
@@ -1250,7 +936,6 @@ button.danger:hover {
       const pattern = /\b((?:1|2|3)\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\.?)\s+(\d+):(\d+)(?:-(\d+))?\b/gi;
       const references = [];
       const seen = new Set();
-
       let match;
       while ((match = pattern.exec(text)) !== null) {
         const prefix = match[1] ? match[1].trim() + ' ' : '';
@@ -1258,51 +943,32 @@ button.danger:hover {
         const chapter = match[3];
         const verseStart = match[4];
         const verseEnd = match[5] || verseStart;
-
         let bookKey = (prefix + bookRaw).toLowerCase();
         let normalizedBook = bookMappings[bookKey];
-        
         if (!normalizedBook && bookRaw.includes(' ')) {
           const words = bookRaw.split(/\s+/);
-          const lastWord = words[words.length - 1];
-          bookKey = (prefix + lastWord).toLowerCase();
+          bookKey = (prefix + words[words.length - 1]).toLowerCase();
           normalizedBook = bookMappings[bookKey];
         }
-        
         if (!normalizedBook) continue;
-
         const reference = `${normalizedBook} ${chapter}:${verseStart}${verseEnd !== verseStart ? '-' + verseEnd : ''}`;
         const key = reference.toLowerCase();
-
         if (!seen.has(key)) {
           seen.add(key);
-          references.push({
-            reference,
-            apiReference: `${normalizedBook}+${chapter}:${verseStart}-${verseEnd}`
-          });
+          references.push({ reference, apiReference: `${normalizedBook}+${chapter}:${verseStart}-${verseEnd}` });
         }
       }
-
       return references;
     }
 
     async function fetchVerse(apiReference) {
-      if (verseCache[apiReference]) {
-        return verseCache[apiReference];
-      }
-
+      if (verseCache[apiReference]) return verseCache[apiReference];
       try {
         const query = apiReference.replace(/\+/g, ' ');
         const response = await fetch(`${ESV_WORKER_URL}?q=${encodeURIComponent(query)}`);
-        
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        
-        const result = {
-          text: data.passages[0].trim(),
-          reference: query
-        };
-
+        const result = { text: data.passages[0].trim(), reference: query };
         verseCache[apiReference] = result;
         return result;
       } catch (error) {
@@ -1312,277 +978,130 @@ button.danger:hover {
     }
 
     // ---- DOM ----
-    const $roomSel = document.getElementById("roomSelect");
-    const $roomInp = document.getElementById("roomInput");
-    const $createJoin = document.getElementById("createJoinBtn");
-    const $share = document.getElementById("shareBtn");
-    const $status = document.getElementById("status");
-    const $pdfLink = document.getElementById("pdfLink");
-    const $sermonDate = document.getElementById("sermonDate");
+    const $ = id => document.getElementById(id);
+    const $roomSel = $("roomSelect"), $roomInp = $("roomInput"), $createJoin = $("createJoinBtn");
+    const $share = $("shareBtn"), $status = $("status"), $pdfLink = $("pdfLink");
+    const $sermonDate = $("sermonDate"), $heroImage = $("heroImage");
+    const $boardActive = $("boardActive"), $boardDone = $("boardDone"), $boardDeleted = $("boardDeleted");
+    const $newType = $("newType"), $newTitle = $("newTitle"), $newText = $("newText");
+    const $deleteRoom = $("deleteRoomBtn"), $loadLatest = $("loadLatestBtn"), $refresh = $("refreshBtn");
+    const $searchInput = $("searchInput"), $clearSearch = $("clearSearchBtn"), $filterCount = $("filterCount");
+    const $helpBtn = $("helpBtn"), $shortcutsHelp = $("shortcutsHelp"), $closeHelp = $("closeHelp");
+    const $menuToggle = $("menuToggle"), $menuDropdown = $("menuDropdown");
+    const $activeCount = $("activeCount"), $doneCount = $("doneCount"), $deletedCount = $("deletedCount");
+    const $emptyState = $("emptyState"), $emptyLoadBtn = $("emptyLoadBtn"), $hintText = $("hintText");
 
-    const $boardActive  = document.getElementById("boardActive");
-    const $boardDone    = document.getElementById("boardDone");
-    const $boardDeleted = document.getElementById("boardDeleted");
-    const $boards       = document.querySelector(".boards");
-
-    const $addBtn = document.getElementById("addBtn");
-    const $newType = document.getElementById("newType");
-    const $newTitle= document.getElementById("newTitle");
-    const $newText = document.getElementById("newText");
-
-    const $deleteRoom = document.getElementById("deleteRoomBtn");
-    const $loadLatest = document.getElementById("loadLatestBtn");
-    const $refresh = document.getElementById("refreshBtn");
-
-    const $searchInput = document.getElementById("searchInput");
-    const $clearSearch = document.getElementById("clearSearchBtn");
-    const $filterCount = document.getElementById("filterCount");
-
-    const $helpBtn = document.getElementById("helpBtn");
-    const $shortcutsHelp = document.getElementById("shortcutsHelp");
-    const $closeHelp = document.getElementById("closeHelp");
-
-    const $menuToggle = document.getElementById("menuToggle");
-    const $menuDropdown = document.getElementById("menuDropdown");
-
-    const $activeCount = document.getElementById("activeCount");
-    const $doneCount = document.getElementById("doneCount");
-    const $deletedCount = document.getElementById("deletedCount");
-
-    const $emptyState = document.getElementById("emptyState");
-    const $emptyLoadBtn = document.getElementById("emptyLoadBtn");
-    const $hintText = document.getElementById("hintText");
-
-    // ---- Board collapse toggle ----
-    document.querySelectorAll('.board-header').forEach(header => {
-      header.addEventListener('click', () => {
-        const wrap = header.closest('.board-wrap');
-        wrap.classList.toggle('collapsed');
-      });
+    // ---- Board collapse ----
+    document.querySelectorAll('.board-header').forEach(h => {
+      h.addEventListener('click', () => h.closest('.board-wrap').classList.toggle('collapsed'));
     });
 
-    // ---- Hamburger menu ----
-    $menuToggle.addEventListener("click", (e) => {
-      e.stopPropagation();
-      $menuDropdown.classList.toggle("visible");
-    });
-
-    document.addEventListener("click", (e) => {
-      if (!e.target.closest(".menu-toggle")) {
-        $menuDropdown.classList.remove("visible");
-      }
-    });
-
-    $menuDropdown.addEventListener("click", () => {
-      $menuDropdown.classList.remove("visible");
-    });
+    // ---- Menu ----
+    $menuToggle.addEventListener("click", e => { e.stopPropagation(); $menuDropdown.classList.toggle("visible"); });
+    document.addEventListener("click", e => { if (!e.target.closest(".menu-toggle")) $menuDropdown.classList.remove("visible"); });
+    $menuDropdown.addEventListener("click", () => $menuDropdown.classList.remove("visible"));
 
     // ---- Icons ----
     const ICONS = {
-      check: `
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 6L9 17l-5-5" />
-        </svg>`,
-      trash: `
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 6h18" />
-          <path d="M8 6V4h8v2" />
-          <path d="M19 6l-1 14H6L5 6" />
-          <path d="M10 11v6M14 11v6" />
-        </svg>`,
-      undo: `
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M7 9l-4 4 4 4" />
-          <path d="M3 13h9a6 6 0 016 6" />
-        </svg>`,
-      edit: `
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-        </svg>`
+      check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`,
+      trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>`,
+      undo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 9l-4 4 4 4"/><path d="M3 13h9a6 6 0 016 6"/></svg>`,
+      edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`
     };
 
     // ---- State ----
     let cards = [];
     let currentSermonDate = null;
-    const genId = () => "c_" + Math.random().toString(36).slice(2,9);
-    // Deterministic ID from card text — survives reloads of the same guide.json
+    const genId = () => "c_" + Math.random().toString(36).slice(2, 9);
     function stableId(text, index) {
       let h = 0x811c9dc5;
-      for (let i = 0; i < text.length; i++) {
-        h ^= text.charCodeAt(i);
-        h = Math.imul(h, 0x01000193);
-      }
+      for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 0x01000193); }
       return "s_" + (h >>> 0).toString(36) + "_" + index;
     }
     let searchQuery = "";
 
     $newType.addEventListener("change", () => {
-      if ($newType.value === "section") {
-        $newTitle.classList.add("visible");
-      } else {
-        $newTitle.classList.remove("visible");
-        $newTitle.value = "";
-      }
+      $newTitle.classList.toggle("visible", $newType.value === "section");
+      if ($newType.value !== "section") $newTitle.value = "";
     });
 
-    // Auto-expand textarea as user types
-    function autoExpandTextarea(textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+    function autoExpandTextarea(ta) {
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 200) + 'px';
     }
-    
     $newText.addEventListener('input', () => autoExpandTextarea($newText));
-    
-    // Also handle paste events
-    $newText.addEventListener('paste', () => {
-      setTimeout(() => autoExpandTextarea($newText), 0);
-    });
+    $newText.addEventListener('paste', () => setTimeout(() => autoExpandTextarea($newText), 0));
 
     function updateSermonDate(dateStr) {
-      if (dateStr) {
-        currentSermonDate = dateStr;
-        $sermonDate.textContent = dateStr;
-        $sermonDate.style.display = "inline";
-      } else {
-        currentSermonDate = null;
-        $sermonDate.textContent = "";
-        $sermonDate.style.display = "none";
-      }
+      currentSermonDate = dateStr || null;
+      $sermonDate.textContent = dateStr || "";
+      $sermonDate.style.display = dateStr ? "inline" : "none";
     }
 
     function updateCardCounts() {
-      const active = cards.filter(c => c.status === 'active').length;
-      const done = cards.filter(c => c.status === 'done').length;
-      const deleted = cards.filter(c => c.status === 'deleted').length;
-      
-      $activeCount.textContent = active;
-      $doneCount.textContent = done;
-      $deletedCount.textContent = deleted;
-      
-      // Show/hide empty state
-      if (cards.length === 0) {
-        $emptyState.style.display = 'block';
-        $hintText.style.display = 'none';
-      } else {
-        $emptyState.style.display = 'none';
-        $hintText.style.display = 'block';
-      }
+      const a = cards.filter(c => c.status === 'active').length;
+      const d = cards.filter(c => c.status === 'done').length;
+      const x = cards.filter(c => c.status === 'deleted').length;
+      $activeCount.textContent = a;
+      $doneCount.textContent = d;
+      $deletedCount.textContent = x;
+      $emptyState.style.display = cards.length === 0 ? 'block' : 'none';
+      $hintText.style.display = cards.length === 0 ? 'none' : 'block';
     }
 
     function updateFilterCount() {
-      if (!searchQuery) {
-        $filterCount.textContent = "";
-        return;
-      }
-      const visible = cards.filter(c => {
-        const text = (c.text || "").toLowerCase();
-        const title = (c.title || "").toLowerCase();
-        const query = searchQuery.toLowerCase();
-        return text.includes(query) || title.includes(query);
-      }).length;
-      $filterCount.textContent = `Showing ${visible} of ${cards.length}`;
+      if (!searchQuery) { $filterCount.textContent = ""; return; }
+      const q = searchQuery.toLowerCase();
+      const visible = cards.filter(c => (c.text || "").toLowerCase().includes(q) || (c.title || "").toLowerCase().includes(q)).length;
+      $filterCount.textContent = `${visible} of ${cards.length}`;
     }
 
     function applySearch() {
-      const query = searchQuery.toLowerCase();
-      document.querySelectorAll(".card").forEach(cardEl => {
-        if (!query) {
-          cardEl.classList.remove("filtered");
-          return;
-        }
-        const id = cardEl.dataset.id;
-        const card = cards.find(c => c.id === id);
-        if (!card) {
-          cardEl.classList.add("filtered");
-          return;
-        }
-        const text = (card.text || "").toLowerCase();
-        const title = (card.title || "").toLowerCase();
-        const matches = text.includes(query) || title.includes(query);
-        if (matches) {
-          cardEl.classList.remove("filtered");
-        } else {
-          cardEl.classList.add("filtered");
-        }
+      const q = searchQuery.toLowerCase();
+      document.querySelectorAll(".card").forEach(el => {
+        if (!q) { el.classList.remove("filtered"); return; }
+        const card = cards.find(c => c.id === el.dataset.id);
+        if (!card) { el.classList.add("filtered"); return; }
+        const match = (card.text || "").toLowerCase().includes(q) || (card.title || "").toLowerCase().includes(q);
+        el.classList.toggle("filtered", !match);
       });
       updateFilterCount();
     }
 
     async function createVersesSection(text) {
-      const references = detectVerseReferences(text);
-      
-      if (references.length === 0) return null;
-
-      const versesDiv = document.createElement("div");
-      versesDiv.className = "card-verses";
-
+      const refs = detectVerseReferences(text);
+      if (refs.length === 0) return null;
+      const div = document.createElement("div");
+      div.className = "card-verses";
       const header = document.createElement("div");
       header.className = "verses-header";
-      header.innerHTML = `
-        <span class="verses-icon">📖</span>
-        <span class="verses-title">Bible Verses (${references.length})</span>
-        <span class="verses-toggle">▼</span>
-      `;
-
+      header.innerHTML = `<span class="verses-icon">📖</span><span class="verses-title">Verses (${refs.length})</span><span class="verses-toggle">▾</span>`;
       const content = document.createElement("div");
       content.className = "verses-content";
-
       header.addEventListener("click", () => {
         content.classList.toggle("visible");
-        const toggle = header.querySelector(".verses-toggle");
-        toggle.style.transform = content.classList.contains("visible") 
-          ? "rotate(0deg)" 
-          : "rotate(-90deg)";
+        header.querySelector(".verses-toggle").style.transform = content.classList.contains("visible") ? "rotate(0)" : "rotate(-90deg)";
       });
-
-      versesDiv.appendChild(header);
-      versesDiv.appendChild(content);
-
-      for (const ref of references) {
+      div.appendChild(header);
+      div.appendChild(content);
+      for (const ref of refs) {
         const block = document.createElement("div");
         block.className = "verse-block";
-
-        const refTitle = document.createElement("div");
-        refTitle.className = "verse-reference";
-        refTitle.textContent = ref.reference;
-
-        const verseText = document.createElement("div");
-        verseText.className = "verse-text verse-loading";
-        verseText.textContent = "Loading...";
-
-        block.appendChild(refTitle);
-        block.appendChild(verseText);
+        block.innerHTML = `<div class="verse-reference">${ref.reference}</div><div class="verse-text verse-loading">Loading...</div>`;
         content.appendChild(block);
-
-        fetchVerse(ref.apiReference).then(result => {
-          if (result.error) {
-            verseText.className = "verse-text verse-error";
-            verseText.textContent = result.message;
-          } else {
-            verseText.className = "verse-text";
-            verseText.textContent = result.text;
-          }
+        fetchVerse(ref.apiReference).then(r => {
+          const vt = block.querySelector(".verse-text");
+          vt.className = r.error ? "verse-text verse-error" : "verse-text";
+          vt.textContent = r.error ? r.message : r.text;
         });
       }
-
-      return versesDiv;
+      return div;
     }
 
     async function renderCards(next) {
-      cards = next.map(c => ({ 
-        status: 'active', 
-        source: 'pdf',
-        ...c, 
-        id: c.id || genId() 
-      }));
-
-      $boardActive.innerHTML  = "";
-      $boardDone.innerHTML    = "";
+      cards = next.map(c => ({ status: 'active', source: 'pdf', ...c, id: c.id || genId() }));
+      $boardActive.innerHTML = "";
+      $boardDone.innerHTML = "";
       $boardDeleted.innerHTML = "";
 
       for (const c of cards) {
@@ -1594,48 +1113,33 @@ button.danger:hover {
         const isCustom = c.source === "custom";
         const isSection = c.type === "section";
 
-        // Add card type classes
         if (isCustom) el.classList.add('custom-card');
         if (isSection) el.classList.add('section-card');
         if (isEdited && !isCustom) el.classList.add('edited-card');
 
+        let tagClass = "", tagText = isSection ? "Section" : "Question";
+        if (isCustom) { tagClass = "custom"; tagText = isSection ? "Custom Section" : "Custom"; }
+        else if (isSection) { tagClass = "section"; }
+        else if (isEdited) { tagClass = "edited"; }
+
         const header = document.createElement("div");
         header.className = "card-header";
-        
-        let tagClass = "";
-        let tagText = isSection ? "Section" : "Question";
-        if (isCustom) {
-          tagClass = "custom";
-          tagText = isSection ? "Custom Section" : "Custom";
-        } else if (isSection) {
-          tagClass = "section";
-        } else if (isEdited) {
-          tagClass = "edited";
-        }
-
         header.innerHTML = `
           <span class="drag-handle">⋮⋮</span>
           <span class="tag ${tagClass}">${tagText}</span>
-          ${c.title ? `<strong style="margin-left:6px">${escapeHtml(c.title)}</strong>` : ""}
+          ${c.title ? `<strong style="font-size:13px;margin-left:4px">${escapeHtml(c.title)}</strong>` : ""}
           ${isEdited ? '<span class="edited-badge">EDITED</span>' : ''}
-          <div class="spacer"></div>
-          ${c.status === 'active' ? `
-            <button class="icon-btn" data-action="edit" title="Edit" aria-label="Edit">
-              ${ICONS.edit}
-            </button>
-            <button class="icon-btn success" data-action="complete" title="Mark complete" aria-label="Mark complete">
-              ${ICONS.check}
-            </button>
-            <button class="icon-btn danger" data-action="trash" title="Move to deleted" aria-label="Move to deleted">
-              ${ICONS.trash}
-            </button>
-          ` : `
-            <button class="icon-btn" data-action="undo" title="Move back to active" aria-label="Undo">
-              ${ICONS.undo}
-            </button>
-          `}
+          <div class="card-actions">
+            ${c.status === 'active' ? `
+              <button class="btn-icon" data-action="edit" title="Edit">${ICONS.edit}</button>
+              <button class="btn-icon" data-action="complete" title="Complete" style="color:var(--success)">${ICONS.check}</button>
+              <button class="btn-icon btn-danger" data-action="trash" title="Delete">${ICONS.trash}</button>
+            ` : `
+              <button class="btn-icon" data-action="undo" title="Restore">${ICONS.undo}</button>
+            `}
+          </div>
         `;
-        
+
         const body = document.createElement("div");
         body.className = "card-body";
         body.textContent = c.text;
@@ -1647,8 +1151,8 @@ button.danger:hover {
 
 ```
       <div class="edit-controls">
-        <button class="secondary" data-action="cancel-edit">Cancel</button>
-        <button data-action="save-edit">Save</button>
+        <button class="btn-ghost" data-action="cancel-edit">Cancel</button>
+        <button class="btn-primary" data-action="save-edit">Save</button>
       </div>
     `;
 
@@ -1657,9 +1161,7 @@ button.danger:hover {
     el.appendChild(editArea);
 
     const versesSection = await createVersesSection(c.text);
-    if (versesSection) {
-      el.appendChild(versesSection);
-    }
+    if (versesSection) el.appendChild(versesSection);
 
     if (c.status === "done") $boardDone.appendChild(el);
     else if (c.status === "deleted") $boardDeleted.appendChild(el);
@@ -1673,187 +1175,120 @@ button.danger:hover {
 function getCurrentCards() {
   const byId = Object.fromEntries(cards.map(c => [c.id, c]));
   const read = (container, status) =>
-    [...container.querySelectorAll(".card")].map(n => {
-      const id = n.dataset.id;
-      return { ...byId[id], status };
-    });
-  return [
-    ...read($boardActive,  'active'),
-    ...read($boardDone,    'done'),
-    ...read($boardDeleted, 'deleted'),
-  ];
+    [...container.querySelectorAll(".card")].map(n => ({ ...byId[n.dataset.id], status }));
+  return [...read($boardActive, 'active'), ...read($boardDone, 'done'), ...read($boardDeleted, 'deleted')];
 }
 
+// ---- Sortable with improved feel ----
 Sortable.create($boardActive, {
-  animation: 150,
+  animation: 200,
   handle: ".drag-handle",
   ghostClass: "ghost",
+  chosenClass: "sortable-chosen",
+  dragClass: "sortable-drag",
   direction: "vertical",
+  forceFallback: true,         // bypass native HTML5 DnD for smoother feel
+  fallbackTolerance: 3,        // dead-zone before drag starts (prevents accidental drags)
+  swapThreshold: 0.55,         // tighter swap zone
+  delay: 80,                   // slight delay prevents accidental drags on mobile
+  delayOnTouchOnly: true,      // delay only applies on touch devices
   onEnd() { cards = getCurrentCards(); autoSave(); }
 });
 
-const debounce = (fn, ms = 400) => {
-  let t;
-  return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
-};
+const debounce = (fn, ms = 400) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 
 const autoSave = debounce(() => {
   saveLive(getCurrentCards());
 }, 400);
 
+// ---- Card actions ----
 document.querySelector(".boards").addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-action]");
   if (!btn) return;
-
   const card = btn.closest(".card");
   if (!card) return;
-  
   const id = card.dataset.id;
   const action = btn.dataset.action;
 
   if (action === "edit") {
     card.classList.add("editing");
-    const textarea = card.querySelector(".edit-textarea");
-    if (textarea) {
-      textarea.focus();
-      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-    }
+    const ta = card.querySelector(".edit-textarea");
+    if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
     return;
   }
 
   if (action === "cancel-edit") {
     card.classList.remove("editing");
-    const originalCard = cards.find(c => c.id === id);
-    if (originalCard) {
-      const textarea = card.querySelector(".edit-textarea");
-      if (textarea) textarea.value = originalCard.text;
-    }
+    const orig = cards.find(c => c.id === id);
+    if (orig) { const ta = card.querySelector(".edit-textarea"); if (ta) ta.value = orig.text; }
     return;
   }
 
   if (action === "save-edit") {
-    const textarea = card.querySelector(".edit-textarea");
-    if (!textarea) return;
-    
-    const newText = textarea.value.trim();
-    if (!newText) {
-      showToast("Card text cannot be empty", "warning");
-      return;
-    }
-
+    const ta = card.querySelector(".edit-textarea");
+    if (!ta) return;
+    const newText = ta.value.trim();
+    if (!newText) { showToast("Card text cannot be empty", "warning"); return; }
     const current = getCurrentCards();
     const next = current.map(c => {
       if (c.id !== id) return c;
       const originalText = c.originalText || (c.source === 'pdf' ? c.text : undefined);
       return { ...c, text: newText, originalText };
     });
-    
     await renderCards(next);
     autoSave();
-    showToast("Changes saved", "success");
+    showToast("Saved", "success");
     return;
   }
 
-  let newStatus;
-  let toastMsg;
-  if (action === "complete") {
-    newStatus = "done";
-    toastMsg = "Marked as complete";
-  } else if (action === "trash") {
-    newStatus = "deleted";
-    toastMsg = "Moved to deleted";
-  } else if (action === "undo") {
-    newStatus = "active";
-    toastMsg = "Restored to active";
-  } else {
-    return;
-  }
+  let newStatus, toastMsg;
+  if (action === "complete") { newStatus = "done"; toastMsg = "Completed"; }
+  else if (action === "trash") { newStatus = "deleted"; toastMsg = "Deleted"; }
+  else if (action === "undo") { newStatus = "active"; toastMsg = "Restored"; }
+  else return;
 
-  const current = getCurrentCards();
-  const next = current.map(c => (c.id === id ? { ...c, status: newStatus } : c));
-
+  const next = getCurrentCards().map(c => (c.id === id ? { ...c, status: newStatus } : c));
   await renderCards(next);
   autoSave();
   showToast(toastMsg, action === "trash" ? "warning" : "success");
 });
 
-document.getElementById("addBtn").addEventListener("click", async () => {
+// ---- Add card ----
+$("addBtn").addEventListener("click", async () => {
   const type = $newType.value;
   const title = ($newTitle.value || "").trim();
   const text = ($newText.value || "").trim();
   if (!text) return;
-  
-  const item = { 
-    id: genId(), 
-    type, 
-    text, 
-    status: "active",
-    source: "custom"
-  };
+  const item = { id: genId(), type, text, status: "active", source: "custom" };
   if (type === "section" && title) item.title = title;
-  
   await renderCards([item, ...cards]);
   $newText.value = "";
-  $newText.style.height = 'auto'; // Reset height after clearing
+  $newText.style.height = 'auto';
   $newTitle.value = "";
   autoSave();
-  showToast("Card added", "success");
+  showToast("Added", "success");
 });
 
-$searchInput.addEventListener("input", (e) => {
-  searchQuery = e.target.value;
-  applySearch();
-});
+// ---- Search ----
+$searchInput.addEventListener("input", e => { searchQuery = e.target.value; applySearch(); });
+$clearSearch.addEventListener("click", () => { searchQuery = ""; $searchInput.value = ""; applySearch(); });
 
-$clearSearch.addEventListener("click", () => {
-  searchQuery = "";
-  $searchInput.value = "";
-  applySearch();
-});
-
-document.addEventListener("keydown", (e) => {
+// ---- Keyboard shortcuts ----
+document.addEventListener("keydown", e => {
   if (e.target.matches("input, textarea")) {
-    if (e.key === "Escape" && e.target === $searchInput) {
-      $clearSearch.click();
-      $searchInput.blur();
-    }
+    if (e.key === "Escape" && e.target === $searchInput) { $clearSearch.click(); $searchInput.blur(); }
     return;
   }
-
-  if (e.key === "?") {
-    e.preventDefault();
-    $shortcutsHelp.classList.toggle("visible");
-    return;
-  }
-
-  if (e.key === "/") {
-    e.preventDefault();
-    $searchInput.focus();
-    return;
-  }
-
-  if (e.key === "Escape") {
-    e.preventDefault();
-    $shortcutsHelp.classList.remove("visible");
-    $clearSearch.click();
-    return;
-  }
-
-  if (e.key === "n" || e.key === "N") {
-    e.preventDefault();
-    $newText.focus();
-    return;
-  }
+  if (e.key === "?") { e.preventDefault(); $shortcutsHelp.classList.toggle("visible"); }
+  if (e.key === "/") { e.preventDefault(); $searchInput.focus(); }
+  if (e.key === "Escape") { e.preventDefault(); $shortcutsHelp.classList.remove("visible"); $clearSearch.click(); }
+  if (e.key === "n" || e.key === "N") { e.preventDefault(); $newText.focus(); }
 });
 
-$helpBtn.addEventListener("click", () => {
-  $shortcutsHelp.classList.toggle("visible");
-});
+$helpBtn.addEventListener("click", () => $shortcutsHelp.classList.toggle("visible"));
+$closeHelp.addEventListener("click", () => $shortcutsHelp.classList.remove("visible"));
 
-$closeHelp.addEventListener("click", () => {
-  $shortcutsHelp.classList.remove("visible");
-});
-
+// ---- Room management ----
 async function refreshRoomsList(selected) {
   const rooms = await listRooms();
   $roomSel.innerHTML = "";
@@ -1870,9 +1305,7 @@ async function joinAndLoad(room) {
   await joinRoom(room, () => {
     const state = loadLive();
     renderCards(state);
-    $status.textContent = currentRoomCode()
-      ? `Connected: ${currentRoomCode()}`
-      : `Local mode`;
+    $status.textContent = currentRoomCode() ? `Room: ${currentRoomCode()}` : `Local`;
   });
   await refreshRoomsList(currentRoomCode());
   const state = loadLive();
@@ -1883,7 +1316,7 @@ const urlRoom = new URLSearchParams(location.search).get("room");
 await joinAndLoad(urlRoom || null);
 await refreshRoomsList(currentRoomCode());
 
-// ---- Backup recovery: offer to restore if current board is empty ----
+// ---- Backup recovery ----
 {
   const currentCards = loadLive();
   if (!currentCards || currentCards.length === 0) {
@@ -1892,26 +1325,36 @@ await refreshRoomsList(currentRoomCode());
       const age = Date.now() - (backup.savedAt || 0);
       const ageMin = Math.round(age / 60_000);
       const ageLabel = ageMin < 60 ? `${ageMin}m ago` : `${Math.round(ageMin / 60)}h ago`;
-      if (confirm(`Your board is empty, but a backup with ${backup.cards.length} cards was found (${ageLabel}).\n\nRestore from backup?`)) {
+      if (confirm(`Board is empty but a backup with ${backup.cards.length} cards exists (${ageLabel}). Restore?`)) {
         await renderCards(backup.cards);
         autoSave();
-        showToast(`Restored ${backup.cards.length} cards from backup`, "success");
+        showToast(`Restored ${backup.cards.length} cards`, "success");
       }
     }
   }
 }
 
-// Restore saved PDF link on page load
+// ---- PDF link restore ----
 const savedPdf = loadSavedPdfLink();
 if (savedPdf && savedPdf.url) {
   const isPdf = savedPdf.url.toLowerCase().endsWith(".pdf");
-  $pdfLink.textContent = isPdf ? "Open PDF" : "Open Source Page";
+  $pdfLink.textContent = isPdf ? "Open PDF" : "Source";
   $pdfLink.href = savedPdf.url;
   $pdfLink.style.display = "inline-block";
-  if (savedPdf.date) {
-    updateSermonDate(savedPdf.date);
-  }
+  if (savedPdf.date) updateSermonDate(savedPdf.date);
 }
+
+// ---- Hero image ----
+function loadHeroImage() {
+  try {
+    const url = new URL("data/hero.webp", location.href);
+    const img = new Image();
+    img.onload = () => { $heroImage.src = url.toString(); $heroImage.style.display = "block"; };
+    img.onerror = () => {}; // no hero image, that's fine
+    img.src = url.toString();
+  } catch {}
+}
+loadHeroImage();
 
 $createJoin.addEventListener("click", async () => {
   const name = ($roomInp.value || "").trim();
@@ -1920,54 +1363,42 @@ $createJoin.addEventListener("click", async () => {
   const url = new URL(location.href);
   url.searchParams.set("room", name);
   history.replaceState(null, "", url.toString());
-  showToast(`Joined room: ${name}`, "success");
+  showToast(`Joined: ${name}`, "success");
 });
 
 $roomSel.addEventListener("change", async () => {
-  const name = $roomSel.value;
-  await joinAndLoad(name);
+  await joinAndLoad($roomSel.value);
   const url = new URL(location.href);
-  url.searchParams.set("room", name);
+  url.searchParams.set("room", $roomSel.value);
   history.replaceState(null, "", url.toString());
 });
 
 $share.addEventListener("click", async () => {
   const code = currentRoomCode();
-  if (!code) {
-    showToast("Join a room first", "warning");
-    return;
-  }
+  if (!code) { showToast("Join a room first", "warning"); return; }
   const url = new URL(location.href);
   url.searchParams.set("room", code);
   await navigator.clipboard.writeText(url.toString());
-  showToast("Share link copied!", "success");
+  showToast("Link copied!", "success");
 });
 
 $deleteRoom.addEventListener("click", async () => {
   const code = currentRoomCode();
-
   if (!code) {
-    if (!confirm("Clear ALL local cached rooms on this device?")) return;
+    if (!confirm("Clear all local data?")) return;
     localStorage.removeItem("bhq-rooms-v1");
     location.reload();
     return;
   }
-
-  if (!confirm(`Delete room "${code}" for everyone?\n\nThis will remove the room for everyone, not just you.`)) return;
-
-  try {
-    await deleteRoom(code);
-    showToast(`Room "${code}" deleted`, "success");
-  } catch (e) {
-    console.error(e);
-    showToast("Failed to delete room", "warning");
-  }
-
+  if (!confirm(`Delete room "${code}" for everyone?`)) return;
+  try { await deleteRoom(code); showToast(`Room "${code}" deleted`, "success"); }
+  catch (e) { console.error(e); showToast("Failed to delete", "warning"); }
   const url = new URL(location.href);
   url.searchParams.delete("room");
   location.href = url.toString();
 });
 
+// ---- Load guide ----
 const guideJsonUrl = (noCache = false) => {
   const u = new URL("data/guide.json", location.href);
   if (noCache) u.searchParams.set("ts", Date.now());
@@ -1976,33 +1407,20 @@ const guideJsonUrl = (noCache = false) => {
 
 function extractDateFromUrl(url) {
   const match = url.match(/(\d{1,2})\.(\d{1,2})\.(\d{2})/);
-  if (match) {
-    const month = parseInt(match[1]);
-    const day = parseInt(match[2]);
-    const year = 2000 + parseInt(match[3]);
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  }
-  return null;
+  if (!match) return null;
+  const date = new Date(2000 + parseInt(match[3]), parseInt(match[1]) - 1, parseInt(match[2]));
+  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
 function updateGuideLink(meta) {
   const u = (meta && meta.url) ? String(meta.url) : "";
-  if (!u) { 
-    $pdfLink.style.display = "none";
-    updateSermonDate(null);
-    return;
-  }
-  
+  if (!u) { $pdfLink.style.display = "none"; updateSermonDate(null); return; }
   const isPdf = u.toLowerCase().endsWith(".pdf");
-  $pdfLink.textContent = isPdf ? "Open PDF" : "Open Source Page";
+  $pdfLink.textContent = isPdf ? "Open PDF" : "Source";
   $pdfLink.href = u;
   $pdfLink.style.display = "inline-block";
-  
   const dateStr = extractDateFromUrl(u);
   updateSermonDate(dateStr);
-  
-  // Save to localStorage for persistence
   savePdfLink(u, dateStr);
 }
 
@@ -2032,37 +1450,29 @@ async function loadGuideJson(noCache = false) {
     ];
     await renderCards(next);
     autoSave();
-    $status.textContent = `Loaded: ${next.length} cards`;
+    $status.textContent = `${next.length} cards`;
     showToast(`Loaded ${next.length} cards`, "success");
   } catch (e) {
     console.error(e);
-    $status.textContent = "Failed to load";
-    showToast("Failed to load discussion guide", "warning");
+    $status.textContent = "Failed";
+    showToast("Failed to load guide", "warning");
   }
 }
 
 $loadLatest.addEventListener("click", () => {
-  if (!confirm("Load Latest Sermon will replace the current board.\n\nAny changes will be overwritten. Continue?")) return;
+  if (!confirm("This will replace the current board. Continue?")) return;
   loadGuideJson(false);
 });
 
-$emptyLoadBtn.addEventListener("click", () => {
-  loadGuideJson(false);
-});
+$emptyLoadBtn.addEventListener("click", () => loadGuideJson(false));
 
 $refresh.addEventListener("click", () => {
-  if (!confirm("Refresh will re-read and overwrite the current guide.\n\nAny changes will be overwritten. Continue?")) return;
+  if (!confirm("Refresh will overwrite current changes. Continue?")) return;
   loadGuideJson(true);
 });
 
 function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, m => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "\"": "&quot;",
-    "'": "&#039;"
-  }[m]));
+  return s.replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[m]));
 }
 ```
 
