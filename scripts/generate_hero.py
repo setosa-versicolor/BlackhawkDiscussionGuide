@@ -2,9 +2,10 @@
 """
 scripts/generate_hero.py
 
-Generates a hero header image for the discussion guide using OpenAI's
-gpt-image-1 model. Reads guide.json to extract sermon themes, then
-produces an abstract image that matches the app's dark color palette.
+Generates a hero header image for the discussion guide.
+Uses a two-pass approach:
+1. A text model extracts a single visual metaphor from the guide content.
+2. An image model renders that metaphor in a specific, dark, premium style.
 
 Usage:
     python scripts/generate_hero.py
@@ -41,36 +42,38 @@ def summarize_content(guide):
     return all_text
 
 
-def build_prompt(content_summary):
-    """Create the image generation prompt."""
+def extract_visual_concept(content_summary, api_key):
+    """Uses a text model to isolate a single visual metaphor."""
+    from openai import OpenAI
+    client = OpenAI(api_key=api_key)
+    
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system", 
+                "content": "You are an expert art director. Read the provided text and extract exactly ONE concrete, highly visual object or metaphor that represents the core theme. Respond ONLY with that object (e.g., 'A shattered clay jar', 'An open doorway', 'A single glowing ember'). Do not include any other text."
+            },
+            {"role": "user", "content": content_summary}
+        ],
+        temperature=0.7
+    )
+    return response.choices[0].message.content.strip()
+
+
+def build_image_prompt(visual_concept):
+    """Creates the exact art direction prompt based on the isolated concept."""
     return (
-        "Create an abstract, atmospheric landscape illustration for a "
-        "church discussion guide header image.\n\n"
-        "THEME derived from this week's content:\n"
-        + content_summary + "\n\n"
-        "STYLE REQUIREMENTS (CRITICAL -- follow exactly):\n"
-        "- Evocative and thematic, NOT literal depictions of Bible scenes or people\n"
-        "- NO text, NO words, NO letters, NO numbers anywhere in the image\n"
-        "- NO people, NO faces, NO hands, NO human figures\n"
-        "- Use dark, moody tones that match this exact palette:\n"
-        "  - Deep navy/charcoal background (#0d0f13 to #15171d)\n"
-        "  - Cool steel blue accents (#5b8def)\n"
-        "  - Muted teal (#3dae8e)\n"
-        "  - Warm amber/gold highlights (#d4943a) used sparingly\n"
-        "- Choose a single thematic visual element inspired by the content.\n"
-        "  Examples of the kind of subject matter to consider: a loaf of bread,\n"
-        "  a tree of life, a natural spring, a small boat on still water, a scale\n"
-        "  (for justice), a winding path, a single flame, an open door, a clay vessel,\n"
-        "  a vine with branches, parted waters, a shepherd's staff, a stone rolled away.\n"
-        "  These are just examples -- pick whatever best fits the theme of the content.\n"
-        "- The subject should be rendered abstractly or atmospherically, not as a\n"
-        "  photorealistic product shot. It should feel like fine art, not clip art.\n"
-        "- Dramatic landscapes and vast skies are also fine when they fit the theme.\n"
-        "- Cinematic composition with strong horizontal flow (image is very wide)\n"
-        "- Subtle film grain or painterly texture\n"
-        "- Minimalist and contemplative mood -- elegant restraint, not busy\n\n"
-        "The image should feel like a premium editorial magazine header -- atmospheric,\n"
-        "beautiful, and thought-provoking without being explicitly religious."
+        f"A cinematic, high-fidelity fine art rendering of: {visual_concept}.\n\n"
+        "ART DIRECTION & STYLE REQUIREMENTS (CRITICAL):\n"
+        "- The object must be the absolute central focal point.\n"
+        "- Rendered abstractly or atmospherically, not as a photorealistic product shot.\n"
+        "- NO text, NO words, NO letters, NO numbers.\n"
+        "- NO people, NO faces, NO hands.\n"
+        "- Palette: Deep navy/charcoal background (#0d0f13 to #15171d), cool steel blue accents, muted teal, and sparse warm gold highlights.\n"
+        "- Cinematic composition with strong horizontal flow.\n"
+        "- Subtle film grain or painterly texture.\n"
+        "- Minimalist, elegant, and contemplative mood."
     )
 
 
@@ -128,12 +131,15 @@ def main():
         print("No content in guide.json -- skipping hero image.")
         return 0
 
-    prompt = build_prompt(content)
-    print("Generating hero image from {} questions...".format(
-        len(guide.get("questions", []))))
-
     try:
+        print("Extracting visual concept...")
+        visual_concept = extract_visual_concept(content, api_key)
+        print(f"Concept isolated: {visual_concept}")
+
+        prompt = build_image_prompt(visual_concept)
+        print("Generating hero image...")
         generate_image(prompt, api_key, args.out)
+
     except Exception as e:
         print("Hero image generation failed (non-fatal): {}".format(e),
               file=sys.stderr)
