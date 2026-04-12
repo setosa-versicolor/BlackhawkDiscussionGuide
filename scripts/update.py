@@ -642,6 +642,10 @@ def main():
             if pdf:
                 data = parse_pdf_guide(pdf)
 
+        # Clean the date out of the title if it exists (e.g., "4/5/2026 | God of the Impossible")
+    if data.get("title") and "|" in data["title"]:
+        data["title"] = data["title"].split("|", 1)[-1].strip()
+
     # Write JSON for the interactive front-end (into site/)
     write_json(source_url, data, out_path=args.out_json,
                series_title=meta.get("series_title", ""),
