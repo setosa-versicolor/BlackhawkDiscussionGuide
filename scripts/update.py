@@ -461,7 +461,7 @@ def _normalize_pdf_text(raw: str) -> str:
     raw = "\n".join(joined)
 
     # 4) Force bullets that appear mid-line to start new lines.
-    raw = re.sub(r"(\?|:)\s*[\u2013\-\u2022]\s+", r"\1\n\u2013 ", raw)
+    raw = re.sub(r"(\?|:)\s*[\u2013\-\u2022]\s+", "\\1\n\u2013 ", raw)
 
     # 5) Normalize all bullet markers to an en-dash at line starts.
     raw = re.sub(r"^[\s]*[\u2022\-]\s+", "\u2013 ", raw, flags=re.M)
