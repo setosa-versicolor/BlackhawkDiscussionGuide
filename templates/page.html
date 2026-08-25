@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <title>Discussion Guide — Blackhawk Church</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,600;8..60,700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -401,15 +401,32 @@
       cursor: grab;
       user-select: none;
       color: var(--text-secondary);
-      opacity: 0.35;
+      opacity: 0.55;
       transition: opacity 0.15s;
       font-size: 14px;
       line-height: 1;
-      padding: 2px;
+      /* Keep the glyph small but give it a ~44px touch target (WCAG 2.5.5).
+         Negative margins cancel the extra padding's effect on layout. */
+      padding: 13px 10px;
+      margin: -13px -6px;
+      touch-action: none;
     }
 
-    .card:hover .drag-handle { opacity: 0.6; }
+    .card:hover .drag-handle { opacity: 0.85; }
     .drag-handle:active { cursor: grabbing; }
+
+    /* No hover on touch devices, so keep the handle visible there. */
+    @media (hover: none) {
+      .drag-handle { opacity: 0.7; }
+    }
+
+    /* Reordering is disabled while a search filter is active, because hidden
+       cards remain in the DOM and would silently scramble the real order. */
+    body.is-filtering .drag-handle {
+      opacity: 0.2;
+      cursor: not-allowed;
+    }
+    body.is-filtering .btn-move { display: none; }
 
     .tag {
       font-size: 10px;
@@ -455,6 +472,134 @@
       display: flex;
       gap: 2px;
       margin-left: auto;
+    }
+
+    /* Move up/down: a keyboard- and tap-friendly alternative to dragging */
+    .btn-move svg { width: 15px; height: 15px; }
+    .card:first-child .btn-move[data-action="move-up"],
+    .card:last-child .btn-move[data-action="move-down"] {
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    /* Cards are focusable so they can be reordered with Alt + arrow keys */
+    .card:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .card:focus { outline: none; }
+
+    /* ===== CARD EXIT CEREMONY ===== */
+    /* When a card leaves the Active board it doesn't just vanish: its own
+       footprint becomes a little stage for confetti and a parting message,
+       then the slot collapses and the cards below slide up to fill it. */
+    .card.exiting {
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .card.exiting .card-header,
+    .card.exiting .card-body,
+    .card.exiting .edit-area,
+    .card.exiting .card-verses {
+      opacity: 0;
+      transition: opacity 0.16s ease;
+    }
+
+    .card.exit-done {
+      background: var(--section-dim);
+      border-color: rgba(61, 174, 142, 0.35);
+    }
+    .card.exit-done::before { background: var(--success); opacity: 1; }
+
+    .card.exit-deleted {
+      background: var(--danger-dim);
+      border-color: rgba(229, 87, 79, 0.28);
+    }
+    .card.exit-deleted::before { background: var(--danger); opacity: 1; }
+
+    .exit-stage {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 18px;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .exit-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .exit-message {
+      position: relative;
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 15.5px;
+      font-weight: 600;
+      line-height: 1.35;
+      text-align: center;
+      text-wrap: balance;
+      opacity: 0;
+      transform: translateY(7px) scale(0.94);
+      animation: exitMsgIn 0.34s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      text-shadow: 0 1px 8px var(--bg);
+    }
+
+    .exit-done .exit-message { color: var(--success); }
+    .exit-deleted .exit-message { color: var(--text-secondary); font-style: italic; }
+
+    @keyframes exitMsgIn {
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ===== PROGRESS ===== */
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 4px 0 8px;
+    }
+
+    .ring { flex-shrink: 0; display: block; }
+    .ring circle { fill: none; stroke-width: 3.5; }
+    .ring .ring-track { stroke: var(--border-light); }
+    .ring .ring-fill {
+      stroke: var(--success);
+      stroke-linecap: round;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+      transition: stroke-dashoffset 0.65s cubic-bezier(0.2, 0.7, 0.3, 1);
+    }
+
+    .progress-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .progress-row.complete .progress-text { color: var(--success); }
+
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2500;
+      display: none;
+    }
+
+    /* Respect users who ask for less motion. */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
     }
 
     /* Drag states */
@@ -884,6 +1029,15 @@
       </div>
     </details>
 
+    <!-- ===== PROGRESS ===== -->
+    <div class="progress-row" id="progressRow" style="display:none">
+      <svg class="ring" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <circle class="ring-track" cx="13" cy="13" r="11"></circle>
+        <circle class="ring-fill" id="ringFill" cx="13" cy="13" r="11"></circle>
+      </svg>
+      <span class="progress-text" id="progressText" role="status" aria-live="polite"></span>
+    </div>
+
     <!-- ===== BOARDS ===== -->
     <div class="boards">
       <div class="board-wrap" id="activeWrap">
@@ -942,6 +1096,9 @@
   <!-- Toast -->
   <div class="toast-container" id="toastContainer"></div>
 
+  <!-- Completion celebration -->
+  <canvas id="confettiCanvas" aria-hidden="true"></canvas>
+
   <!-- Shortcuts -->
   <div class="shortcuts-help" id="shortcutsHelp">
     <button class="close-btn" id="closeHelp">&times;</button>
@@ -950,6 +1107,8 @@
     <div class="shortcut"><span>Search</span><span class="key">/</span></div>
     <div class="shortcut"><span>Clear search</span><span class="key">Esc</span></div>
     <div class="shortcut"><span>New card</span><span class="key">n</span></div>
+    <div class="shortcut"><span>Move card up</span><span class="key">Alt + ↑</span></div>
+    <div class="shortcut"><span>Move card down</span><span class="key">Alt + ↓</span></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" crossorigin="anonymous"></script>
@@ -1168,6 +1327,11 @@
     const $menuToggle = $("menuToggle"), $menuDropdown = $("menuDropdown");
     const $activeCount = $("activeCount"), $doneCount = $("doneCount"), $deletedCount = $("deletedCount");
     const $emptyState = $("emptyState"), $emptyLoadBtn = $("emptyLoadBtn"), $hintText = $("hintText");
+    const $progressRow = $("progressRow"), $ringFill = $("ringFill"), $progressText = $("progressText");
+    const $confetti = $("confettiCanvas");
+
+    const prefersReducedMotion = () =>
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     // ---- Board collapse ----
     document.querySelectorAll('.board-header').forEach(h => {
@@ -1184,11 +1348,303 @@
       check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>`,
       trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>`,
       undo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 9l-4 4 4 4"/><path d="M3 13h9a6 6 0 016 6"/></svg>`,
-      edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`
+      edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+      up: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>`,
+      down: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`
     };
+
+    // ---- FLIP animation ----
+    // renderCards() rebuilds the board from scratch, so cards can never animate
+    // on their own. This measures where every card sat before the change, lets
+    // the rebuild happen, then animates each card from its old position to its
+    // new one. Keys off data-id, which survives the rebuild.
+    async function withFLIP(mutate) {
+      if (prefersReducedMotion()) { await mutate(); return; }
+
+      const before = new Map(
+        [...document.querySelectorAll(".card")]
+          .map(n => [n.dataset.id, n.getBoundingClientRect()])
+      );
+
+      await mutate();
+
+      for (const n of document.querySelectorAll(".card")) {
+        const a = n.getBoundingClientRect();
+        // Zero-sized means the card sits inside a collapsed board; nothing to show.
+        if (!a.width && !a.height) continue;
+
+        const b = before.get(n.dataset.id);
+        if (!b || (!b.width && !b.height)) {
+          n.animate(
+            [{ opacity: 0, transform: "translateY(-8px) scale(0.98)" },
+             { opacity: 1, transform: "none" }],
+            { duration: 220, easing: "cubic-bezier(0.2, 0.7, 0.3, 1)" }
+          );
+          continue;
+        }
+        const dx = b.left - a.left, dy = b.top - a.top;
+        if (!dx && !dy) continue;
+        n.animate(
+          [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }],
+          { duration: 280, easing: "cubic-bezier(0.2, 0.7, 0.3, 1)" }
+        );
+      }
+    }
+
+    // ---- Card exit ceremony ----
+    // A card leaving the Active board gets a send-off in its own footprint:
+    // particles, a parting line, then the slot collapses and everything below
+    // slides up to take its place.
+    const EXIT_PHRASES = {
+      done: [
+        "Boom, crushed it.",
+        "Wow, you must really know the Bible.",
+        "Consider that discussion, discussed.",
+        "That one's in the books.",
+        "Somebody's been doing the reading.",
+        "Iron sharpening iron right there.",
+        "Well discussed, well done.",
+        "You came ready today.",
+        "Deep waters. Handled.",
+        "Someone take notes, that was good.",
+        "Straight to the heart of it.",
+        "That answer had layers.",
+        "Group wisdom: unlocked.",
+        "Put a bow on it.",
+        "That'll preach.",
+        "Amen to that.",
+        "Pens down, that's the one.",
+        "That question never stood a chance.",
+        "Filed under: handled beautifully.",
+        "Small group MVP behavior.",
+        "Chef's kiss on that answer.",
+        "Seminary called, they want you back.",
+        "That's a wrap on that one.",
+        "Genuinely good conversation.",
+        "Everybody grew a little there.",
+        "Thoroughly, completely discussed.",
+        "You sat with it. That counts.",
+        "That one's going to stick with someone.",
+        "Big questions, bigger answers.",
+        "Nailed the landing."
+      ],
+      deleted: [
+        "Yeah, who needed that one?",
+        "I was thinking the same thing tbh.",
+        "Bold move. Respect.",
+        "That one was a little much.",
+        "Nobody has to know.",
+        "Skipped. No notes.",
+        "We'll circle back. (We won't.)",
+        "Reading the room, I see.",
+        "Honestly? Fair.",
+        "It wasn't you, question. It was us.",
+        "Cut for time.",
+        "Left on read.",
+        "Into the void it goes.",
+        "Some questions just aren't it.",
+        "Saving that one for a braver group.",
+        "Deleted. Zero regrets.",
+        "Not today, question.",
+        "That's a problem for next week.",
+        "Gone but not grieved.",
+        "The group has spoken.",
+        "Respectfully, no.",
+        "That question walked so the others could run.",
+        "Mercy rule applied.",
+        "Trimming the fat.",
+        "Nobody was going to answer that anyway.",
+        "Too real for a Tuesday.",
+        "We're all better off.",
+        "Retired with honors.",
+        "Somebody had to say it.",
+        "Straight to the shadow realm."
+      ]
+    };
+
+    const _lastPhrase = {};
+    function pickPhrase(kind) {
+      const pool = EXIT_PHRASES[kind];
+      let p = pool[Math.floor(Math.random() * pool.length)];
+      // Avoid saying the same thing twice in a row.
+      let guard = 0;
+      while (pool.length > 1 && p === _lastPhrase[kind] && guard++ < 8) {
+        p = pool[Math.floor(Math.random() * pool.length)];
+      }
+      _lastPhrase[kind] = p;
+      return p;
+    }
+
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+
+    // Particles confined to one card's footprint. Completion gets bright
+    // confetti falling; deletion gets slower, muted motes drifting down.
+    function playSlotParticles(canvas, kind) {
+      const ctx = canvas.getContext("2d");
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      if (!w || !h) return () => {};
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const isDone = kind === "done";
+      const colors = isDone
+        ? ["#3dae8e", "#5b8def", "#9b7aed", "#d4943a", "#e6ecf7"]
+        : ["#6b7280", "#8b92a5", "#e5574f"];
+      const count = isDone ? 52 : 26;
+
+      const parts = [];
+      for (let i = 0; i < count; i++) {
+        parts.push({
+          x: Math.random() * w,
+          y: -10 - Math.random() * h * 0.9,
+          vx: (Math.random() - 0.5) * (isDone ? 1.3 : 0.45),
+          vy: isDone ? 1.2 + Math.random() * 2.0 : 0.45 + Math.random() * 0.75,
+          sw: isDone ? 4 + Math.random() * 4 : 2 + Math.random() * 2.4,
+          sh: isDone ? 3 + Math.random() * 4 : 2 + Math.random() * 2.4,
+          rot: Math.random() * Math.PI,
+          vr: (Math.random() - 0.5) * (isDone ? 0.32 : 0.07),
+          c: colors[i % colors.length],
+          round: !isDone,
+          life: 1,
+          fade: isDone ? 0.0038 : 0.0085
+        });
+      }
+
+      let raf = null, stopped = false;
+      (function tick() {
+        if (stopped) return;
+        ctx.clearRect(0, 0, w, h);
+        for (const p of parts) {
+          if (p.life <= 0) continue;
+          p.vy += isDone ? 0.045 : 0.012;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vr;
+          p.life -= p.fade;
+          if (p.y > h + 12) p.life = 0;
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.c;
+          if (p.round) {
+            ctx.beginPath();
+            ctx.arc(0, 0, p.sw / 2, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.fillRect(-p.sw / 2, -p.sh / 2, p.sw, p.sh);
+          }
+          ctx.restore();
+        }
+        raf = requestAnimationFrame(tick);
+      })();
+
+      return () => { stopped = true; if (raf) cancelAnimationFrame(raf); };
+    }
+
+    let _exitBusy = false;
+
+    // Returns true if the send-off actually played, so the caller knows whether
+    // it still needs to confirm the action some other way.
+    async function playCardExit(cardEl, kind) {
+      if (!cardEl || prefersReducedMotion() || _exitBusy) return false;
+      _exitBusy = true;
+      try {
+        const h = cardEl.offsetHeight;
+        cardEl.style.height = h + "px";
+        cardEl.classList.add("exiting", kind === "done" ? "exit-done" : "exit-deleted");
+
+        const stage = document.createElement("div");
+        stage.className = "exit-stage";
+        const canvas = document.createElement("canvas");
+        canvas.className = "exit-canvas";
+        const msg = document.createElement("div");
+        msg.className = "exit-message";
+        msg.textContent = pickPhrase(kind);
+        stage.appendChild(canvas);
+        stage.appendChild(msg);
+        cardEl.appendChild(stage);
+
+        const stop = playSlotParticles(canvas, kind);
+        if (navigator.vibrate) navigator.vibrate(kind === "done" ? [9, 36, 13] : 9);
+
+        await wait(kind === "done" ? 1000 : 850);
+
+        // Collapsing the slot's own height is what makes every card below it
+        // slide up smoothly, rather than snapping into the gap.
+        const collapse = cardEl.animate(
+          [{ height: h + "px", marginTop: "6px", marginBottom: "6px", opacity: 1 },
+           { height: "0px", marginTop: "0px", marginBottom: "0px", opacity: 0 }],
+          { duration: 330, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" }
+        );
+        try { await collapse.finished; } catch {}
+        stop();
+        return true;
+      } finally {
+        _exitBusy = false;
+      }
+    }
+
+    // ---- Completion celebration ----
+    // Fires once, when the last active card is completed. A celebration that
+    // happens on every card is not a celebration.
+    function celebrate() {
+      if (prefersReducedMotion()) return;
+      const ctx = $confetti.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      const w = window.innerWidth, h = window.innerHeight;
+      $confetti.width = Math.round(w * dpr);
+      $confetti.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      $confetti.style.display = "block";
+
+      const colors = ["#3dae8e", "#5b8def", "#9b7aed", "#d4943a"];
+      const bits = [];
+      for (let i = 0; i < 90; i++) {
+        const ang = -Math.PI / 2 + (Math.random() - 0.5) * 1.6;
+        const sp = 6 + Math.random() * 9;
+        bits.push({
+          x: w / 2, y: h * 0.62,
+          vx: Math.cos(ang) * sp,
+          vy: Math.sin(ang) * sp,
+          w: 5 + Math.random() * 6,
+          h: 4 + Math.random() * 5,
+          rot: Math.random() * Math.PI,
+          vr: (Math.random() - 0.5) * 0.35,
+          c: colors[i % colors.length],
+          life: 1
+        });
+      }
+
+      (function tick() {
+        ctx.clearRect(0, 0, w, h);
+        let alive = false;
+        for (const p of bits) {
+          if (p.life <= 0) continue;
+          alive = true;
+          p.vy += 0.28;
+          p.vx *= 0.996;
+          p.x += p.vx; p.y += p.vy;
+          p.rot += p.vr;
+          p.life -= 0.009;
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.c;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        }
+        if (alive) requestAnimationFrame(tick);
+        else { ctx.clearRect(0, 0, w, h); $confetti.style.display = "none"; }
+      })();
+    }
 
     // ---- State ----
     let cards = [];
+    let sortables = [];
     let currentSermonDate = null;
     const genId = () => "c_" + Math.random().toString(36).slice(2, 9);
     function stableId(text, index) {
@@ -1235,6 +1691,37 @@
       $deletedCount.textContent = x;
       $emptyState.style.display = cards.length === 0 ? 'block' : 'none';
       $hintText.style.display = cards.length === 0 ? 'none' : 'block';
+      updateProgress(a, d);
+    }
+
+    // ---- Progress ring ----
+    const RING_CIRC = 2 * Math.PI * 11;
+    let _wasComplete = false;
+    let _progressReady = false;   // suppresses celebration on first paint
+
+    function updateProgress(activeCount, doneCount) {
+      const total = activeCount + doneCount;   // deleted cards are not in play
+      if (total === 0) {
+        $progressRow.style.display = "none";
+        _wasComplete = false;
+        _progressReady = true;
+        return;
+      }
+
+      $progressRow.style.display = "flex";
+      $ringFill.style.strokeDasharray = RING_CIRC;
+      $ringFill.style.strokeDashoffset = String(RING_CIRC * (1 - doneCount / total));
+      $progressText.textContent = `${doneCount} of ${total} discussed`;
+
+      const complete = doneCount === total;
+      $progressRow.classList.toggle("complete", complete);
+
+      if (complete && !_wasComplete && _progressReady) {
+        celebrate();
+        showToast("Guide complete", "success");
+      }
+      _wasComplete = complete;
+      _progressReady = true;
     }
 
     function updateFilterCount() {
@@ -1254,6 +1741,13 @@
         el.classList.toggle("filtered", !match);
       });
       updateFilterCount();
+
+      // Filtered-out cards stay in the DOM, so reordering while a search is
+      // active would move cards relative to invisible neighbours and corrupt
+      // the real order. Turn dragging off for the duration.
+      const filtering = !!searchQuery;
+      sortables.forEach(s => s.option("disabled", filtering));
+      document.body.classList.toggle("is-filtering", filtering);
     }
 
     async function createVersesSection(text) {
@@ -1296,6 +1790,7 @@
         const el = document.createElement("div");
         el.className = "card";
         el.dataset.id = c.id;
+        el.tabIndex = 0;   // focusable so Alt + arrows can reorder it
 
         const isEdited = c.originalText && c.originalText !== c.text;
         const isCustom = c.source === "custom";
@@ -1318,12 +1813,14 @@
           ${c.title ? `<strong style="font-size:13px;margin-left:4px">${escapeHtml(c.title)}</strong>` : ""}
           ${isEdited ? '<span class="edited-badge">EDITED</span>' : ''}
           <div class="card-actions">
+            <button class="btn-icon btn-move" data-action="move-up" title="Move up" aria-label="Move up">${ICONS.up}</button>
+            <button class="btn-icon btn-move" data-action="move-down" title="Move down" aria-label="Move down">${ICONS.down}</button>
             ${c.status === 'active' ? `
-              <button class="btn-icon" data-action="edit" title="Edit">${ICONS.edit}</button>
-              <button class="btn-icon" data-action="complete" title="Complete" style="color:var(--success)">${ICONS.check}</button>
-              <button class="btn-icon btn-danger" data-action="trash" title="Delete">${ICONS.trash}</button>
+              <button class="btn-icon" data-action="edit" title="Edit" aria-label="Edit card">${ICONS.edit}</button>
+              <button class="btn-icon" data-action="complete" title="Complete" aria-label="Mark complete" style="color:var(--success)">${ICONS.check}</button>
+              <button class="btn-icon btn-danger" data-action="trash" title="Delete" aria-label="Delete card">${ICONS.trash}</button>
             ` : `
-              <button class="btn-icon" data-action="undo" title="Restore">${ICONS.undo}</button>
+              <button class="btn-icon" data-action="undo" title="Restore" aria-label="Restore card">${ICONS.undo}</button>
             `}
           </div>
         `;
@@ -1366,7 +1863,11 @@
     }
 
     // ---- Sortable with improved feel ----
-    Sortable.create($boardActive, {
+    // All three boards share one group, so dragging a card into Completed or
+    // Deleted changes its status. getCurrentCards() already derives status from
+    // the container a card ends up in, so no extra bookkeeping is needed.
+    const sortOpts = {
+      group: "cards",
       animation: 200,
       handle: ".drag-handle",
       ghostClass: "ghost",
@@ -1378,8 +1879,44 @@
       swapThreshold: 0.55,         // tighter swap zone
       delay: 80,                   // slight delay prevents accidental drags on mobile
       delayOnTouchOnly: true,      // delay only applies on touch devices
-      onEnd() { cards = getCurrentCards(); autoSave(); }
-    });
+      scroll: true,                // auto-scroll when dragging near a viewport edge
+      scrollSensitivity: 80,
+      scrollSpeed: 12,
+      bubbleScroll: true,
+      onStart() { if (navigator.vibrate) navigator.vibrate(8); },
+      onEnd(evt) {
+        cards = getCurrentCards();
+        if (evt.from !== evt.to) {
+          // Dropped into a different board, so the card's status changed and its
+          // action buttons (complete/delete vs. restore) need to be rebuilt.
+          renderCards(cards);
+        } else {
+          updateCardCounts();
+        }
+        autoSave();
+      }
+    };
+
+    sortables = [$boardActive, $boardDone, $boardDeleted]
+      .map(board => Sortable.create(board, { ...sortOpts }));
+
+    // ---- Reorder without dragging ----
+    // Shared by the ▲/▼ buttons and the Alt + arrow shortcuts.
+    async function nudge(cardEl, dir) {
+      if (searchQuery) return;   // order is unreliable while filtered
+      const sib = dir < 0 ? cardEl.previousElementSibling : cardEl.nextElementSibling;
+      if (!sib) return;
+
+      await withFLIP(() => {
+        if (dir < 0) cardEl.parentNode.insertBefore(cardEl, sib);
+        else cardEl.parentNode.insertBefore(sib, cardEl);
+      });
+
+      cards = getCurrentCards();
+      autoSave();
+      cardEl.focus();
+      if (navigator.vibrate) navigator.vibrate(8);
+    }
 
     const debounce = (fn, ms = 400) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 
@@ -1395,6 +1932,9 @@
       if (!card) return;
       const id = card.dataset.id;
       const action = btn.dataset.action;
+
+      if (action === "move-up")   { await nudge(card, -1); return; }
+      if (action === "move-down") { await nudge(card,  1); return; }
 
       if (action === "edit") {
         card.classList.add("editing");
@@ -1421,7 +1961,7 @@
           const originalText = c.originalText || (c.source === 'pdf' ? c.text : undefined);
           return { ...c, text: newText, originalText };
         });
-        await renderCards(next);
+        await withFLIP(() => renderCards(next));
         autoSave();
         showToast("Saved", "success");
         return;
@@ -1434,9 +1974,19 @@
       else return;
 
       const next = getCurrentCards().map(c => (c.id === id ? { ...c, status: newStatus } : c));
-      await renderCards(next);
+
+      if (action === "complete" || action === "trash") {
+        // When the send-off plays, the card says its own goodbye and a toast
+        // would just be noise. If it was skipped (reduced motion, or another
+        // card is already animating), fall back to the toast.
+        const played = await playCardExit(card, newStatus);
+        await withFLIP(() => renderCards(next));
+        if (!played) showToast(toastMsg, action === "trash" ? "warning" : "success");
+      } else {
+        await withFLIP(() => renderCards(next));
+        showToast(toastMsg, "success");
+      }
       autoSave();
-      showToast(toastMsg, action === "trash" ? "warning" : "success");
     });
 
     // ---- Add card ----
@@ -1447,7 +1997,7 @@
       if (!text) return;
       const item = { id: genId(), type, text, status: "active", source: "custom" };
       if (type === "section" && title) item.title = title;
-      await renderCards([item, ...cards]);
+      await withFLIP(() => renderCards([item, ...cards]));
       $newText.value = "";
       $newText.style.height = 'auto';
       $newTitle.value = "";
@@ -1507,6 +2057,16 @@
         if (!$searchInput.value) collapseSearch();
       }
     }, { passive: true });
+
+    // ---- Reorder a focused card with Alt + arrows ----
+    document.querySelector(".boards").addEventListener("keydown", async (e) => {
+      if (!e.altKey) return;
+      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+      const card = e.target.closest(".card");
+      if (!card) return;
+      e.preventDefault();
+      await nudge(card, e.key === "ArrowUp" ? -1 : 1);
+    });
 
     // ---- Keyboard shortcuts ----
     document.addEventListener("keydown", e => {
@@ -1701,7 +2261,7 @@
             source: "pdf"
           }))
         ];
-        await renderCards(next);
+        await withFLIP(() => renderCards(next));
         autoSave();
         showToast(`Loaded ${next.length} cards`, "success");
       } catch (e) {

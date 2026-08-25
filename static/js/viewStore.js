@@ -14,9 +14,11 @@ let _backupTimer = null;
 let fb = null;
 let unsub = null;
 
-// Track whether this client just wrote to Firestore,
-// so the echo snapshot can be skipped safely.
-let _lastWriteTs = 0;
+// Identifies this browser tab so our own snapshot echo can be skipped without
+// guessing from timestamps. Timestamp proximity could not tell our echo apart
+// from a genuine concurrent write by someone else in the room, so those edits
+// were being silently dropped.
+const CLIENT_ID = Math.random().toString(36).slice(2);
 
 function loadLS() {
   try { memory = JSON.parse(localStorage.getItem(LS_KEY)) || memory; } catch {}
@@ -149,10 +151,8 @@ export async function joinRoom(code, onChange) {
       const remoteTs = data.ts || 0;
       const localTs = memory.rooms[currentRoom]?.live?.ts || 0;
 
-      // Skip if this is our own echo (written < 2s ago with same ts)
-      if (_lastWriteTs && Math.abs(remoteTs - _lastWriteTs) < 2000) {
-        return;
-      }
+      // Skip only our own echo, identified exactly rather than by timing.
+      if (data.by === CLIENT_ID) return;
 
       // Only accept remote if it's genuinely newer
       if (remoteTs > localTs) {
@@ -181,9 +181,8 @@ export async function saveLive(cards) {
     const { db, firestore } = fb;
     const liveDoc = firestore.doc(db, "rooms", currentRoom, "views", "__live");
     const roomDoc = firestore.doc(db, "rooms", currentRoom);
-    _lastWriteTs = ts; // mark so our own echo is skipped
     try {
-      await firestore.setDoc(liveDoc, { cards, ts, _updated: firestore.serverTimestamp() }, { merge: true });
+      await firestore.setDoc(liveDoc, { cards, ts, by: CLIENT_ID, _updated: firestore.serverTimestamp() }, { merge: true });
       await firestore.setDoc(roomDoc, { updated: firestore.serverTimestamp() }, { merge: true });
     } catch (e) {
       console.error("saveLive Firestore error (saved locally):", e);
