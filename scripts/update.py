@@ -255,24 +255,44 @@ def _find_message_page_for_today(today: datetime.date) -> str | None:
     else:
         return undated_candidates[-1]
 
-def find_current_series_resources_url() -> str:
-    soup = get_soup(LEARN_URL)
+def find_current_series_resources_url() -> str | None:
+    """
+    Best-effort: find the current series' "Resources" link on the Learn page.
+
+    This is only used as a last-resort fallback (see step 3 in
+    find_today_discussion_pdf_or_page); the primary discovery path reads the
+    Messages page directly. The Learn page markup changes from time to time, so
+    return None rather than raising when no suitable link is found, and let the
+    caller decide whether the fallback is even needed.
+    """
+    try:
+        soup = get_soup(LEARN_URL)
+    except Exception as e:
+        print(f"Note: could not load Learn page for series Resources link: {e}")
+        return None
+
     past_series_header = soup.find(
         lambda tag: tag.name in ("h4","h5","h2","h3") and "Past Series" in tag.get_text()
     )
     candidates = []
     for a in soup.find_all("a"):
-        if a.get_text(strip=True) == "Resources":
+        # Match the series resources link. Older markup used the exact text
+        # "Resources"; current markup uses "Series Resources". Keep this tight
+        # so we do not pick up prose links that merely end in "resources".
+        text = a.get_text(strip=True).lower()
+        if text in ("resources", "series resources"):
             if past_series_header and hasattr(a, "sourceline") and hasattr(past_series_header, "sourceline"):
                 if (a.sourceline or 0) < (past_series_header.sourceline or 10**9):
                     candidates.append(a)
             else:
                 candidates.append(a)
     if not candidates:
-        raise RuntimeError("Could not find current series 'Resources' link on Learn page.")
+        print("Note: no current series 'Resources' link found on Learn page; "
+              "relying on Messages page discovery.")
+        return None
     return requests.compat.urljoin(LEARN_URL, candidates[0].get("href"))
 
-def find_today_discussion_pdf_or_page(series_url: str, today: datetime.date) -> dict:
+def find_today_discussion_pdf_or_page(series_url: str | None, today: datetime.date) -> dict:
     """
     Returns: { series_title, date, url, context, all_guides }
     'url' may be a PDF or HTML page. We'll parse accordingly.
@@ -302,6 +322,11 @@ def find_today_discussion_pdf_or_page(series_url: str, today: datetime.date) -> 
             }
 
     # 3) Fallback: series resources list (date-scored)
+    if not series_url:
+        raise RuntimeError(
+            "Could not locate a Discussion Guide via the Messages page, and no "
+            "series Resources URL was available as a fallback."
+        )
     soup_r = get_soup(series_url)
     series_title_tag = soup_r.find(lambda t: t.name in ("h1","h2") and t.get_text(strip=True))
     series_title = series_title_tag.get_text(strip=True) if series_title_tag else "Current Series"
@@ -594,12 +619,14 @@ def main():
     args = ap.parse_args()
 
     today = datetime.datetime.now(tz=TZ).date()
-    series_url = find_current_series_resources_url()
     meta = {"series_title": "Current Series", "date": today, "url": None, "context": ""}
 
     if args.override:
         source_url = args.override
     else:
+        # Primary discovery is the Messages page; the Learn page "Resources"
+        # link is only a last-resort fallback, so resolve it best-effort.
+        series_url = find_current_series_resources_url()
         meta = find_today_discussion_pdf_or_page(series_url, today)
         source_url = meta["url"]
 
