@@ -503,7 +503,7 @@
     .card.exiting .edit-area,
     .card.exiting .card-verses {
       opacity: 0;
-      transition: opacity 0.16s ease;
+      transition: opacity 0.3s ease;
     }
 
     .card.exit-done {
@@ -545,16 +545,27 @@
       text-align: center;
       text-wrap: balance;
       opacity: 0;
-      transform: translateY(7px) scale(0.94);
-      animation: exitMsgIn 0.34s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      /* Settles in slowly. A snappy entrance eats into reading time and makes
+         the whole beat feel hurried. */
+      animation: exitMsgIn 0.52s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
       text-shadow: 0 1px 8px var(--bg);
+    }
+
+    .exit-message.leaving {
+      animation: exitMsgOut 0.32s ease forwards;
     }
 
     .exit-done .exit-message { color: var(--success); }
     .exit-deleted .exit-message { color: var(--text-secondary); font-style: italic; }
 
     @keyframes exitMsgIn {
-      to { opacity: 1; transform: translateY(0) scale(1); }
+      from { opacity: 0; transform: translateY(8px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes exitMsgOut {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(-5px); }
     }
 
     /* ===== PROGRESS ===== */
@@ -1477,59 +1488,100 @@
 
     const wait = ms => new Promise(r => setTimeout(r, ms));
 
-    // Particles confined to one card's footprint. Completion gets bright
-    // confetti falling; deletion gets slower, muted motes drifting down.
+    // Particles confined to one card's footprint. The goal is a lazy sprinkle,
+    // not a burst: pieces drift down slowly, sway side to side like real paper,
+    // and fade in and out at the edges so nothing pops. They are emitted
+    // continuously and taper off rather than all arriving at once.
+    const PARTICLE_CFG = {
+      done: {
+        colors: ["#3dae8e", "#5b8def", "#9b7aed", "#d4943a", "#e6ecf7"],
+        rate: 0.30, maxAlive: 30,
+        vy: [0.28, 0.60], gravity: 0.0030,
+        size: [4, 8], spin: 0.045,
+        swayAmp: [5, 14], swayFreq: [0.012, 0.028],
+        round: false
+      },
+      deleted: {
+        colors: ["#6b7280", "#8b92a5", "#a2452f"],
+        rate: 0.15, maxAlive: 15,
+        vy: [0.16, 0.34], gravity: 0.0012,
+        size: [2, 4], spin: 0.012,
+        swayAmp: [3, 8], swayFreq: [0.008, 0.018],
+        round: true
+      }
+    };
+
     function playSlotParticles(canvas, kind) {
+      const noop = { stopSpawning() {}, stop() {} };
       const ctx = canvas.getContext("2d");
       const w = canvas.clientWidth, h = canvas.clientHeight;
-      if (!w || !h) return () => {};
+      if (!w || !h) return noop;
+
       const dpr = window.devicePixelRatio || 1;
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const isDone = kind === "done";
-      const colors = isDone
-        ? ["#3dae8e", "#5b8def", "#9b7aed", "#d4943a", "#e6ecf7"]
-        : ["#6b7280", "#8b92a5", "#e5574f"];
-      const count = isDone ? 52 : 26;
+      const cfg = PARTICLE_CFG[kind] || PARTICLE_CFG.done;
+      const rand = ([lo, hi]) => lo + Math.random() * (hi - lo);
+      let frame = 0;
 
-      const parts = [];
-      for (let i = 0; i < count; i++) {
-        parts.push({
-          x: Math.random() * w,
-          y: -10 - Math.random() * h * 0.9,
-          vx: (Math.random() - 0.5) * (isDone ? 1.3 : 0.45),
-          vy: isDone ? 1.2 + Math.random() * 2.0 : 0.45 + Math.random() * 0.75,
-          sw: isDone ? 4 + Math.random() * 4 : 2 + Math.random() * 2.4,
-          sh: isDone ? 3 + Math.random() * 4 : 2 + Math.random() * 2.4,
+      function make(seeded) {
+        const sw = rand(cfg.size);
+        return {
+          baseX: Math.random() * w,
+          x: 0,
+          y: seeded ? Math.random() * h : -rand([4, 14]),
+          vy: rand(cfg.vy),
+          sw,
+          sh: sw * (0.6 + Math.random() * 0.5),
           rot: Math.random() * Math.PI,
-          vr: (Math.random() - 0.5) * (isDone ? 0.32 : 0.07),
-          c: colors[i % colors.length],
-          round: !isDone,
-          life: 1,
-          fade: isDone ? 0.0038 : 0.0085
-        });
+          vr: (Math.random() - 0.5) * cfg.spin,
+          swayA: rand(cfg.swayAmp),
+          swayF: rand(cfg.swayFreq),
+          swayP: Math.random() * Math.PI * 2,
+          c: cfg.colors[Math.floor(Math.random() * cfg.colors.length)]
+        };
       }
 
-      let raf = null, stopped = false;
+      // Seed a few mid-flight so the card isn't empty for the first moment.
+      const parts = [];
+      for (let i = 0; i < Math.round(cfg.maxAlive * 0.45); i++) parts.push(make(true));
+
+      let raf = null, stopped = false, spawning = true, acc = 0;
+
       (function tick() {
         if (stopped) return;
+        frame++;
         ctx.clearRect(0, 0, w, h);
-        for (const p of parts) {
-          if (p.life <= 0) continue;
-          p.vy += isDone ? 0.045 : 0.012;
-          p.x += p.vx;
+
+        if (spawning) {
+          acc += cfg.rate;
+          while (acc >= 1 && parts.length < cfg.maxAlive) { acc -= 1; parts.push(make(false)); }
+          if (acc > 1) acc = 1;
+        }
+
+        for (let i = parts.length - 1; i >= 0; i--) {
+          const p = parts[i];
+          p.vy += cfg.gravity;
           p.y += p.vy;
           p.rot += p.vr;
-          p.life -= p.fade;
-          if (p.y > h + 12) p.life = 0;
+          p.x = p.baseX + Math.sin(frame * p.swayF + p.swayP) * p.swayA;
+
+          if (p.y > h + 14) { parts.splice(i, 1); continue; }
+
+          // Soft in at the top, soft out at the bottom: no popping.
+          const t = p.y / h;
+          let alpha = 1;
+          if (t < 0.10) alpha = Math.max(0, t / 0.10);
+          else if (t > 0.72) alpha = Math.max(0, (1 - t) / 0.28);
+
           ctx.save();
-          ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+          ctx.globalAlpha = alpha;
           ctx.translate(p.x, p.y);
           ctx.rotate(p.rot);
           ctx.fillStyle = p.c;
-          if (p.round) {
+          if (cfg.round) {
             ctx.beginPath();
             ctx.arc(0, 0, p.sw / 2, 0, Math.PI * 2);
             ctx.fill();
@@ -1541,10 +1593,22 @@
         raf = requestAnimationFrame(tick);
       })();
 
-      return () => { stopped = true; if (raf) cancelAnimationFrame(raf); };
+      return {
+        stopSpawning() { spawning = false; },
+        stop() { stopped = true; if (raf) cancelAnimationFrame(raf); }
+      };
     }
 
     let _exitBusy = false;
+
+    // Four beats: settle (message arrives), read (it just sits there), release
+    // (message leaves, sprinkle tapers), collapse (slot closes, cards slide up).
+    // The read beat is sized to the phrase, because a 45-character line needs
+    // noticeably longer than a 13-character one.
+    const EXIT_TIMING = {
+      done:    { settle: 420, readBase: 580, perChar: 27, readMin: 1200, readMax: 1950, release: 330, collapse: 430 },
+      deleted: { settle: 380, readBase: 520, perChar: 28, readMin: 1050, readMax: 1850, release: 300, collapse: 400 }
+    };
 
     // Returns true if the send-off actually played, so the caller knows whether
     // it still needs to confirm the action some other way.
@@ -1552,9 +1616,12 @@
       if (!cardEl || prefersReducedMotion() || _exitBusy) return false;
       _exitBusy = true;
       try {
+        const T = EXIT_TIMING[kind] || EXIT_TIMING.done;
         const h = cardEl.offsetHeight;
         cardEl.style.height = h + "px";
         cardEl.classList.add("exiting", kind === "done" ? "exit-done" : "exit-deleted");
+
+        const phrase = pickPhrase(kind);
 
         const stage = document.createElement("div");
         stage.className = "exit-stage";
@@ -1562,25 +1629,35 @@
         canvas.className = "exit-canvas";
         const msg = document.createElement("div");
         msg.className = "exit-message";
-        msg.textContent = pickPhrase(kind);
+        msg.textContent = phrase;
         stage.appendChild(canvas);
         stage.appendChild(msg);
         cardEl.appendChild(stage);
 
-        const stop = playSlotParticles(canvas, kind);
+        const particles = playSlotParticles(canvas, kind);
         if (navigator.vibrate) navigator.vibrate(kind === "done" ? [9, 36, 13] : 9);
 
-        await wait(kind === "done" ? 1000 : 850);
+        // Settle, then hold long enough to actually read the line.
+        const readMs = Math.min(
+          T.readMax,
+          Math.max(T.readMin, T.readBase + phrase.length * T.perChar)
+        );
+        await wait(T.settle + readMs);
+
+        // Ease out before closing, so the line is never yanked away mid-read.
+        msg.classList.add("leaving");
+        particles.stopSpawning();
+        await wait(T.release);
 
         // Collapsing the slot's own height is what makes every card below it
         // slide up smoothly, rather than snapping into the gap.
         const collapse = cardEl.animate(
           [{ height: h + "px", marginTop: "6px", marginBottom: "6px", opacity: 1 },
            { height: "0px", marginTop: "0px", marginBottom: "0px", opacity: 0 }],
-          { duration: 330, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" }
+          { duration: T.collapse, easing: "cubic-bezier(0.33, 0, 0.2, 1)", fill: "forwards" }
         );
         try { await collapse.finished; } catch {}
-        stop();
+        particles.stop();
         return true;
       } finally {
         _exitBusy = false;
