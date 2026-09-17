@@ -1,0 +1,9 @@
+# wrangler local state
+.wrangler/
+
+# build output from scripts/update.py
+site/
+
+# python
+.venv/
+__pycache__/
