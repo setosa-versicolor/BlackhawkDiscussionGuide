@@ -674,6 +674,17 @@
       flex: 1;
     }
 
+    .verses-translation {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      margin-right: 6px;
+    }
+
     .verses-toggle {
       font-size: 10px;
       color: var(--text-secondary);
@@ -710,6 +721,17 @@
       opacity: 0.85;
     }
 
+    /* Licence attribution returned per translation; required for NIV/NLT/ESV. */
+    .verse-copyright {
+      font-size: 9.5px;
+      line-height: 1.45;
+      color: var(--text-secondary);
+      opacity: 0.6;
+      margin-top: 5px;
+      padding-left: 12px;
+    }
+    .verse-copyright:empty { display: none; }
+
     .verse-loading { font-size: 12px; color: var(--text-secondary); font-style: italic; }
     .verse-error { font-size: 12px; color: var(--danger); font-style: italic; }
 
@@ -744,6 +766,39 @@
       font-size: 13px;
       font-weight: 400;
       justify-content: flex-start;
+    }
+
+    .menu-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 8px 12px 6px;
+    }
+
+    .menu-field label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+
+    .menu-field select {
+      width: 100%;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 7px 8px;
+      font-size: 12.5px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .menu-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 8px;
     }
 
     .menu-dropdown button:hover { background: var(--card); }
@@ -1012,6 +1067,16 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
           </button>
           <div class="menu-dropdown" id="menuDropdown">
+            <div class="menu-field" id="translationField">
+              <label for="translationSelect">Bible translation</label>
+              <select id="translationSelect">
+                <option value="niv">NIV — New International Version</option>
+                <option value="esv">ESV — English Standard Version</option>
+                <option value="nlt">NLT — New Living Translation</option>
+                <option value="kjv">KJV — King James Version</option>
+              </select>
+            </div>
+            <div class="menu-divider"></div>
             <button id="shareBtn">Copy share link</button>
             <button id="refreshBtn">Refresh guide</button>
             <button id="helpBtn">Keyboard shortcuts</button>
@@ -1208,6 +1273,69 @@
     const verseCache = {};
     const ESV_WORKER_URL = 'https://esv-bible-proxy.johnston-thayer.workers.dev';
 
+    // Deploy workers/bible-proxy, then paste its URL here to switch on
+    // NIV/NLT/KJV. Until it is set those three report themselves as
+    // unconfigured and ESV keeps working exactly as before.
+    const BIBLE_PROXY_URL = 'https://bible-proxy.johnston-thayer.workers.dev';
+
+    // ESV comes from api.esv.org via its own worker; the other three come from
+    // API.Bible via workers/bible-proxy. `source` is what fetchVerse routes on.
+    const TRANSLATIONS = {
+      niv: { label: 'NIV', name: 'New International Version', source: 'apibible' },
+      esv: { label: 'ESV', name: 'English Standard Version',  source: 'esv' },
+      nlt: { label: 'NLT', name: 'New Living Translation',    source: 'apibible' },
+      kjv: { label: 'KJV', name: 'King James Version',        source: 'apibible' }
+    };
+    const DEFAULT_TRANSLATION = 'niv';
+    const TRANSLATION_STORAGE_KEY = 'bhq-translation';
+
+    // api.esv.org doesn't return an attribution string, and the licence
+    // requires one to be shown, so it is spelled out here.
+    const ESV_COPYRIGHT = 'Scripture quotations are from the ESV\u00ae Bible (The Holy Bible, English Standard Version\u00ae), copyright \u00a9 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.';
+
+    function loadTranslation() {
+      try {
+        const saved = localStorage.getItem(TRANSLATION_STORAGE_KEY);
+        if (saved && TRANSLATIONS[saved]) return saved;
+      } catch {}
+      // NIV is the default, but it needs the proxy. Until that is deployed,
+      // fall back to ESV so a first-time reader still gets verses rather than
+      // an error on every card. Setting BIBLE_PROXY_URL makes NIV the default.
+      if (!BIBLE_PROXY_URL && TRANSLATIONS[DEFAULT_TRANSLATION].source !== 'esv') {
+        return 'esv';
+      }
+      return DEFAULT_TRANSLATION;
+    }
+
+    function saveTranslation(t) {
+      try { localStorage.setItem(TRANSLATION_STORAGE_KEY, t); } catch {}
+    }
+
+    let currentTranslation = loadTranslation();
+
+    // API.Bible addresses passages by book id (JHN.3.16), not by name, so the
+    // normalised names produced by bookMappings are mapped across here.
+    const bookIds = {
+      'Genesis': 'GEN', 'Exodus': 'EXO', 'Leviticus': 'LEV', 'Numbers': 'NUM',
+      'Deuteronomy': 'DEU', 'Joshua': 'JOS', 'Judges': 'JDG', 'Ruth': 'RUT',
+      '1 Samuel': '1SA', '2 Samuel': '2SA', '1 Kings': '1KI', '2 Kings': '2KI',
+      '1 Chronicles': '1CH', '2 Chronicles': '2CH', 'Ezra': 'EZR',
+      'Nehemiah': 'NEH', 'Esther': 'EST', 'Job': 'JOB', 'Psalm': 'PSA',
+      'Proverbs': 'PRO', 'Ecclesiastes': 'ECC', 'Song of Solomon': 'SNG',
+      'Isaiah': 'ISA', 'Jeremiah': 'JER', 'Lamentations': 'LAM',
+      'Ezekiel': 'EZK', 'Daniel': 'DAN', 'Hosea': 'HOS', 'Joel': 'JOL',
+      'Amos': 'AMO', 'Obadiah': 'OBA', 'Jonah': 'JON', 'Micah': 'MIC',
+      'Nahum': 'NAM', 'Habakkuk': 'HAB', 'Zephaniah': 'ZEP', 'Haggai': 'HAG',
+      'Zechariah': 'ZEC', 'Malachi': 'MAL', 'Matthew': 'MAT', 'Mark': 'MRK',
+      'Luke': 'LUK', 'John': 'JHN', 'Acts': 'ACT', 'Romans': 'ROM',
+      '1 Corinthians': '1CO', '2 Corinthians': '2CO', 'Galatians': 'GAL',
+      'Ephesians': 'EPH', 'Philippians': 'PHP', 'Colossians': 'COL',
+      '1 Thessalonians': '1TH', '2 Thessalonians': '2TH', '1 Timothy': '1TI',
+      '2 Timothy': '2TI', 'Titus': 'TIT', 'Philemon': 'PHM', 'Hebrews': 'HEB',
+      'James': 'JAS', '1 Peter': '1PE', '2 Peter': '2PE', '1 John': '1JN',
+      '2 John': '2JN', '3 John': '3JN', 'Jude': 'JUD', 'Revelation': 'REV'
+    };
+
     const bookMappings = {
       'gen': 'Genesis', 'genesis': 'Genesis',
       'ex': 'Exodus', 'exo': 'Exodus', 'exod': 'Exodus', 'exodus': 'Exodus',
@@ -1300,25 +1428,69 @@
         const key = reference.toLowerCase();
         if (!seen.has(key)) {
           seen.add(key);
-          references.push({ reference, apiReference: `${normalizedBook}+${chapter}:${verseStart}-${verseEnd}` });
+          references.push({
+            reference,
+            book: normalizedBook,
+            chapter,
+            verseStart,
+            verseEnd,
+            // What the ESV worker expects; unchanged from before.
+            query: `${normalizedBook} ${chapter}:${verseStart}-${verseEnd}`
+          });
         }
       }
       return references;
     }
 
-    async function fetchVerse(apiReference) {
-      if (verseCache[apiReference]) return verseCache[apiReference];
+    // API.Bible passage id, e.g. JHN.3.16 or 1CO.13.4-1CO.13.7.
+    function buildPassageId(ref) {
+      const id = bookIds[ref.book];
+      if (!id) return null;
+      const start = `${id}.${ref.chapter}.${ref.verseStart}`;
+      return ref.verseEnd !== ref.verseStart
+        ? `${start}-${id}.${ref.chapter}.${ref.verseEnd}`
+        : start;
+    }
+
+    async function fetchVerse(ref, translation = currentTranslation) {
+      const cfg = TRANSLATIONS[translation] || TRANSLATIONS[DEFAULT_TRANSLATION];
+      // Cache per translation, so switching back and forth costs nothing.
+      const cacheKey = `${translation}|${ref.reference}`;
+      if (verseCache[cacheKey]) return verseCache[cacheKey];
+
       try {
-        const query = apiReference.replace(/\+/g, ' ');
-        const response = await fetch(`${ESV_WORKER_URL}?q=${encodeURIComponent(query)}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        const result = { text: data.passages[0].trim(), reference: query };
-        verseCache[apiReference] = result;
+        let result;
+        if (cfg.source === 'esv') {
+          const response = await fetch(`${ESV_WORKER_URL}?q=${encodeURIComponent(ref.query)}`);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          result = {
+            text: data.passages[0].trim(),
+            reference: ref.reference,
+            copyright: ESV_COPYRIGHT
+          };
+        } else {
+          if (!BIBLE_PROXY_URL) {
+            return { error: true, message: `${cfg.label} is not configured yet \u2014 deploy workers/bible-proxy` };
+          }
+          const passage = buildPassageId(ref);
+          if (!passage) throw new Error(`No book id for ${ref.book}`);
+          const url = `${BIBLE_PROXY_URL}?translation=${encodeURIComponent(translation)}&passage=${encodeURIComponent(passage)}`;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          if (!data.passages || !data.passages[0]) throw new Error('Empty passage');
+          result = {
+            text: data.passages[0].trim(),
+            reference: data.reference || ref.reference,
+            copyright: data.copyright || ''
+          };
+        }
+        verseCache[cacheKey] = result;
         return result;
       } catch (error) {
         console.error('Error fetching verse:', error);
-        return { error: true, message: 'Unable to load verse' };
+        return { error: true, message: `Unable to load verse (${cfg.label})` };
       }
     }
 
@@ -1336,6 +1508,7 @@
     const $searchWrap = $("searchWrap"), $actionButtons = $("actionButtons");
     const $helpBtn = $("helpBtn"), $shortcutsHelp = $("shortcutsHelp"), $closeHelp = $("closeHelp");
     const $menuToggle = $("menuToggle"), $menuDropdown = $("menuDropdown");
+    const $translationSelect = $("translationSelect"), $translationField = $("translationField");
     const $activeCount = $("activeCount"), $doneCount = $("doneCount"), $deletedCount = $("deletedCount");
     const $emptyState = $("emptyState"), $emptyLoadBtn = $("emptyLoadBtn"), $hintText = $("hintText");
     const $progressRow = $("progressRow"), $ringFill = $("ringFill"), $progressText = $("progressText");
@@ -1352,7 +1525,25 @@
     // ---- Menu ----
     $menuToggle.addEventListener("click", e => { e.stopPropagation(); $menuDropdown.classList.toggle("visible"); });
     document.addEventListener("click", e => { if (!e.target.closest(".menu-toggle")) $menuDropdown.classList.remove("visible"); });
-    $menuDropdown.addEventListener("click", () => $menuDropdown.classList.remove("visible"));
+    // Every other child of the menu is a one-shot action, so a click closes it.
+    // The translation picker is not, so it opts out.
+    $menuDropdown.addEventListener("click", e => {
+      if (e.target.closest("#translationField")) return;
+      $menuDropdown.classList.remove("visible");
+    });
+
+    // ---- Translation picker ----
+    $translationSelect.value = currentTranslation;
+    $translationField.addEventListener("click", e => e.stopPropagation());
+    $translationSelect.addEventListener("change", () => {
+      const next = $translationSelect.value;
+      if (!TRANSLATIONS[next] || next === currentTranslation) return;
+      currentTranslation = next;
+      saveTranslation(next);
+      refreshVerses();
+      $menuDropdown.classList.remove("visible");
+      showToast(`Showing verses in ${TRANSLATIONS[next].label}`);
+    });
 
     // ---- Icons ----
     const ICONS = {
@@ -1867,6 +2058,25 @@
       document.body.classList.toggle("is-filtering", filtering);
     }
 
+    // Fills one .verse-block from whichever translation is current. Split out
+    // of createVersesSection so switching translations can refresh blocks in
+    // place, keeping each section's open/closed state.
+    function loadVerseBlock(block, ref) {
+      const vt = block.querySelector(".verse-text");
+      const vc = block.querySelector(".verse-copyright");
+      vt.className = "verse-text verse-loading";
+      vt.textContent = "Loading...";
+      if (vc) vc.textContent = "";
+      const token = (block.dataset.token = String(Date.now() + Math.random()));
+      return fetchVerse(ref, currentTranslation).then(r => {
+        // A newer switch may have landed while this request was in flight.
+        if (block.dataset.token !== token) return;
+        vt.className = r.error ? "verse-text verse-error" : "verse-text";
+        vt.textContent = r.error ? r.message : r.text;
+        if (vc) vc.textContent = r.error ? "" : (r.copyright || "");
+      });
+    }
+
     async function createVersesSection(text) {
       const refs = detectVerseReferences(text);
       if (refs.length === 0) return null;
@@ -1874,7 +2084,8 @@
       div.className = "card-verses";
       const header = document.createElement("div");
       header.className = "verses-header";
-      header.innerHTML = `<span class="verses-icon">📖</span><span class="verses-title">Verses (${refs.length})</span><span class="verses-toggle">▾</span>`;
+      const label = TRANSLATIONS[currentTranslation].label;
+      header.innerHTML = `<span class="verses-icon">📖</span><span class="verses-title">Verses (${refs.length})</span><span class="verses-translation">${label}</span><span class="verses-toggle">▾</span>`;
       const content = document.createElement("div");
       content.className = "verses-content";
       header.addEventListener("click", () => {
@@ -1886,15 +2097,25 @@
       for (const ref of refs) {
         const block = document.createElement("div");
         block.className = "verse-block";
-        block.innerHTML = `<div class="verse-reference">${ref.reference}</div><div class="verse-text verse-loading">Loading...</div>`;
+        // Kept on the node so a translation switch can re-fetch without
+        // re-running detection over the card text.
+        block.dataset.verseRef = JSON.stringify(ref);
+        block.innerHTML = `<div class="verse-reference">${ref.reference}</div><div class="verse-text verse-loading">Loading...</div><div class="verse-copyright"></div>`;
         content.appendChild(block);
-        fetchVerse(ref.apiReference).then(r => {
-          const vt = block.querySelector(".verse-text");
-          vt.className = r.error ? "verse-text verse-error" : "verse-text";
-          vt.textContent = r.error ? r.message : r.text;
-        });
+        loadVerseBlock(block, ref);
       }
       return div;
+    }
+
+    // Re-fetch every rendered verse in the newly chosen translation.
+    function refreshVerses() {
+      const label = TRANSLATIONS[currentTranslation].label;
+      document.querySelectorAll(".verses-translation").forEach(el => { el.textContent = label; });
+      document.querySelectorAll(".verse-block").forEach(block => {
+        let ref;
+        try { ref = JSON.parse(block.dataset.verseRef || "null"); } catch { ref = null; }
+        if (ref) loadVerseBlock(block, ref);
+      });
     }
 
     async function renderCards(next) {

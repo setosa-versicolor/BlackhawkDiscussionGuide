@@ -21,6 +21,25 @@ python -m http.server -d site 8080
 # open http://localhost:8080
 ```
 
+## Bible translations
+
+Verse references detected in the questions are looked up live. Four
+translations are available from the ⋮ menu; the choice is remembered per
+device and defaults to **NIV**.
+
+| Translation | Source | Proxy |
+|---|---|---|
+| NIV (default) | API.Bible | `workers/bible-proxy` |
+| ESV | api.esv.org | existing `esv-bible-proxy` |
+| NLT | API.Bible | `workers/bible-proxy` |
+| KJV | API.Bible | `workers/bible-proxy` |
+
+Both proxies exist so the API keys stay out of this public repo. **NIV, NLT and
+KJV stay switched off until `workers/bible-proxy` is deployed** and its URL is
+set as `BIBLE_PROXY_URL` in `templates/page.html` — see
+[workers/bible-proxy/README.md](workers/bible-proxy/README.md). Until then the
+page falls back to ESV, which is unaffected.
+
 ## Notes
 - Timezone is America/Chicago.
 - If the series markup changes, adjust `find_current_series_resources_url()` or date parsing in `find_today_discussion_pdf()`.
