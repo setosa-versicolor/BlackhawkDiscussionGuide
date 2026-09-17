@@ -1358,6 +1358,36 @@
 
     // ---- Bible Verse Detection ----
     const verseCache = {};
+
+    // Verses resolved at build time by scripts/verses.py and shipped inside
+    // guide.json, keyed by reference then translation. When a reference is in
+    // here it costs no API call at all - which is every reference in the
+    // week's guide. Anything typed into a custom card still goes to the proxy.
+    let prefetchedVerses = {};
+
+    // Cards usually come back from the room store rather than from
+    // loadGuideJson(), so the prefetched verses have to be loaded in their own
+    // right or they would only ever apply on a fresh "Load Sermon". Lazy,
+    // because guideJsonUrl is declared further down, and awaited by fetchVerse
+    // so a card that renders first still waits for it.
+    let prefetchedReady = null;
+
+    function ensurePrefetched() {
+      if (!prefetchedReady) {
+        prefetchedReady = (async () => {
+          try {
+            const res = await fetch(new URL("data/guide.json", location.href).toString());
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data && data.verses) prefetchedVerses = data.verses;
+          } catch (err) {
+            // No prefetch available; live lookups still work.
+            console.warn("Prefetched verses unavailable:", err);
+          }
+        })();
+      }
+      return prefetchedReady;
+    }
     const ESV_WORKER_URL = 'https://esv-bible-proxy.johnston-thayer.workers.dev';
 
     // Deploy workers/bible-proxy, then paste its URL here to switch on
@@ -1558,6 +1588,19 @@
       // Cache per translation, so switching back and forth costs nothing.
       const cacheKey = `${translation}|${ref.reference}`;
       if (verseCache[cacheKey]) return verseCache[cacheKey];
+
+      // Resolved at build time? Then there is nothing to fetch.
+      await ensurePrefetched();
+      const pre = prefetchedVerses[ref.reference] && prefetchedVerses[ref.reference][translation];
+      if (pre && pre.text) {
+        const result = {
+          text: pre.text,
+          reference: ref.reference,
+          copyright: pre.copyright || (cfg.source === 'esv' ? ESV_COPYRIGHT : '')
+        };
+        verseCache[cacheKey] = result;
+        return result;
+      }
 
       try {
         let result;
@@ -2795,6 +2838,7 @@
         if (!res.ok) throw new Error("HTTP " + res.status);
         const data = await res.json();
         updateGuideLink(data);
+        prefetchedVerses = data.verses || {};
         const next = [
           ...(data.questions || []).map((q, i) => ({
             id: stableId(q, i),

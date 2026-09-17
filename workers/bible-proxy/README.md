@@ -64,8 +64,17 @@ page handles all four translations through one code path.
 
 - **Allowlists.** Only the three Bible ids above are reachable, and `passage` is
   regex-validated, so the worker can't be repurposed as an open API.Bible proxy.
-- **Edge cache.** Responses are cached for a year (scripture is immutable),
-  which is what keeps Sunday-morning traffic off the daily API quota.
+- **KV cache.** Every resolved passage is stored in the `VERSES` KV namespace,
+  so a given translation+passage costs one API.Bible call once, ever, and is
+  then served from KV for every reader in every room. Scripture does not
+  change, so entries never expire.
+- **Not the Cache API.** An earlier version used `caches.default`. That needs a
+  custom domain and is a no-op on `*.workers.dev`, so it silently cached
+  nothing. KV is a binding and works regardless of domain.
+- **KV is eventually consistent** (~60s to propagate globally), so a brand-new
+  passage may be fetched a couple of extra times in its first minute. The
+  build-time prefetch warms the cache days before anyone reads, so in practice
+  readers always hit a warm key.
 - **CORS.** `ALLOWED_ORIGINS` in `src/index.js` lists who may call it. Add your
   origin there if you fork the site.
 - **Attribution.** API.Bible returns a `copyright` string per translation and

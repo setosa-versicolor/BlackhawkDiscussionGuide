@@ -11,6 +11,12 @@
  *
  * The `passages` array mirrors the shape of the existing esv-bible-proxy worker
  * so the page can treat every translation the same way.
+ *
+ * Resolved passages are cached in Workers KV, so a given translation+passage
+ * costs one API.Bible call once and is then served from KV for every reader,
+ * in every room, indefinitely. Scripture does not change, so entries never
+ * expire. This deliberately does NOT use the Cache API: that requires a custom
+ * domain and is a no-op on *.workers.dev, where it silently cached nothing.
  */
 
 const API_BASE = "https://rest.api.bible/v1/bibles";
@@ -98,17 +104,16 @@ export default {
       return json({ error: "Worker is missing the API_BIBLE_KEY secret" }, 500, origin);
     }
 
-    // Scripture text never changes, so cache aggressively at the edge. This is
-    // what keeps a busy Sunday morning from eating the daily API quota.
-    const cacheKey = new Request(
-      `https://bible-proxy.internal/${translation}/${passage}`,
-      { method: "GET" }
-    );
-    const cache = caches.default;
-    const cached = await cache.match(cacheKey);
-    if (cached) {
-      const body = await cached.json();
-      return json(body, 200, origin, { "X-Cache": "HIT" });
+    // Bump the prefix if the stored shape ever changes, to retire old entries.
+    const kvKey = `v1:${translation}:${passage}`;
+    if (env.VERSES) {
+      try {
+        const hit = await env.VERSES.get(kvKey, { type: "json" });
+        if (hit) return json(hit, 200, origin, { "X-Cache": "HIT" });
+      } catch (err) {
+        // A KV read failure should slow us down, never break the page.
+        console.error("KV read failed", err);
+      }
     }
 
     const params = new URLSearchParams({
@@ -153,18 +158,16 @@ export default {
       translation: bible.label,
     };
 
-    // Store in the edge cache for a year; scripture is immutable.
-    ctx.waitUntil(
-      cache.put(
-        cacheKey,
-        new Response(JSON.stringify(body), {
-          headers: {
-            "Content-Type": "application/json; charset=utf-8",
-            "Cache-Control": "public, max-age=31536000",
-          },
-        })
-      )
-    );
+    // Written without waitUntil: the next reader may arrive within
+    // milliseconds, and a fire-and-forget put can lose that race and spend a
+    // second API call. Paying ~10ms here makes the cache reliable.
+    if (env.VERSES) {
+      try {
+        await env.VERSES.put(kvKey, JSON.stringify(body));
+      } catch (err) {
+        console.error("KV write failed", err);
+      }
+    }
 
     return json(body, 200, origin, { "X-Cache": "MISS" });
   },
