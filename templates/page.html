@@ -1442,6 +1442,20 @@
       return references;
     }
 
+    // api.esv.org prefixes each passage with its own reference heading and a
+    // blank line, and indents the body. The bible-proxy worker already strips
+    // that for API.Bible, so do the same here and all four translations render
+    // as one clean run of prose instead of ESV showing its reference twice.
+    function cleanVerseText(raw) {
+      let t = String(raw || '');
+      const parts = t.split(/\n\s*\n/);
+      // A heading looks like "Luke 19:10" or "1 Corinthians 13:4\u201313".
+      if (parts.length > 1 && /^\s*(?:[1-3]\s+)?[A-Za-z][A-Za-z\s]*\s+\d+:\d+(?:\s*[-\u2013]\s*\d+)?\s*$/.test(parts[0])) {
+        t = parts.slice(1).join(' ');
+      }
+      return t.replace(/\s+/g, ' ').trim();
+    }
+
     // API.Bible passage id, e.g. JHN.3.16 or 1CO.13.4-1CO.13.7.
     function buildPassageId(ref) {
       const id = bookIds[ref.book];
@@ -1465,7 +1479,7 @@
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const data = await response.json();
           result = {
-            text: data.passages[0].trim(),
+            text: cleanVerseText(data.passages[0]),
             reference: ref.reference,
             copyright: ESV_COPYRIGHT
           };
@@ -1481,7 +1495,7 @@
           const data = await response.json();
           if (!data.passages || !data.passages[0]) throw new Error('Empty passage');
           result = {
-            text: data.passages[0].trim(),
+            text: cleanVerseText(data.passages[0]),
             reference: data.reference || ref.reference,
             copyright: data.copyright || ''
           };
