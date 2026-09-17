@@ -679,10 +679,95 @@
       font-weight: 700;
       letter-spacing: 0.6px;
       color: var(--text-secondary);
+      background: transparent;
       border: 1px solid var(--border);
       border-radius: 4px;
-      padding: 1px 5px;
+      /* Roomy enough to be a comfortable tap target on a phone. */
+      padding: 3px 7px;
       margin-right: 6px;
+      font-family: inherit;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    /* The badge is deliberately small, but a ~23px target is awkward on a
+       phone. This grows the touch area to roughly 39px without changing how
+       the badge looks. */
+    .verses-translation::after {
+      content: "";
+      position: absolute;
+      inset: -8px -4px;
+    }
+
+    .verses-translation:hover,
+    .verses-translation[aria-expanded="true"] {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(91, 141, 239, 0.08);
+    }
+
+    .verses-translation:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    /* Anchored to the badge but parented to <body>, so no card ever clips it. */
+    .translation-popover {
+      position: absolute;
+      z-index: 1200;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 4px;
+      min-width: 190px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+
+    .translation-popover button {
+      background: transparent;
+      color: var(--text);
+      border: none;
+      padding: 9px 10px;
+      text-align: left;
+      border-radius: var(--radius);
+      font-size: 12.5px;
+      font-family: inherit;
+      font-weight: 400;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .translation-popover button:hover { background: var(--card); }
+
+    .translation-popover button[aria-checked="true"] {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .translation-popover .tp-check {
+      width: 12px;
+      flex: none;
+      font-size: 11px;
+    }
+
+    .translation-popover .tp-abbr {
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      min-width: 30px;
+      flex: none;
+    }
+
+    .translation-popover .tp-name {
+      color: var(--text-secondary);
+      font-size: 11.5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .verses-toggle {
@@ -1547,17 +1632,109 @@
     });
 
     // ---- Translation picker ----
-    $translationSelect.value = currentTranslation;
-    $translationField.addEventListener("click", e => e.stopPropagation());
-    $translationSelect.addEventListener("change", () => {
-      const next = $translationSelect.value;
+    // Two entry points - the menu dropdown and the badge on each verses header
+    // - both funnel through setTranslation so they can never disagree.
+    function setTranslation(next) {
       if (!TRANSLATIONS[next] || next === currentTranslation) return;
       currentTranslation = next;
       saveTranslation(next);
+      $translationSelect.value = next;
       refreshVerses();
-      $menuDropdown.classList.remove("visible");
       showToast(`Showing verses in ${TRANSLATIONS[next].label}`);
+    }
+
+    $translationSelect.value = currentTranslation;
+    $translationField.addEventListener("click", e => e.stopPropagation());
+    $translationSelect.addEventListener("change", () => {
+      setTranslation($translationSelect.value);
+      $menuDropdown.classList.remove("visible");
     });
+
+    // ---- Badge popover ----
+    // The badge sits inside .verses-header, whose own click toggles the
+    // section, so every handler here stops propagation.
+    let $tpop = null, $tpopAnchor = null;
+
+    function closeTranslationPopover() {
+      if (!$tpop) return;
+      $tpop.remove();
+      $tpop = null;
+      if ($tpopAnchor) {
+        $tpopAnchor.setAttribute("aria-expanded", "false");
+        $tpopAnchor = null;
+      }
+    }
+
+    function openTranslationPopover(anchor) {
+      closeTranslationPopover();
+      $tpopAnchor = anchor;
+      anchor.setAttribute("aria-expanded", "true");
+
+      const pop = document.createElement("div");
+      pop.className = "translation-popover";
+      pop.setAttribute("role", "menu");
+      for (const [key, cfg] of Object.entries(TRANSLATIONS)) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.setAttribute("role", "menuitemradio");
+        b.setAttribute("aria-checked", String(key === currentTranslation));
+        b.innerHTML = `<span class="tp-check">${key === currentTranslation ? "✓" : ""}</span><span class="tp-abbr">${cfg.label}</span><span class="tp-name">${cfg.name}</span>`;
+        b.addEventListener("click", e => {
+          e.stopPropagation();
+          setTranslation(key);
+          closeTranslationPopover();
+        });
+        pop.appendChild(b);
+      }
+
+      // Parented to <body> rather than the card so no overflow can clip it,
+      // and positioned in page coordinates so it tracks the anchor.
+      document.body.appendChild(pop);
+      const r = anchor.getBoundingClientRect();
+      const pw = pop.offsetWidth, ph = pop.offsetHeight;
+      const margin = 8;
+      let left = r.right + window.scrollX - pw;
+      left = Math.max(margin + window.scrollX, Math.min(left, window.scrollX + document.documentElement.clientWidth - pw - margin));
+      // Flip above the badge when there isn't room below.
+      const below = r.bottom + 6;
+      const top = (below + ph > window.innerHeight && r.top - ph - 6 > 0)
+        ? r.top + window.scrollY - ph - 6
+        : below + window.scrollY;
+      pop.style.left = `${left}px`;
+      pop.style.top = `${top}px`;
+      pop.addEventListener("click", e => e.stopPropagation());
+      $tpop = pop;
+    }
+
+    // Delegated, because verses headers are created as cards render. This runs
+    // in the CAPTURE phase on purpose: the badge sits inside .verses-header,
+    // whose own click toggles the section open. Bubbling would reach the header
+    // first, so a tap on the badge would collapse the section as well as open
+    // the popover. Capturing lets us swallow the event before it gets there.
+    document.addEventListener("click", e => {
+      const badge = e.target.closest(".verses-translation");
+      if (!badge) return;
+      e.stopPropagation();
+      e.preventDefault();
+      if ($tpopAnchor === badge) closeTranslationPopover();
+      else openTranslationPopover(badge);
+    }, true);
+
+    // Any click that wasn't on a badge (and didn't land inside the popover,
+    // which stops its own) dismisses it.
+    document.addEventListener("click", () => closeTranslationPopover());
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && $tpop) {
+        const a = $tpopAnchor;
+        closeTranslationPopover();
+        if (a) a.focus();
+      }
+    });
+
+    // Anchored in page coordinates, so any layout shift should dismiss it.
+    window.addEventListener("scroll", closeTranslationPopover, true);
+    window.addEventListener("resize", closeTranslationPopover);
 
     // ---- Icons ----
     const ICONS = {
@@ -2099,7 +2276,7 @@
       const header = document.createElement("div");
       header.className = "verses-header";
       const label = TRANSLATIONS[currentTranslation].label;
-      header.innerHTML = `<span class="verses-icon">📖</span><span class="verses-title">Verses (${refs.length})</span><span class="verses-translation">${label}</span><span class="verses-toggle">▾</span>`;
+      header.innerHTML = `<span class="verses-icon">📖</span><span class="verses-title">Verses (${refs.length})</span><button type="button" class="verses-translation" aria-haspopup="true" aria-expanded="false" title="Change translation">${label}</button><span class="verses-toggle">▾</span>`;
       const content = document.createElement("div");
       content.className = "verses-content";
       header.addEventListener("click", () => {
