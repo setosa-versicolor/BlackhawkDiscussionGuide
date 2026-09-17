@@ -564,6 +564,21 @@ def write_json(source_url: str, data: dict, out_path: str = "site/data/guide.jso
         "questions": data.get("questions", []),
         "sections": data.get("sections", []),
     }
+
+    # Resolve this week's scripture references now, so the page costs no API
+    # calls when people read it. Best-effort: if it fails the page just looks
+    # verses up live, exactly as before.
+    try:
+        import verses as verses_mod
+        guide_text = " ".join(
+            payload["questions"]
+            + [s.get("title", "") for s in payload["sections"]]
+            + [s.get("body", "") for s in payload["sections"]]
+        )
+        payload["verses"] = verses_mod.prefetch(guide_text)
+    except Exception as exc:
+        print(f"Verse prefetch skipped: {exc}")
+        payload["verses"] = {}
     Path(out_path).write_text(
         __import__("json").dumps(payload, indent=2, ensure_ascii=False),
         encoding="utf-8"
