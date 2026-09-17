@@ -806,16 +806,17 @@
       opacity: 0.85;
     }
 
-    /* Licence attribution returned per translation; required for NIV/NLT/ESV. */
-    .verse-copyright {
-      font-size: 9.5px;
-      line-height: 1.45;
+    /* Licence attribution, required for NIV/NLT/ESV. Shown once at the foot of
+       the page rather than under every verse, which was repetitive. */
+    .scripture-credit {
+      margin-top: 18px;
+      font-size: 10px;
+      line-height: 1.5;
       color: var(--text-secondary);
-      opacity: 0.6;
-      margin-top: 5px;
-      padding-left: 12px;
+      opacity: 0.55;
+      max-width: 60ch;
     }
-    .verse-copyright:empty { display: none; }
+    .scripture-credit:empty { display: none; }
 
     .verse-loading { font-size: 12px; color: var(--text-secondary); font-style: italic; }
     .verse-error { font-size: 12px; color: var(--danger); font-style: italic; }
@@ -1240,6 +1241,7 @@
     </div>
 
     <div class="hint" id="hintText">Press <strong>?</strong> for shortcuts</div>
+    <div class="scripture-credit" id="scriptureCredit"></div>
     <div class="footer">blackhawk.church/learn</div>
   </div>
 
@@ -2254,18 +2256,32 @@
     // place, keeping each section's open/closed state.
     function loadVerseBlock(block, ref) {
       const vt = block.querySelector(".verse-text");
-      const vc = block.querySelector(".verse-copyright");
       vt.className = "verse-text verse-loading";
       vt.textContent = "Loading...";
-      if (vc) vc.textContent = "";
       const token = (block.dataset.token = String(Date.now() + Math.random()));
       return fetchVerse(ref, currentTranslation).then(r => {
         // A newer switch may have landed while this request was in flight.
         if (block.dataset.token !== token) return;
         vt.className = r.error ? "verse-text verse-error" : "verse-text";
         vt.textContent = r.error ? r.message : r.text;
-        if (vc) vc.textContent = r.error ? "" : (r.copyright || "");
+        // The attribution is identical for every verse in a translation, so it
+        // is collected here and rendered once at the foot of the page.
+        if (!r.error && r.copyright) creditByTranslation[currentTranslation] = r.copyright;
+        renderCredit();
       });
+    }
+
+    // Attribution text per translation, learned from whichever verse loads
+    // first. API.Bible returns it per passage; ESV's is a constant.
+    const creditByTranslation = {};
+
+    function renderCredit() {
+      const el = document.getElementById("scriptureCredit");
+      if (!el) return;
+      // Credit only what is actually on screen: no verses, or none that
+      // loaded, means nothing to attribute.
+      const showing = document.querySelector(".verse-text:not(.verse-loading):not(.verse-error)");
+      el.textContent = showing ? (creditByTranslation[currentTranslation] || "") : "";
     }
 
     async function createVersesSection(text) {
@@ -2291,7 +2307,7 @@
         // Kept on the node so a translation switch can re-fetch without
         // re-running detection over the card text.
         block.dataset.verseRef = JSON.stringify(ref);
-        block.innerHTML = `<div class="verse-reference">${ref.reference}</div><div class="verse-text verse-loading">Loading...</div><div class="verse-copyright"></div>`;
+        block.innerHTML = `<div class="verse-reference">${ref.reference}</div><div class="verse-text verse-loading">Loading...</div>`;
         content.appendChild(block);
         loadVerseBlock(block, ref);
       }
@@ -2302,6 +2318,9 @@
     function refreshVerses() {
       const label = TRANSLATIONS[currentTranslation].label;
       document.querySelectorAll(".verses-translation").forEach(el => { el.textContent = label; });
+      // Drop the outgoing translation's credit right away; the incoming one is
+      // rendered as soon as its first verse lands.
+      renderCredit();
       document.querySelectorAll(".verse-block").forEach(block => {
         let ref;
         try { ref = JSON.parse(block.dataset.verseRef || "null"); } catch { ref = null; }
@@ -2382,6 +2401,9 @@
 
       updateCardCounts();
       applySearch();
+      // Board just changed - if the last verse-bearing card went away, the
+      // credit needs to go with it. Verses still loading will re-render it.
+      renderCredit();
     }
 
     function getCurrentCards() {
