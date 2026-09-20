@@ -1,23 +1,80 @@
 {
-  "url": "https://blackhawk.church/wp-content/uploads/2026/09/Vision-Sunday-Discussion-Guide-9.6.2026.pdf",
-  "title": "Vision Sunday",
+  "url": "https://blackhawk.church/wp-content/uploads/2026/09/What-About-Gods-Will-Discussion-Guide-9.20.26.pdf",
+  "title": "What About: God’s Will",
   "series": "Current Series",
   "questions": [
-    "What’s one of your all-time favorite movies? Why do you love it so much?",
-    "The mission statement of Blackhawk Church is: “Building a loving community that follows Christ in order to reach a community that is lost without him.” What’s the significance of those three little words ‘in order to’? What can happen if we forget how these two parts of the mission statement are connected?",
-    "Read Luke 19:10. Read John 20:21. What do these passages reveal about Jesus’ purpose and his heart for people? What is the spiritual risk for a church—or an individual—that stops actively moving toward those who are lost?",
-    "Pastor Matt talked about how we can reach others by praying for them, sharing our story, and inviting them to join us. When you look at your everyday routines (work, neighborhood, hobbies), who has God placed in your sphere of influence who might not know Him? Is the Holy Spirit prompting you to move toward someone in your life this week through prayer, story-sharing, or an invitation?",
-    "What does it look like for you to live intentionally \"on mission\" this fall? What needs to change in your schedule or priorities to make space for that?",
-    "How can our growth group live on mission together this season (i.e. serving together, co-hosting a gathering, praying for specific people)?"
+    "Are you naturally good at making decisions, or do you tend to be indecisive?",
+    "Pastor Lynne described God’s will as being less about where you will go and what you will do and more about who you are becoming. What is the difference between those two ways of thinking?",
+    "Read Romans 12:1-2 Pastor Lynne stated: \"Discernment doesn't lead to transformation. Transformation leads to discernment.\" How does asking \"Who is God forming me to become?\" change how we make choices compared to asking \"What is the right choice?\"",
+    "Read Galatians 5:22–23. What traits of Jesus are we called to cultivate? How does becoming more like Jesus lead to better decisions?",
+    "Read Proverbs 3:5–6. The Hebrew word for \"acknowledge/submit\" (yāda) means to know. How does reading this verse as \"in all your ways know Him\" change how you approach everyday choices?",
+    "We often carry guilt or second-guess past choices. Looking at figures like Abraham and Peter, how does knowing God can redeem our imperfect decisions bring freedom and relief?",
+    "When we have to make a decision, Lynne suggested four helpful steps: o  Evaluate how the option lines up with what God says. o  Get input from wise, godly people. o  Consider what experts or experience would say. o  Make a decision in faith. Is there a decision you're facing where you need to seek scripture, wise counsel, expertise, or simply take a step of faith? How can this group support you as you navigate that a decision?"
   ],
   "sections": [
     {
       "title": "Pray",
-      "body": "Pray that we would grow in recognizing God’s great love for us. Pray that we join him on his mission to reach and save the lost. Pray that as we reflect on this message, the Holy Spirit will bring specific people to mind who we are called to move towards, and that we will continue to be transformed more into the image of Jesus."
+      "body": "Pray that we may grow closer to God through the process of making decisions. Pray that as we walk with Him, our desire to do what God wants would increase. Pray that as we navigate real decisions in our lives today, that we will lean on God every step of the way. As we continue to reflect on this message, pray that we would continue to be transformed by the power of the Holy Spirit."
     },
     {
       "title": "Next Steps",
       "body": "Check out the resources page for links to several Bible reading plans and other helpful tools. Explore other opportunities for growth and transformation by checking out courses."
     }
-  ]
+  ],
+  "verses": {
+    "Romans 12:1-2": {
+      "niv": {
+        "text": "Therefore, I urge you, brothers and sisters, in view of God’s mercy, to offer your bodies as a living sacrifice, holy and pleasing to God—this is your true and proper worship. Do not conform to the pattern of this world, but be transformed by the renewing of your mind. Then you will be able to test and approve what God’s will is—his good, pleasing and perfect will.",
+        "copyright": "The Holy Bible, New International Version® NIV® Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.® Used by Permission of Biblica, Inc.® All rights reserved worldwide."
+      },
+      "esv": {
+        "text": "I appeal to you therefore, brothers, by the mercies of God, to present your bodies as a living sacrifice, holy and acceptable to God, which is your spiritual worship. Do not be conformed to this world, but be transformed by the renewal of your mind, that by testing you may discern what is the will of God, what is good and acceptable and perfect.",
+        "copyright": "Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved."
+      },
+      "nlt": {
+        "text": "And so, dear brothers and sisters, I plead with you to give your bodies to God because of all he has done for you. Let them be a living and holy sacrifice—the kind he will find acceptable. This is truly the way to worship him. Don’t copy the behavior and customs of this world, but let God transform you into a new person by changing the way you think. Then you will learn to know God’s will for you, which is good and pleasing and perfect.",
+        "copyright": "Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. All rights reserved. Used by permission of Tyndale House Publishers, Carol Stream, Illinois 60188. All rights reserved."
+      },
+      "kjv": {
+        "text": "I beseech you therefore, brethren, by the mercies of God, that ye present your bodies a living sacrifice, holy, acceptable unto God, which is your reasonable service. And be not conformed to this world: but be ye transformed by the renewing of your mind, that ye may prove what is that good, and acceptable, and perfect, will of God.",
+        "copyright": "PUBLIC DOMAIN except in the United Kingdom, where a Crown Copyright applies to printing the KJV. See http://www.cambridge.org/about-us/who-we-are/queens-printers-patent"
+      }
+    },
+    "Galatians 5:22": {
+      "niv": {
+        "text": "But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness,",
+        "copyright": "The Holy Bible, New International Version® NIV® Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.® Used by Permission of Biblica, Inc.® All rights reserved worldwide."
+      },
+      "esv": {
+        "text": "But the fruit of the Spirit is love, joy, peace, patience, kindness, goodness, faithfulness,",
+        "copyright": "Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved."
+      },
+      "nlt": {
+        "text": "But the Holy Spirit produces this kind of fruit in our lives: love, joy, peace, patience, kindness, goodness, faithfulness,",
+        "copyright": "Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. All rights reserved. Used by permission of Tyndale House Publishers, Carol Stream, Illinois 60188. All rights reserved."
+      },
+      "kjv": {
+        "text": "But the fruit of the Spirit is love, joy, peace, longsuffering, gentleness, goodness, faith,",
+        "copyright": "PUBLIC DOMAIN except in the United Kingdom, where a Crown Copyright applies to printing the KJV. See http://www.cambridge.org/about-us/who-we-are/queens-printers-patent"
+      }
+    },
+    "Proverbs 3:5": {
+      "niv": {
+        "text": "Trust in the Lord with all your heart and lean not on your own understanding;",
+        "copyright": "The Holy Bible, New International Version® NIV® Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.® Used by Permission of Biblica, Inc.® All rights reserved worldwide."
+      },
+      "esv": {
+        "text": "Trust in the LORD with all your heart, and do not lean on your own understanding.",
+        "copyright": "Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved."
+      },
+      "nlt": {
+        "text": "Trust in the Lord with all your heart; do not depend on your own understanding.",
+        "copyright": "Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. All rights reserved. Used by permission of Tyndale House Publishers, Carol Stream, Illinois 60188. All rights reserved."
+      },
+      "kjv": {
+        "text": "Trust in the LORD with all thine heart; and lean not unto thine own understanding.",
+        "copyright": "PUBLIC DOMAIN except in the United Kingdom, where a Crown Copyright applies to printing the KJV. See http://www.cambridge.org/about-us/who-we-are/queens-printers-patent"
+      }
+    }
+  }
 }
