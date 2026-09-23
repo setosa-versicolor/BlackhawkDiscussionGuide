@@ -122,34 +122,101 @@
 
     .hero-meta a:hover { text-decoration: underline; }
 
-    /* ===== TOOLBAR ===== */
-    /* ===== ACTION BAR (search + load + menu) ===== */
+    /* ===== ACTION BAR (search + add + load + menu) ===== */
+    /* Collapsed, search is a pill like its neighbours. Opening it grows the pill
+       rightward while Add Question and Load Sermon squeeze into the ⋮ button;
+       closing plays the same animation in reverse. */
     .action-bar {
       display: flex;
       align-items: center;
-      gap: 8px;
       margin-bottom: 16px;
       position: relative;
       height: 38px;
+      --bar-ease: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .search-wrap {
       position: relative;
       display: flex;
       align-items: center;
-      flex: 0 0 auto;
-      width: 50%;
-      min-width: 160px;
-      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      flex: 0 1 auto;
+      width: 98px;
+      min-width: 38px;
+      height: 38px;
+      margin-right: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: width 0.32s var(--bar-ease), border-color 0.15s, background 0.15s;
     }
 
+    .search-wrap:not(.expanded):hover { background: var(--surface); }
     .search-wrap.expanded {
       width: 100%;
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+    /* A filter left applied after collapsing stays visibly in force. */
+    .search-wrap.has-query:not(.expanded) { border-color: var(--accent); }
+
+    .search-icon {
+      position: absolute;
+      left: 11px;
+      width: 15px;
+      height: 15px;
+      color: var(--text-secondary);
+      pointer-events: none;
     }
 
-    .search-wrap input {
+    .search-trigger {
+      position: absolute;
+      inset: 0;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 0 12px 0 32px;
+      color: var(--text-secondary);
+      justify-content: flex-start;
+      transition: opacity 0.15s;
+    }
+    .search-wrap:not(.expanded):hover .search-trigger { color: var(--text); }
+    .search-wrap.has-query .search-trigger { color: var(--text); }
+
+    .search-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .search-wrap input[type="text"] {
       width: 100%;
-      padding-right: 36px;
+      height: 100%;
+      min-width: 0;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      padding: 0 64px 0 32px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+    }
+
+    .search-wrap.expanded .search-trigger { opacity: 0; pointer-events: none; }
+    .search-wrap.expanded input[type="text"] {
+      opacity: 1;
+      pointer-events: auto;
+      transition-delay: 0.1s;
+    }
+
+    .filter-count {
+      position: absolute;
+      right: 34px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
     }
 
     .search-clear {
@@ -160,47 +227,90 @@
       background: transparent;
       border: none;
       color: var(--text-secondary);
-      padding: 4px 6px;
-      font-size: 12px;
+      padding: 4px 8px;
+      font-size: 16px;
+      line-height: 1;
       border-radius: 4px;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.15s;
     }
 
+    .search-wrap.expanded .filter-count,
     .search-wrap.expanded .search-clear {
       opacity: 1;
-      pointer-events: auto;
+      transition-delay: 0.1s;
     }
+    .search-wrap.expanded .search-clear { pointer-events: auto; }
 
     .search-clear:hover {
-      background: var(--surface);
+      background: var(--card);
       color: var(--text);
     }
 
+    /* Right-aligned against ⋮ so that, while search grows, they visibly slide
+       into it: the box narrows from the left and clips its contents there. */
     .action-buttons {
       display: flex;
       align-items: center;
+      justify-content: flex-end;
       gap: 6px;
       margin-left: auto;
+      margin-right: 6px;
       flex-shrink: 0;
-      transition: opacity 0.2s, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      transform-origin: right center;
+      overflow: hidden;
+      max-width: var(--actions-w, 280px);
+      transition: max-width 0.32s var(--bar-ease), margin-right 0.32s var(--bar-ease), opacity 0.22s;
+    }
+    .action-buttons > button {
+      flex-shrink: 0;
+      transition: transform 0.32s var(--bar-ease);
     }
 
-    .action-buttons.hidden {
+    .action-buttons.tucked {
+      max-width: 0;
+      margin-right: 0;
       opacity: 0;
       pointer-events: none;
-      transform: translateX(20px);
-      position: absolute;
-      right: 0;
+    }
+    .action-buttons.tucked > button { transform: translateX(24px) scale(0.9); }
+
+    .action-bar .menu-toggle { flex-shrink: 0; }
+
+    /* Narrow phones: the search pill drops its label so every control keeps
+       its full name on one row. */
+    @media (max-width: 374px) {
+      .search-wrap:not(.has-query) { width: 38px; }
+      .search-wrap:not(.has-query) .search-label { display: none; }
+      .action-buttons > button { padding: 8px 11px; }
     }
 
-    .filter-count {
-      font-size: 12px;
-      color: var(--text-secondary);
-      white-space: nowrap;
+    /* ===== ADD PANEL ===== */
+    .add-panel {
+      display: grid;
+      grid-template-rows: 0fr;
+      opacity: 0;
+      /* visibility waits for the fold to finish, then hides the form from
+         focus and screen readers. */
+      transition: grid-template-rows 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s,
+                  margin 0.28s, visibility 0s linear 0.28s;
+      margin-bottom: 0;
+      visibility: hidden;
     }
+    .add-panel > .panel {
+      overflow: hidden;
+      min-height: 0;
+      margin-bottom: 0;
+      transition: padding 0.28s, border-width 0.28s;
+    }
+    .add-panel.open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      margin-bottom: 16px;
+      visibility: visible;
+      transition-delay: 0s;
+    }
+    .add-panel:not(.open) > .panel { padding-top: 0; padding-bottom: 0; border-width: 0; }
 
     .toolbar-group {
       display: flex;
@@ -569,30 +679,53 @@
     }
 
     /* ===== PROGRESS ===== */
+    /* Sticks to the top of the viewport while scrolling through questions. It
+       bleeds to the edges of .wrap so cards never peek out beside it. */
     .progress-row {
+      position: sticky;
+      top: 0;
+      z-index: 50;
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin: 4px 0 8px;
+      gap: 12px;
+      margin: 0 -20px 4px;
+      padding: 10px 20px;
+      background: var(--bg);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .progress-row.stuck {
+      border-bottom-color: var(--border);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
     }
 
-    .ring { flex-shrink: 0; display: block; }
-    .ring circle { fill: none; stroke-width: 3.5; }
-    .ring .ring-track { stroke: var(--border-light); }
-    .ring .ring-fill {
-      stroke: var(--success);
-      stroke-linecap: round;
-      transform: rotate(-90deg);
-      transform-origin: 50% 50%;
-      transition: stroke-dashoffset 0.65s cubic-bezier(0.2, 0.7, 0.3, 1);
+    .progress-track {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border-light);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 100%;
+      border-radius: 3px;
+      background: var(--accent);
+      transform-origin: left center;
+      transform: scaleX(0);
+      transition: transform 0.65s cubic-bezier(0.2, 0.7, 0.3, 1), background 0.3s;
     }
 
     .progress-text {
+      flex-shrink: 0;
       font-size: 12px;
       color: var(--text-secondary);
       font-weight: 500;
+      font-variant-numeric: tabular-nums;
     }
 
+    .progress-row.complete .progress-fill { background: var(--success); }
     .progress-row.complete .progress-text { color: var(--success); }
 
     #confettiCanvas {
@@ -1100,6 +1233,7 @@
     @media (max-width: 768px) {
       .wrap { padding: 0 14px 80px; }
       .hero { margin: 0 -14px 24px; padding: 24px 18px 18px; }
+      .progress-row { margin: 0 -14px 4px; padding: 10px 14px; }
       .hero h1 { font-size: 22px; }
       .card-body { font-size: 14px; }
       input[type="text"], select { font-size: 16px; }
@@ -1142,43 +1276,44 @@
     <!-- ===== ACTION BAR ===== -->
     <div class="action-bar" id="actionBar">
       <div class="search-wrap" id="searchWrap">
-        <input id="searchInput" type="text" placeholder="Search questions…" />
-        <button class="search-clear" id="clearSearchBtn">&times;</button>
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <button class="search-trigger" id="searchTrigger" aria-label="Search questions" aria-expanded="false">
+          <span class="search-label" id="searchLabel">Search</span>
+        </button>
+        <input id="searchInput" type="text" placeholder="Search questions…" aria-label="Search questions" tabindex="-1" />
+        <span class="filter-count" id="filterCount"></span>
+        <button class="search-clear" id="clearSearchBtn" aria-label="Clear search" tabindex="-1">&times;</button>
       </div>
-      <span class="filter-count" id="filterCount"></span>
       <div class="action-buttons" id="actionButtons">
+        <button class="btn-ghost" id="addQuestionBtn" aria-expanded="false" aria-controls="addPanel">Add Question</button>
         <button class="btn-ghost" id="loadLatestBtn">Load Sermon</button>
-        <div class="menu-toggle">
-          <button class="btn-icon" id="menuToggle" title="More">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-          </button>
-          <div class="menu-dropdown" id="menuDropdown">
-            <div class="menu-field" id="translationField">
-              <label for="translationSelect">Bible translation</label>
-              <select id="translationSelect">
-                <option value="niv">NIV — New International Version</option>
-                <option value="esv">ESV — English Standard Version</option>
-                <option value="nlt">NLT — New Living Translation</option>
-                <option value="kjv">KJV — King James Version</option>
-              </select>
-            </div>
-            <div class="menu-divider"></div>
-            <button id="shareBtn">Copy share link</button>
-            <button id="refreshBtn">Refresh guide</button>
-            <button id="helpBtn">Keyboard shortcuts</button>
-            <button id="deleteRoomBtn" class="btn-danger">Delete room</button>
+      </div>
+      <div class="menu-toggle">
+        <button class="btn-icon" id="menuToggle" title="More">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+        <div class="menu-dropdown" id="menuDropdown">
+          <div class="menu-field" id="translationField">
+            <label for="translationSelect">Bible translation</label>
+            <select id="translationSelect">
+              <option value="niv">NIV — New International Version</option>
+              <option value="esv">ESV — English Standard Version</option>
+              <option value="nlt">NLT — New Living Translation</option>
+              <option value="kjv">KJV — King James Version</option>
+            </select>
           </div>
+          <div class="menu-divider"></div>
+          <button id="shareBtn">Copy share link</button>
+          <button id="refreshBtn">Refresh guide</button>
+          <button id="helpBtn">Keyboard shortcuts</button>
+          <button id="deleteRoomBtn" class="btn-danger">Delete room</button>
         </div>
       </div>
     </div>
 
     <!-- ===== ADD ===== -->
-    <details class="add-section" style="margin-bottom:16px">
-      <summary style="cursor:pointer;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);padding:6px 0;list-style:none;display:flex;align-items:center;gap:6px">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Add Custom
-      </summary>
-      <div class="panel" style="margin-top:6px">
+    <div class="add-panel" id="addPanel">
+      <div class="panel">
         <div class="add-form">
           <select id="newType">
             <option value="question">Question</option>
@@ -1189,14 +1324,12 @@
           <button class="btn-primary" id="addBtn">Add</button>
         </div>
       </div>
-    </details>
+    </div>
 
     <!-- ===== PROGRESS ===== -->
+    <div id="progressSentinel" aria-hidden="true"></div>
     <div class="progress-row" id="progressRow" style="display:none">
-      <svg class="ring" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-        <circle class="ring-track" cx="13" cy="13" r="11"></circle>
-        <circle class="ring-fill" id="ringFill" cx="13" cy="13" r="11"></circle>
-      </svg>
+      <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
       <span class="progress-text" id="progressText" role="status" aria-live="polite"></span>
     </div>
 
@@ -1651,12 +1784,14 @@
     const $deleteRoom = $("deleteRoomBtn"), $loadLatest = $("loadLatestBtn"), $refresh = $("refreshBtn");
     const $searchInput = $("searchInput"), $clearSearch = $("clearSearchBtn"), $filterCount = $("filterCount");
     const $searchWrap = $("searchWrap"), $actionButtons = $("actionButtons");
+    const $searchTrigger = $("searchTrigger"), $searchLabel = $("searchLabel");
+    const $addQuestionBtn = $("addQuestionBtn"), $addPanel = $("addPanel");
     const $helpBtn = $("helpBtn"), $shortcutsHelp = $("shortcutsHelp"), $closeHelp = $("closeHelp");
     const $menuToggle = $("menuToggle"), $menuDropdown = $("menuDropdown");
     const $translationSelect = $("translationSelect"), $translationField = $("translationField");
     const $activeCount = $("activeCount"), $doneCount = $("doneCount"), $deletedCount = $("deletedCount");
     const $emptyState = $("emptyState"), $emptyLoadBtn = $("emptyLoadBtn"), $hintText = $("hintText");
-    const $progressRow = $("progressRow"), $ringFill = $("ringFill"), $progressText = $("progressText");
+    const $progressRow = $("progressRow"), $progressFill = $("progressFill"), $progressText = $("progressText");
     const $confetti = $("confettiCanvas");
 
     const prefersReducedMotion = () =>
@@ -2239,8 +2374,13 @@
       updateProgress(a, d);
     }
 
-    // ---- Progress ring ----
-    const RING_CIRC = 2 * Math.PI * 11;
+    // ---- Progress bar ----
+    // A zero-height sentinel sits just above the sticky bar; once it scrolls
+    // out of view the bar is stuck, and gets a shadow to lift it off the cards.
+    new IntersectionObserver(([entry]) => {
+      $progressRow.classList.toggle("stuck", !entry.isIntersecting);
+    }).observe($("progressSentinel"));
+
     let _wasComplete = false;
     let _progressReady = false;   // suppresses celebration on first paint
 
@@ -2254,8 +2394,7 @@
       }
 
       $progressRow.style.display = "flex";
-      $ringFill.style.strokeDasharray = RING_CIRC;
-      $ringFill.style.strokeDashoffset = String(RING_CIRC * (1 - doneCount / total));
+      $progressFill.style.transform = `scaleX(${doneCount / total})`;
       $progressText.textContent = `${doneCount} of ${total} discussed`;
 
       const complete = doneCount === total;
@@ -2596,62 +2735,107 @@
       $newText.value = "";
       $newText.style.height = 'auto';
       $newTitle.value = "";
+      closeAddPanel();
       autoSave();
       showToast("Added", "success");
     });
 
     // ---- Search (expand/collapse) ----
+    // Opening search tucks Add Question and Load Sermon away so the box can
+    // take the row; tapping elsewhere, scrolling, or opening ⋮ reverses it.
+    // Collapsing keeps any query applied, and the pill then shows it.
     let _searchExpanded = false;
     let _scrollYOnExpand = 0;
-    let _expandedAt = 0;
+
+    function syncSearchLabel() {
+      const q = $searchInput.value.trim();
+      $searchWrap.classList.toggle("has-query", !!q);
+      $searchLabel.textContent = q ? `“${q}”` : "Search";
+      $searchTrigger.setAttribute("aria-label", q ? `Search questions, filtered by ${q}` : "Search questions");
+    }
 
     function expandSearch() {
       if (_searchExpanded) return;
       _searchExpanded = true;
-      _expandedAt = Date.now();
       _scrollYOnExpand = window.scrollY;
+      closeAddPanel();
+      // Animate from the buttons' real width rather than a guess, so the
+      // squeeze starts moving on the first frame.
+      $actionButtons.style.setProperty("--actions-w", $actionButtons.scrollWidth + "px");
       $searchWrap.classList.add("expanded");
-      $actionButtons.classList.add("hidden");
-      $searchInput.focus();
+      $actionButtons.classList.add("tucked");
+      $searchTrigger.setAttribute("aria-expanded", "true");
+      $searchInput.tabIndex = 0;
+      $clearSearch.tabIndex = 0;
+      // Synchronous with the tap, or iOS won't raise the keyboard.
+      $searchInput.focus({ preventScroll: true });
     }
 
     function collapseSearch() {
       if (!_searchExpanded) return;
       _searchExpanded = false;
+      const hadFocus = $searchWrap.contains(document.activeElement);
       $searchWrap.classList.remove("expanded");
-      $actionButtons.classList.remove("hidden");
-      $searchInput.blur();
+      $actionButtons.classList.remove("tucked");
+      $searchTrigger.setAttribute("aria-expanded", "false");
+      $searchInput.tabIndex = -1;
+      $clearSearch.tabIndex = -1;
+      syncSearchLabel();
+      if (hadFocus) $searchInput.blur();
     }
 
-    $searchInput.addEventListener("focus", () => expandSearch());
+    $searchTrigger.addEventListener("click", expandSearch);
+    $searchInput.addEventListener("focus", expandSearch);
 
     $searchInput.addEventListener("input", e => {
       searchQuery = e.target.value;
       applySearch();
     });
 
-    $clearSearch.addEventListener("click", () => {
+    function clearSearch() {
       searchQuery = "";
       $searchInput.value = "";
       applySearch();
-      collapseSearch();
+      syncSearchLabel();
+    }
+
+    $clearSearch.addEventListener("click", () => {
+      clearSearch();
+      $searchInput.focus({ preventScroll: true });
     });
 
-    // Collapse on click outside (with grace period to avoid race with focus)
-    document.addEventListener("mousedown", e => {
+    // Tapping anywhere outside the box, the ⋮ button included, closes it.
+    // pointerdown rather than click so it also fires ahead of the menu opening.
+    document.addEventListener("pointerdown", e => {
       if (!_searchExpanded) return;
-      if (Date.now() - _expandedAt < 300) return;
-      if (e.target.closest("#searchWrap") || e.target.closest("#filterCount")) return;
-      if (!$searchInput.value) collapseSearch();
+      if (e.target.closest("#searchWrap")) return;
+      collapseSearch();
     });
 
     // Collapse on scroll (with 40px tolerance for incidental thumb movement)
     window.addEventListener("scroll", () => {
       if (!_searchExpanded) return;
-      if (Math.abs(window.scrollY - _scrollYOnExpand) > 40) {
-        if (!$searchInput.value) collapseSearch();
-      }
+      if (Math.abs(window.scrollY - _scrollYOnExpand) > 40) collapseSearch();
     }, { passive: true });
+
+    // ---- Add Question panel ----
+    function openAddPanel() {
+      $addPanel.classList.add("open");
+      $addQuestionBtn.setAttribute("aria-expanded", "true");
+      $newText.focus({ preventScroll: true });
+    }
+
+    function closeAddPanel() {
+      if (!$addPanel.classList.contains("open")) return;
+      $addPanel.classList.remove("open");
+      $addQuestionBtn.setAttribute("aria-expanded", "false");
+      if ($addPanel.contains(document.activeElement)) document.activeElement.blur();
+    }
+
+    $addQuestionBtn.addEventListener("click", () => {
+      if ($addPanel.classList.contains("open")) closeAddPanel();
+      else openAddPanel();
+    });
 
     // ---- Reorder a focused card with Alt + arrows ----
     document.querySelector(".boards").addEventListener("keydown", async (e) => {
@@ -2667,15 +2851,16 @@
     document.addEventListener("keydown", e => {
       if (e.target.matches("input, textarea")) {
         if (e.key === "Escape" && e.target === $searchInput) {
-          searchQuery = ""; $searchInput.value = ""; applySearch();
+          clearSearch();
           collapseSearch();
         }
+        if (e.key === "Escape" && $addPanel.contains(e.target)) closeAddPanel();
         return;
       }
       if (e.key === "?") { e.preventDefault(); $shortcutsHelp.classList.toggle("visible"); }
       if (e.key === "/") { e.preventDefault(); expandSearch(); }
       if (e.key === "Escape") { e.preventDefault(); $shortcutsHelp.classList.remove("visible"); }
-      if (e.key === "n" || e.key === "N") { e.preventDefault(); $newText.focus(); }
+      if (e.key === "n" || e.key === "N") { e.preventDefault(); openAddPanel(); }
     });
 
     $helpBtn.addEventListener("click", () => $shortcutsHelp.classList.toggle("visible"));
