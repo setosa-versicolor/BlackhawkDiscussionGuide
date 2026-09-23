@@ -425,24 +425,52 @@
     /* ===== SEARCH (integrated into action bar) ===== */
 
     /* ===== ADD FORM ===== */
+    /* Add sits directly under the text it submits; Cancel is quiet text in the
+       opposite corner so it is never hit by accident. */
     .add-form {
       display: flex;
+      flex-direction: column;
       gap: 8px;
-      align-items: flex-start;
-      flex-wrap: wrap;
     }
 
+    .add-form-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .add-cancel {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-weight: 400;
+      padding: 8px 4px 8px 12px;
+    }
+    .add-cancel:hover { color: var(--text); }
+
     .add-form textarea {
-      flex: 1;
-      min-width: 200px;
+      width: 100%;
       resize: none;
       overflow: hidden;
-      min-height: 38px;
+      min-height: 64px;
       line-height: 1.5;
     }
 
+    .add-submit {
+      align-self: flex-end;
+      min-width: 110px;
+      justify-content: center;
+    }
+    .add-submit:disabled { opacity: 0.45; cursor: default; }
+    .add-submit:disabled:hover { opacity: 0.45; }
+
+    @media (max-width: 768px) {
+      .add-submit { align-self: stretch; padding: 11px 14px; font-size: 14px; }
+    }
+
     #newTitle { display: none; }
-    #newTitle.visible { display: block; min-width: 160px; }
+    #newTitle.visible { display: block; width: 100%; }
 
     /* ===== BOARD HEADERS ===== */
     .board-header {
@@ -1333,13 +1361,16 @@
     <div class="add-panel" id="addPanel">
       <div class="panel">
         <div class="add-form">
-          <select id="newType">
-            <option value="question">Question</option>
-            <option value="section">Section</option>
-          </select>
+          <div class="add-form-top">
+            <select id="newType" aria-label="Card type">
+              <option value="question">Question</option>
+              <option value="section">Section</option>
+            </select>
+            <button class="add-cancel" id="addCancelBtn" type="button">Cancel</button>
+          </div>
           <input id="newTitle" type="text" placeholder="Section title" />
-          <textarea id="newText" placeholder="Type here…" rows="1"></textarea>
-          <button class="btn-primary" id="addBtn">Add</button>
+          <textarea id="newText" placeholder="Type your question…" rows="2" aria-label="Card text"></textarea>
+          <button class="btn-primary add-submit" id="addBtn" disabled>Add</button>
         </div>
       </div>
     </div>
@@ -2353,8 +2384,10 @@
     let searchQuery = "";
 
     $newType.addEventListener("change", () => {
-      $newTitle.classList.toggle("visible", $newType.value === "section");
-      if ($newType.value !== "section") $newTitle.value = "";
+      const section = $newType.value === "section";
+      $newTitle.classList.toggle("visible", section);
+      if (!section) $newTitle.value = "";
+      $newText.placeholder = section ? "Type the section text…" : "Type your question…";
     });
 
     function autoExpandTextarea(ta) {
@@ -2750,12 +2783,36 @@
       const item = { id: genId(), type, text, status: "active", source: "custom" };
       if (type === "section" && title) item.title = title;
       await withFLIP(() => renderCards([item, ...cards]));
-      $newText.value = "";
-      $newText.style.height = 'auto';
-      $newTitle.value = "";
+      resetAddForm();
       closeAddPanel();
       autoSave();
       showToast("Added", "success");
+    });
+
+    function resetAddForm() {
+      $newText.value = "";
+      $newText.style.height = "auto";
+      $newTitle.value = "";
+      syncAddButton();
+    }
+
+    // Add stays dimmed until there is something to add.
+    function syncAddButton() {
+      $("addBtn").disabled = !$newText.value.trim();
+    }
+    $newText.addEventListener("input", syncAddButton);
+
+    // Ctrl/Cmd+Enter adds from the keyboard; plain Enter still makes a new line.
+    $newText.addEventListener("keydown", e => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        $("addBtn").click();
+      }
+    });
+
+    $("addCancelBtn").addEventListener("click", () => {
+      resetAddForm();
+      closeAddPanel();
     });
 
     // ---- Search (expand/collapse) ----
@@ -2764,6 +2821,7 @@
     // keeps any query applied, and the pill then shows it.
     let _searchExpanded = false;
     let _scrollYOnExpand = 0;
+    let _expandedAt = 0;
 
     function syncSearchLabel() {
       const q = $searchInput.value.trim();
@@ -2776,6 +2834,7 @@
       if (_searchExpanded) return;
       _searchExpanded = true;
       _scrollYOnExpand = window.scrollY;
+      _expandedAt = Date.now();
       closeAddPanel();
       $menuDropdown.classList.remove("visible");
       // Animate from the buttons' real width rather than a guess, so the
@@ -2821,11 +2880,22 @@
     }
 
     // × clears the query; on an already-empty box it closes search instead.
-    $clearSearch.addEventListener("click", () => {
+    // Touch is handled on touchstart and cancelled there. Otherwise the tap's
+    // click arrives after search has already shrunk, lands on the Search pill
+    // now under the finger and reopens it, and on iOS the keyboard dropping
+    // shifts the page first - either way the tap appeared to do nothing.
+    // Cancelling touchstart suppresses that click and keeps the keyboard up.
+    function onClearSearch() {
       if (!$searchInput.value) { collapseSearch(); return; }
       clearSearch();
       $searchInput.focus({ preventScroll: true });
-    });
+    }
+    $clearSearch.addEventListener("touchstart", e => {
+      e.preventDefault();
+      onClearSearch();
+    }, { passive: false });
+    $clearSearch.addEventListener("mousedown", e => e.preventDefault());   // keep focus in the box
+    $clearSearch.addEventListener("click", onClearSearch);                 // mouse and keyboard
 
     // Tapping anywhere outside the box closes it. pointerdown rather than
     // click so it lands before whatever that tap goes on to do.
@@ -2835,11 +2905,17 @@
       collapseSearch();
     });
 
-    // Collapse on scroll (with 40px tolerance for incidental thumb movement)
+    // Collapse on scroll (with 40px tolerance for incidental thumb movement).
+    // The on-screen keyboard opening or closing also scrolls the page, which
+    // isn't the reader scrolling, so re-baseline then rather than collapse.
     window.addEventListener("scroll", () => {
       if (!_searchExpanded) return;
+      if (Date.now() - _expandedAt < 600) { _scrollYOnExpand = window.scrollY; return; }
       if (Math.abs(window.scrollY - _scrollYOnExpand) > 40) collapseSearch();
     }, { passive: true });
+    window.visualViewport?.addEventListener("resize", () => {
+      _scrollYOnExpand = window.scrollY;
+    });
 
     // ---- Add Question panel ----
     function openAddPanel() {
