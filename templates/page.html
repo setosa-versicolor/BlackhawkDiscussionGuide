@@ -25,6 +25,7 @@
       --custom-dim: rgba(155, 122, 237, 0.12);
       --edited: #d4943a;
       --edited-dim: rgba(212, 148, 58, 0.12);
+      --edited-solid: #251f18;   /* --edited-dim flattened onto --bg, for the stale-guide tab */
       --section: #3dae8e;
       --section-dim: rgba(61, 174, 142, 0.12);
       --success: #3dae8e;
@@ -298,6 +299,59 @@
       .search-wrap:not(.has-query) { width: 38px; }
       .search-wrap:not(.has-query) .search-label { display: none; }
       .action-buttons > button { padding: 8px 11px; }
+    }
+
+    /* ===== STALE GUIDE NOTICE ===== */
+    /* When the room's cards are from an earlier guide, Load Sermon and the
+       notice beneath it read as one control: the button becomes a yellow tab
+       whose open bottom runs straight into the banner. */
+    /* The row grows by 6px; only the tab reaches down into it, so the other
+       controls keep a gap above the banner and the tab alone connects. */
+    .action-bar.stale { margin-bottom: 0; height: 44px; align-items: flex-start; }
+    .action-bar.stale .menu-toggle { margin-top: 4px; }
+    .action-bar.stale .action-buttons { align-self: stretch; align-items: flex-start; }
+    .action-bar.stale #loadLatestBtn {
+      align-self: stretch;
+      padding-bottom: 14px;   /* keeps its label level with its neighbours' */
+      position: relative;
+      z-index: 1;
+      color: var(--edited);
+      background: var(--edited-solid);
+      border-color: var(--edited);
+      border-bottom-color: var(--edited-solid);   /* hides the banner's top edge under the tab */
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .stale-notice {
+      display: none;
+      width: 100%;
+      margin: -1px 0 16px;
+      padding: 11px 14px;
+      align-items: flex-start;
+      gap: 10px;
+      text-align: left;
+      white-space: normal;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.45;
+      color: var(--text);
+      background: var(--edited-solid);
+      border: 1px solid var(--edited);
+      border-radius: var(--radius);
+      cursor: pointer;
+    }
+    .stale-notice.visible {
+      display: flex;
+      animation: staleIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .stale-notice:hover { background: #2c251b; }
+    .stale-notice svg { width: 17px; height: 17px; flex-shrink: 0; margin-top: 1px; color: var(--edited); }
+    .stale-notice strong { color: var(--edited); font-weight: 600; }
+
+    @keyframes staleIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     /* ===== ADD PANEL ===== */
@@ -1357,6 +1411,12 @@
       </div>
     </div>
 
+    <!-- ===== STALE GUIDE NOTICE ===== -->
+    <button class="stale-notice" id="staleNotice" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><polyline points="3 3 3 8 8 8"/><polyline points="12 7 12 12 15 14"/></svg>
+      <span>You're looking at previous questions. Tap <strong>Load Sermon</strong> to update to this week's questions.</span>
+    </button>
+
     <!-- ===== ADD ===== -->
     <div class="add-panel" id="addPanel">
       <div class="panel">
@@ -1562,6 +1622,7 @@
             if (!res.ok) return;
             const data = await res.json();
             if (data && data.verses) prefetchedVerses = data.verses;
+            noteLatestGuide(data);
           } catch (err) {
             // No prefetch available; live lookups still work.
             console.warn("Prefetched verses unavailable:", err);
@@ -1833,6 +1894,7 @@
     const $deleteRoom = $("deleteRoomBtn"), $loadLatest = $("loadLatestBtn"), $refresh = $("refreshBtn");
     const $searchInput = $("searchInput"), $clearSearch = $("clearSearchBtn"), $filterCount = $("filterCount");
     const $searchWrap = $("searchWrap"), $actionButtons = $("actionButtons");
+    const $staleNotice = $("staleNotice");
     const $actionBar = $("actionBar"), $searchTrigger = $("searchTrigger"), $searchLabel = $("searchLabel");
     const $addQuestionBtn = $("addQuestionBtn"), $addPanel = $("addPanel");
     const $helpBtn = $("helpBtn"), $shortcutsHelp = $("shortcutsHelp"), $closeHelp = $("closeHelp");
@@ -2423,7 +2485,41 @@
       $emptyState.style.display = cards.length === 0 ? 'block' : 'none';
       $hintText.style.display = cards.length === 0 ? 'none' : 'block';
       updateProgress(a, d);
+      updateStaleNotice();
     }
+
+    // ---- Stale guide notice ----
+    // Rooms deliberately keep their cards when a new guide is published, so a
+    // group meeting late can finish last week's questions. This makes that
+    // visible: guide cards get their ids from a hash of their text, so a
+    // board from an earlier guide shares (almost) none of its ids with the
+    // latest one. Requiring most of them to match, rather than all, means a
+    // midweek re-publish that fixes a typo or two doesn't raise the alarm.
+    // Edited cards keep their id, and custom cards are ignored.
+    let latestGuideIds = null;
+
+    function noteLatestGuide(data) {
+      if (!data || !(data.questions || data.sections)) return;
+      latestGuideIds = new Set(guideCards(data).map(c => c.id));
+      updateStaleNotice();
+    }
+
+    function isBoardStale() {
+      if (!latestGuideIds || !latestGuideIds.size) return false;
+      const fromGuide = cards.filter(c => c.source === "pdf");
+      if (!fromGuide.length) return false;
+      const current = fromGuide.filter(c => latestGuideIds.has(c.id)).length;
+      return current < fromGuide.length / 2;
+    }
+
+    function updateStaleNotice() {
+      const stale = isBoardStale();
+      if (stale === $staleNotice.classList.contains("visible")) return;
+      $staleNotice.classList.toggle("visible", stale);
+      $actionBar.classList.toggle("stale", stale);
+    }
+
+    $staleNotice.addEventListener("click", () => $loadLatest.click());
 
     // ---- Progress bar ----
     // A zero-height sentinel sits just above the sticky bar; once it scrolls
@@ -2562,7 +2658,15 @@
       });
     }
 
+    // renderCards awaits verse lookups part-way through, so two calls can
+    // overlap - joining a room renders once from its change callback and once
+    // more straight after. Each call takes a generation number and an
+    // outdated one stops, or both would append their cards and every card
+    // would show twice.
+    let _renderGen = 0;
+
     async function renderCards(next) {
+      const gen = ++_renderGen;
       cards = next.map(c => ({ status: 'active', source: 'pdf', ...c, id: c.id || genId() }));
       $boardActive.innerHTML = "";
       $boardDone.innerHTML = "";
@@ -2626,6 +2730,7 @@
         el.appendChild(editArea);
 
         const versesSection = await createVersesSection(c.text);
+        if (gen !== _renderGen) return;   // a newer render has taken over
         if (versesSection) el.appendChild(versesSection);
 
         if (c.status === "done") $boardDone.appendChild(el);
@@ -2989,6 +3094,7 @@
     }
 
     const urlRoom = new URLSearchParams(location.search).get("room");
+    ensurePrefetched();   // also learns this week's guide, for the stale notice
     await joinAndLoad(urlRoom || null);
     await refreshRoomsList(currentRoomCode());
 
@@ -3117,6 +3223,26 @@
       savePdfLink(u, dateStr, meta.title || "");
     }
 
+    function guideCards(data) {
+      return [
+        ...(data.questions || []).map((q, i) => ({
+          id: stableId(q, i),
+          type: "question",
+          text: q,
+          status: "active",
+          source: "pdf"
+        })),
+        ...(data.sections || []).map((s, i) => ({
+          id: stableId(s.body, 1000 + i),
+          type: "section",
+          title: s.title,
+          text: s.body,
+          status: "active",
+          source: "pdf"
+        }))
+      ];
+    }
+
     async function loadGuideJson(noCache = false) {
       try {
         const res = await fetch(guideJsonUrl(noCache), { cache: noCache ? "no-store" : "default" });
@@ -3124,23 +3250,8 @@
         const data = await res.json();
         updateGuideLink(data);
         prefetchedVerses = data.verses || {};
-        const next = [
-          ...(data.questions || []).map((q, i) => ({
-            id: stableId(q, i),
-            type: "question",
-            text: q,
-            status: "active",
-            source: "pdf"
-          })),
-          ...(data.sections || []).map((s, i) => ({
-            id: stableId(s.body, 1000 + i),
-            type: "section",
-            title: s.title,
-            text: s.body,
-            status: "active",
-            source: "pdf"
-          }))
-        ];
+        noteLatestGuide(data);
+        const next = guideCards(data);
         await withFLIP(() => renderCards(next));
         autoSave();
         showToast(`Loaded ${next.length} cards`, "success");
