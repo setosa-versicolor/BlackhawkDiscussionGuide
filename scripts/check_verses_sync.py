@@ -30,6 +30,7 @@ SAMPLES = [
     "Not references: 3:16 alone, Chapter 5, 2026, see page 12:00.",
     "Ranges: Rev 21:1-4 and Heb 11:1 and Jas 1:2-4.",
     "Edge: 1John 1:9, 2 Jn 1:6, 3John 1:4, Philem 1:6.",
+    "Dashes: Galatians 5:22–23, Proverbs 3:5–6, Ps 23:1—4, Rom 12:1-2, Luke 19:10 — 3 things.",
     "No refs here at all, just prose about the sermon.",
 ]
 

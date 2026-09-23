@@ -1522,8 +1522,9 @@
       'rev': 'Revelation', 'revelation': 'Revelation'
     };
 
+    // Ranges may use a hyphen, en dash or em dash ("Galatians 5:22–23").
     function detectVerseReferences(text) {
-      const pattern = /\b((?:1|2|3)\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\.?)\s+(\d+):(\d+)(?:-(\d+))?\b/gi;
+      const pattern = /\b((?:1|2|3)\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\.?)\s+(\d+):(\d+)(?:[-–—](\d+))?\b/gi;
       const references = [];
       const seen = new Set();
       let match;

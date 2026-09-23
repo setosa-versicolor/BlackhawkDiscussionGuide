@@ -122,8 +122,9 @@ BOOK_IDS = {
     '2 John': '2JN', '3 John': '3JN', 'Jude': 'JUD', 'Revelation': 'REV',
 }
 
+# Ranges may use a hyphen, en dash or em dash ("Galatians 5:22–23").
 _PATTERN = re.compile(
-    r"\b((?:1|2|3)\s+)?([A-Za-z][A-Za-z]*(?:\s+[A-Za-z][A-Za-z]*)?\.?)\s+(\d+):(\d+)(?:-(\d+))?\b"
+    r"\b((?:1|2|3)\s+)?([A-Za-z][A-Za-z]*(?:\s+[A-Za-z][A-Za-z]*)?\.?)\s+(\d+):(\d+)(?:[-–—](\d+))?\b"
 )
 
 
