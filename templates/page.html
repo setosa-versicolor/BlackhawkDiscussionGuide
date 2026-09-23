@@ -1361,7 +1361,7 @@
     <div class="room-picker" id="roomPicker">
       <div class="room-display" id="roomDisplay">
         <select id="roomSelect" title="Rooms"></select>
-        <button class="btn-ghost" id="roomCreateBtn">Create New</button>
+        <button class="btn-ghost" id="roomCreateBtn">New Room</button>
       </div>
       <div class="room-create" id="roomCreate" style="display:none">
         <input id="roomInput" type="text" placeholder="Room name…" />
@@ -1405,7 +1405,7 @@
         </div>
         <div class="menu-divider"></div>
         <button id="shareBtn">Copy share link</button>
-        <button id="refreshBtn">Refresh guide</button>
+        <button id="refreshBtn">Reset questions</button>
         <button id="helpBtn">Keyboard shortcuts</button>
         <button id="deleteRoomBtn" class="btn-danger">Delete room</button>
       </div>
@@ -3262,14 +3262,14 @@
     }
 
     $loadLatest.addEventListener("click", async () => {
-      if (!await appConfirm("This will replace the current board. Continue?", { confirmText: "Load" })) return;
+      if (!await appConfirm("This will remove your current questions and update to the latest questions that are available. Continue?", { confirmText: "Load" })) return;
       loadGuideJson(false);
     });
 
     $emptyLoadBtn.addEventListener("click", () => loadGuideJson(false));
 
     $refresh.addEventListener("click", async () => {
-      if (!await appConfirm("Refresh will overwrite current changes. Continue?", { confirmText: "Refresh" })) return;
+      if (!await appConfirm("This will reset questions to the default state, removing any changes or new questions you may have made. Continue?", { confirmText: "Reset" })) return;
       loadGuideJson(true);
     });
 
