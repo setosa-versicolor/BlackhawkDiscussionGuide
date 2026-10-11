@@ -1,19 +1,20 @@
 {
-  "url": "https://blackhawk.church/wp-content/uploads/2026/10/What-About-My-Disappointment-with-God-Discussion-Guide-10.4.26.pdf",
-  "title": "What about My Disappointment with God?",
+  "url": "https://blackhawk.church/wp-content/uploads/2026/10/What-About-My-Salvation-Discussion-Guide-10.11.26.pdf",
+  "title": "What about Salvation + Eternal Security?",
   "series": "Current Series",
   "questions": [
-    "What’s a fall activity that you enjoy?",
-    "Pastor Matt said, “Disappointment with God doesn’t mean your faith is failing.” Why do you think we often hesitate or hold back from expressing disappointment or anger to God? What makes us feel like being disappointed in God is a sign of weak faith?",
-    "Read Psalm 34:18. How would you describe the difference between feeling disappointed and feeling devastated? Why is that distinction important? When facing unexpected pain, many of us have asked, \"God, how could you let this happen?\" What can help us navigate those moments without losing hope?",
-    "Read Matthew 11:4-11. Pastor Matt pointed out that in this passage, John the Baptist experiences doubt/disappointment, yet Jesus speaks of him with immense love and respect. How does knowing that God holds both our disappointment and His love for us at the same time change how you approach Him?",
-    "Can you think of a time someone mourned with you? How can we care for others who are going through a difficulty with these without slapping a Christian cliche on someone’s pain?",
-    "Read 2 Corinthians 1:3-4. Do you feel like you can go to God with your rawest feelings like disappointment? How can it encourage us to know that God fully understands our disappointments? Have you ever found that you’re able to care for others more deeply because of something you’ve walked through yourself?"
+    "Have you ever had a season of returning to faith after walking away from it? What was that like for you? What was it that brought you back?",
+    "Pastor Chris described how our faith can be squishy. Does that idea resonate with you? Share about a time when faith felt squishy or changed for you. How do the examples of people from the Bible with squishy faith affect how you think about salvation?",
+    "Read 1 Corinthians 15:1-8. Pastor Chris highlights that these verses tell us Jesus died, buried, raised, and appeared. Why is it so significant that our assurance of salvation is not based on something squishy, but something solid?",
+    "Read John 5:24 and John 6:37-39. What do these promises reveal about the assurance of our salvation?",
+    "Sometimes we want to know the answer to whether someone is truly saved or not. Why is it important to remember we are not the judge? Does this impact the way pray for people who don’t believe or have walked away?",
+    "Read Luke 23:39-43. How does the example of the thief on the cross give us hope for those in our lives who don’t yet believe, or have walked away?",
+    "Pastor Chris shared a couple of images and phrases he thinks of when considering salvation and eternal security (Jesus Loves Me This I Know, Jesus with a life preserver, etc.). Which of these images resonate most with you?"
   ],
   "sections": [
     {
       "title": "Pray",
-      "body": "for this week?"
+      "body": "Spend some time praying for those you know who don't know Christ or who have walked away from their faith. You can choose to pray for them out loud by name (just first names), or silently consider them and lift them up together as a group."
     },
     {
       "title": "Next Steps",
@@ -21,57 +22,75 @@
     }
   ],
   "verses": {
-    "Psalm 34:18": {
+    "1 Corinthians 15:1-8": {
       "niv": {
-        "text": "The Lord is close to the brokenhearted and saves those who are crushed in spirit.",
+        "text": "Now, brothers and sisters, I want to remind you of the gospel I preached to you, which you received and on which you have taken your stand. By this gospel you are saved, if you hold firmly to the word I preached to you. Otherwise, you have believed in vain. For what I received I passed on to you as of first importance: that Christ died for our sins according to the Scriptures, that he was buried, that he was raised on the third day according to the Scriptures, and that he appeared to Cephas, and then to the Twelve. After that, he appeared to more than five hundred of the brothers and sisters at the same time, most of whom are still living, though some have fallen asleep. Then he appeared to James, then to all the apostles, and last of all he appeared to me also, as to one abnormally born.",
         "copyright": "The Holy Bible, New International Version® NIV® Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.® Used by Permission of Biblica, Inc.® All rights reserved worldwide."
       },
       "esv": {
-        "text": "The LORD is near to the brokenhearted and saves the crushed in spirit.",
+        "text": "Now I would remind you, brothers, of the gospel I preached to you, which you received, in which you stand, and by which you are being saved, if you hold fast to the word I preached to you—unless you believed in vain. For I delivered to you as of first importance what I also received: that Christ died for our sins in accordance with the Scriptures, that he was buried, that he was raised on the third day in accordance with the Scriptures, and that he appeared to Cephas, then to the twelve. Then he appeared to more than five hundred brothers at one time, most of whom are still alive, though some have fallen asleep. Then he appeared to James, then to all the apostles. Last of all, as to one untimely born, he appeared also to me.",
         "copyright": "Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved."
       },
       "nlt": {
-        "text": "The Lord is close to the brokenhearted; he rescues those whose spirits are crushed.",
+        "text": "Let me now remind you, dear brothers and sisters, of the Good News I preached to you before. You welcomed it then, and you still stand firm in it. It is this Good News that saves you if you continue to believe the message I told you—unless, of course, you believed something that was never true in the first place. I passed on to you what was most important and what had also been passed on to me. Christ died for our sins, just as the Scriptures said. He was buried, and he was raised from the dead on the third day, just as the Scriptures said. He was seen by Peter and then by the Twelve. After that, he was seen by more than 500 of his followers at one time, most of whom are still alive, though some have died. Then he was seen by James and later by all the apostles. Last of all, as though I had been born at the wrong time, I also saw him.",
         "copyright": "Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. All rights reserved. Used by permission of Tyndale House Publishers, Carol Stream, Illinois 60188. All rights reserved."
       },
       "kjv": {
-        "text": "The LORD is nigh unto them that are of a broken heart; and saveth such as be of a contrite spirit.",
+        "text": "Moreover, brethren, I declare unto you the gospel which I preached unto you, which also ye have received, and wherein ye stand; By which also ye are saved, if ye keep in memory what I preached unto you, unless ye have believed in vain. For I delivered unto you first of all that which I also received, how that Christ died for our sins according to the scriptures; And that he was buried, and that he rose again the third day according to the scriptures: And that he was seen of Cephas, then of the twelve: After that, he was seen of above five hundred brethren at once; of whom the greater part remain unto this present, but some are fallen asleep. After that, he was seen of James; then of all the apostles. And last of all he was seen of me also, as of one born out of due time.",
         "copyright": "PUBLIC DOMAIN except in the United Kingdom, where a Crown Copyright applies to printing the KJV. See http://www.cambridge.org/about-us/who-we-are/queens-printers-patent"
       }
     },
-    "Matthew 11:4-11": {
+    "John 5:24": {
       "niv": {
-        "text": "Jesus replied, “Go back and report to John what you hear and see: The blind receive sight, the lame walk, those who have leprosy are cleansed, the deaf hear, the dead are raised, and the good news is proclaimed to the poor. Blessed is anyone who does not stumble on account of me.” As John’s disciples were leaving, Jesus began to speak to the crowd about John: “What did you go out into the wilderness to see? A reed swayed by the wind? If not, what did you go out to see? A man dressed in fine clothes? No, those who wear fine clothes are in kings’ palaces. Then what did you go out to see? A prophet? Yes, I tell you, and more than a prophet. This is the one about whom it is written: “ ‘I will send my messenger ahead of you, who will prepare your way before you.’ Truly I tell you, among those born of women there has not risen anyone greater than John the Baptist; yet whoever is least in the kingdom of heaven is greater than he.",
+        "text": "“Very truly I tell you, whoever hears my word and believes him who sent me has eternal life and will not be judged but has crossed over from death to life.",
         "copyright": "The Holy Bible, New International Version® NIV® Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.® Used by Permission of Biblica, Inc.® All rights reserved worldwide."
       },
       "esv": {
-        "text": "And Jesus answered them, “Go and tell John what you hear and see: the blind receive their sight and the lame walk, lepers are cleansed and the deaf hear, and the dead are raised up, and the poor have good news preached to them. And blessed is the one who is not offended by me.” As they went away, Jesus began to speak to the crowds concerning John: “What did you go out into the wilderness to see? A reed shaken by the wind? What then did you go out to see? A man dressed in soft clothing? Behold, those who wear soft clothing are in kings’ houses. What then did you go out to see? A prophet? Yes, I tell you, and more than a prophet. This is he of whom it is written, “‘Behold, I send my messenger before your face, who will prepare your way before you.’ Truly, I say to you, among those born of women there has arisen no one greater than John the Baptist. Yet the one who is least in the kingdom of heaven is greater than he.",
+        "text": "Truly, truly, I say to you, whoever hears my word and believes him who sent me has eternal life. He does not come into judgment, but has passed from death to life.",
         "copyright": "Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved."
       },
       "nlt": {
-        "text": "Jesus told them, “Go back to John and tell him what you have heard and seen— the blind see, the lame walk, those with leprosy are cured, the deaf hear, the dead are raised to life, and the Good News is being preached to the poor.” And he added, “God blesses those who do not fall away because of me.” As John’s disciples were leaving, Jesus began talking about him to the crowds. “What kind of man did you go into the wilderness to see? Was he a weak reed, swayed by every breath of wind? Or were you expecting to see a man dressed in expensive clothes? No, people with expensive clothes live in palaces. Were you looking for a prophet? Yes, and he is more than a prophet. John is the man to whom the Scriptures refer when they say, ‘Look, I am sending my messenger ahead of you, and he will prepare your way before you.’ “I tell you the truth, of all who have ever lived, none is greater than John the Baptist. Yet even the least person in the Kingdom of Heaven is greater than he is!",
+        "text": "“I tell you the truth, those who listen to my message and believe in God who sent me have eternal life. They will never be condemned for their sins, but they have already passed from death into life.",
         "copyright": "Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. All rights reserved. Used by permission of Tyndale House Publishers, Carol Stream, Illinois 60188. All rights reserved."
       },
       "kjv": {
-        "text": "Jesus answered and said unto them, Go and shew John again those things which ye do hear and see: The blind receive their sight, and the lame walk, the lepers are cleansed, and the deaf hear, the dead are raised up, and the poor have the gospel preached to them. And blessed is he, whosoever shall not be offended in me. And as they departed, Jesus began to say unto the multitudes concerning John, What went ye out into the wilderness to see? A reed shaken with the wind? But what went ye out for to see? A man clothed in soft raiment? behold, they that wear soft clothing are in kings’ houses. But what went ye out for to see? A prophet? yea, I say unto you, and more than a prophet. For this is he, of whom it is written, Behold, I send my messenger before thy face, which shall prepare thy way before thee. Verily I say unto you, Among them that are born of women there hath not risen a greater than John the Baptist: notwithstanding he that is least in the kingdom of heaven is greater than he.",
+        "text": "Verily, verily, I say unto you, He that heareth my word, and believeth on him that sent me, hath everlasting life, and shall not come into condemnation; but is passed from death unto life.",
         "copyright": "PUBLIC DOMAIN except in the United Kingdom, where a Crown Copyright applies to printing the KJV. See http://www.cambridge.org/about-us/who-we-are/queens-printers-patent"
       }
     },
-    "2 Corinthians 1:3-4": {
+    "John 6:37-39": {
       "niv": {
-        "text": "Praise be to the God and Father of our Lord Jesus Christ, the Father of compassion and the God of all comfort, who comforts us in all our troubles, so that we can comfort those in any trouble with the comfort we ourselves receive from God.",
+        "text": "All those the Father gives me will come to me, and whoever comes to me I will never drive away. For I have come down from heaven not to do my will but to do the will of him who sent me. And this is the will of him who sent me, that I shall lose none of all those he has given me, but raise them up at the last day.",
         "copyright": "The Holy Bible, New International Version® NIV® Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.® Used by Permission of Biblica, Inc.® All rights reserved worldwide."
       },
       "esv": {
-        "text": "Blessed be the God and Father of our Lord Jesus Christ, the Father of mercies and God of all comfort, who comforts us in all our affliction, so that we may be able to comfort those who are in any affliction, with the comfort with which we ourselves are comforted by God.",
+        "text": "All that the Father gives me will come to me, and whoever comes to me I will never cast out. For I have come down from heaven, not to do my own will but the will of him who sent me. And this is the will of him who sent me, that I should lose nothing of all that he has given me, but raise it up on the last day.",
         "copyright": "Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved."
       },
       "nlt": {
-        "text": "All praise to God, the Father of our Lord Jesus Christ. God is our merciful Father and the source of all comfort. He comforts us in all our troubles so that we can comfort others. When they are troubled, we will be able to give them the same comfort God has given us.",
+        "text": "However, those the Father has given me will come to me, and I will never reject them. For I have come down from heaven to do the will of God who sent me, not to do my own will. And this is the will of God, that I should not lose even one of all those he has given me, but that I should raise them up at the last day.",
         "copyright": "Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. All rights reserved. Used by permission of Tyndale House Publishers, Carol Stream, Illinois 60188. All rights reserved."
       },
       "kjv": {
-        "text": "Blessed be God, even the Father of our Lord Jesus Christ, the Father of mercies, and the God of all comfort; Who comforteth us in all our tribulation, that we may be able to comfort them which are in any trouble, by the comfort wherewith we ourselves are comforted of God.",
+        "text": "All that the Father giveth me shall come to me; and him that cometh to me I will in no wise cast out. For I came down from heaven, not to do mine own will, but the will of him that sent me. And this is the Father’s will which hath sent me, that of all which he hath given me I should lose nothing, but should raise it up again at the last day.",
+        "copyright": "PUBLIC DOMAIN except in the United Kingdom, where a Crown Copyright applies to printing the KJV. See http://www.cambridge.org/about-us/who-we-are/queens-printers-patent"
+      }
+    },
+    "Luke 23:39-43": {
+      "niv": {
+        "text": "One of the criminals who hung there hurled insults at him: “Aren’t you the Messiah? Save yourself and us!” But the other criminal rebuked him. “Don’t you fear God,” he said, “since you are under the same sentence? We are punished justly, for we are getting what our deeds deserve. But this man has done nothing wrong.” Then he said, “Jesus, remember me when you come into your kingdom.” Jesus answered him, “Truly I tell you, today you will be with me in paradise.”",
+        "copyright": "The Holy Bible, New International Version® NIV® Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.® Used by Permission of Biblica, Inc.® All rights reserved worldwide."
+      },
+      "esv": {
+        "text": "One of the criminals who were hanged railed at him, saying, “Are you not the Christ? Save yourself and us!” But the other rebuked him, saying, “Do you not fear God, since you are under the same sentence of condemnation? And we indeed justly, for we are receiving the due reward of our deeds; but this man has done nothing wrong.” And he said, “Jesus, remember me when you come into your kingdom.” And he said to him, “Truly, I say to you, today you will be with me in paradise.”",
+        "copyright": "Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved."
+      },
+      "nlt": {
+        "text": "One of the criminals hanging beside him scoffed, “So you’re the Messiah, are you? Prove it by saving yourself—and us, too, while you’re at it!” But the other criminal protested, “Don’t you fear God even when you have been sentenced to die? We deserve to die for our crimes, but this man hasn’t done anything wrong.” Then he said, “Jesus, remember me when you come into your Kingdom.” And Jesus replied, “I assure you, today you will be with me in paradise.”",
+        "copyright": "Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. All rights reserved. Used by permission of Tyndale House Publishers, Carol Stream, Illinois 60188. All rights reserved."
+      },
+      "kjv": {
+        "text": "And one of the malefactors which were hanged railed on him, saying, If thou be Christ, save thyself and us. But the other answering rebuked him, saying, Dost not thou fear God, seeing thou art in the same condemnation? And we indeed justly; for we receive the due reward of our deeds: but this man hath done nothing amiss. And he said unto Jesus, Lord, remember me when thou comest into thy kingdom. And Jesus said unto him, Verily I say unto thee, To day shalt thou be with me in paradise.",
         "copyright": "PUBLIC DOMAIN except in the United Kingdom, where a Crown Copyright applies to printing the KJV. See http://www.cambridge.org/about-us/who-we-are/queens-printers-patent"
       }
     }
