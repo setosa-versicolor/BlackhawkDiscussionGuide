@@ -70,16 +70,19 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      /* generate_hero.py places the subject top-right, clear of the title */
-      object-position: right top;
-      opacity: 0.35;
+      /* generate_hero.py places the subject upper right, clear of the title */
+      object-position: right 35%;
+      opacity: 0.6;
       z-index: 0;
     }
 
     .hero-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(to top, var(--bg) 0%, transparent 100%);
+      /* Darken behind the title (left and bottom) and leave the right side clear */
+      background:
+        linear-gradient(to right, var(--bg) 0%, rgba(13, 15, 19, 0.7) 40%, transparent 75%),
+        linear-gradient(to top, var(--bg) 0%, transparent 60%);
       z-index: 1;
     }
 
