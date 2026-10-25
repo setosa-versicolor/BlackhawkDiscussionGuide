@@ -295,7 +295,19 @@ def find_current_series_resources_url() -> str | None:
                     candidates.append(a)
             else:
                 candidates.append(a)
+        if "resources" in href.lower():
+            print(f"Learn page resources link: {text!r} {href}")
     if not candidates:
+        # The Messages page links each message to its series page too.
+        try:
+            for a in get_soup(MESSAGES_URL).find_all("a", href=True):
+                href = a["href"]
+                if "resources" in href.lower():
+                    print(f"Messages page resources link: {a.get_text(strip=True)!r} {href}")
+                if re.search(r"/resources/[^/?#]+/?$", href):
+                    return requests.compat.urljoin(MESSAGES_URL, href)
+        except Exception as e:
+            print(f"Note: could not load Messages page for series link: {e}")
         print("Note: no current series 'Resources' link found on Learn page; "
               "relying on Messages page discovery.")
         return None
