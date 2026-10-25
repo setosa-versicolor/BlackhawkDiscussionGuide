@@ -26,6 +26,10 @@ import os
 import sys
 from pathlib import Path
 
+# gpt-image-1 was shut down on 2026-10-23. Override with OPENAI_IMAGE_MODEL
+# (e.g. gpt-image-2.5-flare) without a code change when this one retires.
+IMAGE_MODEL = os.environ.get("OPENAI_IMAGE_MODEL", "").strip() or "gpt-image-2.5-sunburst"
+
 
 def summarize_content(guide):
     """Build a short thematic summary from the guide JSON."""
@@ -84,7 +88,7 @@ def generate_image(prompt, api_key, output_path):
     client = OpenAI(api_key=api_key)
 
     response = client.images.generate(
-        model="gpt-image-1",
+        model=IMAGE_MODEL,
         prompt=prompt,
         n=1,
         size="1536x1024",
@@ -137,7 +141,7 @@ def main():
         print(f"Concept isolated: {visual_concept}")
 
         prompt = build_image_prompt(visual_concept)
-        print("Generating hero image...")
+        print(f"Generating hero image with {IMAGE_MODEL}...")
         generate_image(prompt, api_key, args.out)
 
     except Exception as e:
