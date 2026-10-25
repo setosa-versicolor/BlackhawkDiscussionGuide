@@ -184,6 +184,11 @@ def _first_discussion_link_on_messages_page(today: datetime.date) -> str | None:
                 # Collect undated guides as fallback
                 undated_guides.append(full_url)
 
+    for d, u in sorted(guides):
+        print(f"Messages page guide: {d} {u}")
+    for u in undated_guides:
+        print(f"Messages page guide (undated): {u}")
+
     if not guides and not undated_guides:
         # No guides found at all
         return None
