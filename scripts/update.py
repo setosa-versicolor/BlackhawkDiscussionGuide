@@ -285,7 +285,11 @@ def find_current_series_resources_url() -> str | None:
         # "Resources"; current markup uses "Series Resources". Keep this tight
         # so we do not pick up prose links that merely end in "resources".
         text = a.get_text(strip=True).lower()
-        if text in ("resources", "series resources"):
+        href = a.get("href") or ""
+        # Series pages live at /resources/<series-slug>/ (e.g. /resources/the-church/),
+        # so match on the URL too in case the link text changes again.
+        is_series_href = bool(re.search(r"/resources/[^/?#]+/?$", href)) and not href.lower().endswith(".pdf")
+        if text in ("resources", "series resources") or is_series_href:
             if past_series_header and hasattr(a, "sourceline") and hasattr(past_series_header, "sourceline"):
                 if (a.sourceline or 0) < (past_series_header.sourceline or 10**9):
                     candidates.append(a)
@@ -297,41 +301,8 @@ def find_current_series_resources_url() -> str | None:
         return None
     return requests.compat.urljoin(LEARN_URL, candidates[0].get("href"))
 
-def find_today_discussion_pdf_or_page(series_url: str | None, today: datetime.date) -> dict:
-    """
-    Returns: { series_title, date, url, context, all_guides }
-    'url' may be a PDF or HTML page. We'll parse accordingly.
-    """
-    # 1) Messages landing, direct Discussion Guide
-    direct = _first_discussion_link_on_messages_page(today)
-    if direct:
-        return {
-            "series_title": "Current Series",
-            "date": today,
-            "url": direct,
-            "context": "Messages landing (direct)",
-            "all_guides": []
-        }
-
-    # 2) message page -> discussion guide
-    msg_page = _find_message_page_for_today(today)
-    if msg_page:
-        dg = _discussion_link_from_message_page(msg_page)
-        if dg:
-            return {
-                "series_title": "Current Series",
-                "date": today,
-                "url": dg,
-                "context": msg_page,
-                "all_guides": []
-            }
-
-    # 3) Fallback: series resources list (date-scored)
-    if not series_url:
-        raise RuntimeError(
-            "Could not locate a Discussion Guide via the Messages page, and no "
-            "series Resources URL was available as a fallback."
-        )
+def _guide_from_series_page(series_url: str, today: datetime.date) -> dict | None:
+    """Pick the guide closest to (but not after) today from a series resources page."""
     soup_r = get_soup(series_url)
     series_title_tag = soup_r.find(lambda t: t.name in ("h1","h2") and t.get_text(strip=True))
     series_title = series_title_tag.get_text(strip=True) if series_title_tag else "Current Series"
@@ -379,6 +350,55 @@ def find_today_discussion_pdf_or_page(series_url: str | None, today: datetime.da
             "context": chosen[2],
             "all_guides": guides
         }
+
+    return None
+
+def find_today_discussion_pdf_or_page(series_url: str | None, today: datetime.date) -> dict:
+    """
+    Returns: { series_title, date, url, context, all_guides }
+    'url' may be a PDF or HTML page. We'll parse accordingly.
+    """
+    # 1) Messages landing, direct Discussion Guide
+    direct = _first_discussion_link_on_messages_page(today)
+    direct_date = _extract_date_from_url(direct, year_hint=today.year) if direct else None
+    if direct and direct_date and (today - direct_date).days > 6 and series_url:
+        # The Messages page sometimes lags behind the series page on Sunday
+        # morning, so prefer a newer guide from the series resources list.
+        print(f"Messages page guide is from {direct_date}; checking {series_url}")
+        series = _guide_from_series_page(series_url, today)
+        if series and series["date"] > direct_date:
+            return series
+    if direct:
+        return {
+            "series_title": "Current Series",
+            "date": today,
+            "url": direct,
+            "context": "Messages landing (direct)",
+            "all_guides": []
+        }
+
+    # 2) message page -> discussion guide
+    msg_page = _find_message_page_for_today(today)
+    if msg_page:
+        dg = _discussion_link_from_message_page(msg_page)
+        if dg:
+            return {
+                "series_title": "Current Series",
+                "date": today,
+                "url": dg,
+                "context": msg_page,
+                "all_guides": []
+            }
+
+    # 3) Fallback: series resources list (date-scored)
+    if not series_url:
+        raise RuntimeError(
+            "Could not locate a Discussion Guide via the Messages page, and no "
+            "series Resources URL was available as a fallback."
+        )
+    series = _guide_from_series_page(series_url, today)
+    if series:
+        return series
 
     raise RuntimeError("Could not locate a Discussion Guide link for today's message.")
 
