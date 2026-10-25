@@ -32,16 +32,23 @@ IMAGE_MODEL = os.environ.get("OPENAI_IMAGE_MODEL", "").strip() or "gpt-image-2.5
 
 
 def summarize_content(guide):
-    """Build a short thematic summary from the guide JSON."""
-    questions = guide.get("questions", [])
-    sections = guide.get("sections", [])
+    """Build a thematic summary from the guide JSON, leading with what states the theme."""
+    parts = []
+    if guide.get("title"):
+        parts.append("Sermon title: " + guide["title"])
+    if guide.get("series") and guide["series"] != "Current Series":
+        parts.append("Sermon series: " + guide["series"])
+    if guide.get("verses"):
+        parts.append("Scripture: " + ", ".join(guide["verses"]))
+    for s in guide.get("sections", []):
+        parts.append(s.get("title", "") + ": " + s.get("body", ""))
+    # Questions go last: the first ones are usually icebreakers whose props
+    # (household items, small talk) are not the theme.
+    parts.append("Discussion questions:\n" + "\n".join(guide.get("questions", [])))
 
-    all_text = "\n".join(questions)
-    for s in sections:
-        all_text += "\n" + s.get("title", "") + ": " + s.get("body", "")
-
-    if len(all_text) > 1200:
-        all_text = all_text[:1200] + "..."
+    all_text = "\n\n".join(parts)
+    if len(all_text) > 3000:
+        all_text = all_text[:3000] + "..."
 
     return all_text
 
@@ -56,11 +63,20 @@ def extract_visual_concept(content_summary, api_key):
         messages=[
             {
                 "role": "system", 
-                "content": "You are an expert art director. Read the provided text and extract exactly ONE concrete, highly visual object or metaphor that represents the core theme. Respond ONLY with that object (e.g., 'A shattered clay jar', 'An open doorway', 'A single glowing ember'). Do not include any other text."
+                "content": (
+                    "You are an expert art director choosing the header image for a church "
+                    "small-group discussion guide. First work out the sermon's central message "
+                    "from its title, scripture and prayer. Then choose exactly ONE concrete, "
+                    "highly visual object or scene that someone in the group would connect to "
+                    "that message at a glance, ideally one that shows its key idea or contrast "
+                    "(e.g. 'A shattered clay jar', 'An open doorway', 'A single glowing ember'). "
+                    "Do not pick props or settings mentioned only in icebreaker questions. "
+                    "Respond ONLY with that object or scene, with no other text."
+                )
             },
             {"role": "user", "content": content_summary}
         ],
-        temperature=0.7
+        temperature=0.4
     )
     return response.choices[0].message.content.strip()
 
