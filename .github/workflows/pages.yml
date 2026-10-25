@@ -3,8 +3,9 @@ name: Build & Deploy Discussion Guide
 on:
   workflow_dispatch:
   schedule:
-    # Sundays 17:30 UTC ≈ 11:30 AM Central during CDT; adjust if you prefer.
-    - cron: "30 17 * * 0"
+    # 7am Central: 12:00 UTC during CDT, 13:00 UTC during CST (see gate job)
+    - cron: "0 12 * * 0"
+    - cron: "0 13 * * 0"
 
 permissions:
   contents: read
@@ -16,7 +17,25 @@ env:
   TZ: America/Chicago
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        # Cron is UTC-only: keep whichever of the two schedules is 7am Central today.
+        run: |
+          offset=$(TZ=America/Chicago date +%z)
+          case "${{ github.event.schedule }}" in
+            "0 12 * * 0") want=-0500 ;;
+            "0 13 * * 0") want=-0600 ;;
+            *) want=$offset ;;
+          esac
+          [ "$offset" = "$want" ] && echo run=true >> "$GITHUB_OUTPUT" || echo run=false >> "$GITHUB_OUTPUT"
+
   build:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
